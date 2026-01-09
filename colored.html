@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terrain Flight Simulator</title>
+    <style>
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            font-family: monospace;
+        }
+        canvas { display: block; }
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-family: monospace;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 100;
+        }
+        #fileInput {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 100;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        #minimap {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 256px;
+            height: 256px;
+            border: 2px solid rgba(255,255,255,0.8);
+            background: rgba(0,0,0,0.8);
+            z-index: 99;
+            display: none;
+        }
+        #controls {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            color: white;
+            font-family: monospace;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div id="info">
+        Load heightmap (.map file)<br>
+        <span id="status">Waiting for file...</span>
+    </div>
+    <input type="file" id="fileInput" accept=".map" style="top: 280px;">
+    <canvas id="minimap"></canvas>
+    <div id="controls">
+        Always moving forward | W/S: Pitch up/down | A/D: Strafe | Mouse: Look/Pitch | Q/E: Roll | +/-: Speed | Shift: Boost | Space/C: Direct up/down
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        let scene, camera, renderer, terrain, skybox, cloudPlane;
+        let keys = {};
+        let mouseMovement = { x: 0, y: 0 };
+        let cameraRotation = { x: 0, y: 0, z: 0 };
+        
+        // Minimap
+        let minimapCanvas, minimapCtx;
+        let minimapImageData = null; // Cached minimap image
+        
+        // Terrain data for collision detection
+        let terrainData = {
+            heightData: null,
+            mapSize: 256,
+            worldSize: 0,
+            heightScale: 8.0
+        };
+        
+        // Flight parameters
+        const PIXEL_SIZE = 128; // Each pixel = 64x64 units
+        const BASE_SPEED = 192; // 8 pixels/second = 512 units/second
+        const MOUSE_SENSITIVITY = 0.002;
+        const MOUSE_PITCH_SENSITIVITY = 0.0008; // Slower pitch sensitivity for mouse
+        const ROLL_SPEED = 0.02;
+        const PITCH_SPEED = -0.03; // Speed for W/S pitch control
+        const MIN_HEIGHT_ABOVE_TERRAIN = 5; // Minimum clearance above terrain
+        const AUTO_HEIGHT_ENABLED = false; // Automatically maintain minimum height
+        const SPEED_CHANGE_RATE = 50; // Units per second speed change with +/-
+        
+        // Current flight speed (adjustable with +/-)
+        let currentSpeed = BASE_SPEED;
+        
+        // Camera position (cockpit view) - will be updated when terrain loads
+        let position = { x: 0, y: 500, z: 0 };
+        let velocity = { x: 0, y: 0, z: 0 };
+        
+        function init() {
+            // Scene setup
+            scene = new THREE.Scene();
+            
+            // Fog for atmosphere
+            scene.fog = new THREE.FogExp2(0xB5B5B5, 0.0005); // Off-white fog (adjusted for large scale)
+            
+            // Camera (cockpit perspective - looking down at terrain)
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 10000);
+            camera.position.set(position.x, position.y, position.z);
+            camera.rotation.order = 'ZYX'; // Roll, Pitch, Yaw
+            cameraRotation.x = -0.3; // Start with downward tilt (cockpit view)
+            camera.rotation.set(cameraRotation.x, cameraRotation.y, cameraRotation.z);
+            
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setClearColor(0xCECECE); // Off-white background
+            document.body.appendChild(renderer.domElement);
+            
+            // Initialize minimap
+            minimapCanvas = document.getElementById('minimap');
+            minimapCtx = minimapCanvas.getContext('2d');
+            minimapCanvas.width = 256;
+            minimapCanvas.height = 256;
+            
+            // Lights
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(100, 200, 100);
+            scene.add(directionalLight);
+            
+            // Create pixelated cloud skybox
+            //createSkybox();
+            
+            // Controls
+            setupControls();
+            
+            // File input handler
+            document.getElementById('fileInput').addEventListener('change', handleFileSelect);
+            
+            // Window resize
+            window.addEventListener('resize', onWindowResize);
+            
+            animate();
+        }
+        
+        function createSkybox() {
+           
+        }
+        
+        function setupControls() {
+            // Keyboard controls
+            document.addEventListener('keydown', (e) => {
+                keys[e.key.toLowerCase()] = true;
+            });
+            
+            document.addEventListener('keyup', (e) => {
+                keys[e.key.toLowerCase()] = false;
+            });
+            
+            // Mouse look (only when clicking)
+            let isMouseDown = false;
+            renderer.domElement.addEventListener('mousedown', (e) => {
+                isMouseDown = true;
+                renderer.domElement.requestPointerLock();
+            });
+            
+            document.addEventListener('pointerlockchange', () => {
+                isMouseDown = document.pointerLockElement === renderer.domElement;
+            });
+            
+            document.addEventListener('mousemove', (e) => {
+                if (isMouseDown) {
+                    // Yaw (left/right)
+                    cameraRotation.y -= e.movementX * MOUSE_SENSITIVITY;
+                    // Pitch (up/down) - swapped direction and slower sensitivity
+                    // Mouse up (negative movementY) = pitch up, Mouse down (positive movementY) = pitch down
+                    cameraRotation.x -= e.movementY * MOUSE_PITCH_SENSITIVITY;
+                    cameraRotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, cameraRotation.x));
+                }
+            });
+            
+            document.addEventListener('click', () => {
+                if (document.pointerLockElement !== renderer.domElement) {
+                    renderer.domElement.requestPointerLock();
+                }
+            });
+        }
+        
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const arrayBuffer = e.target.result;
+                const heightData = new Uint8Array(arrayBuffer);
+                createTerrain(heightData);
+                document.getElementById('status').textContent = 'Terrain loaded!';
+            };
+            reader.readAsArrayBuffer(file);
+        }
+        
+        function getTerrainHeight(worldX, worldZ) {
+            if (!terrainData.heightData) return 0;
+            
+            // Convert world coordinates to terrain-relative coordinates
+            // Terrain is positioned at (-worldSize/2, 0, -worldSize/2)
+            const terrainX = worldX + terrainData.worldSize / 2;
+            const terrainZ = worldZ + terrainData.worldSize / 2;
+            
+            // Clamp to terrain bounds
+            if (terrainX < 0 || terrainX >= terrainData.worldSize || 
+                terrainZ < 0 || terrainZ >= terrainData.worldSize) {
+                return 0;
+            }
+            
+            // Convert to map coordinates
+            const mapX = Math.floor((terrainX / terrainData.worldSize) * terrainData.mapSize);
+            const mapZ = Math.floor((terrainZ / terrainData.worldSize) * terrainData.mapSize);
+            
+            // Clamp to valid array indices
+            const clampedX = Math.max(0, Math.min(terrainData.mapSize - 1, mapX));
+            const clampedZ = Math.max(0, Math.min(terrainData.mapSize - 1, mapZ));
+            
+            const idx = clampedZ * terrainData.mapSize + clampedX;
+            const height = terrainData.heightData[idx] || 0;
+            
+            return height * terrainData.heightScale;
+        }
+        
+        function createTerrain(heightData) {
+            // Remove old terrain if exists
+            if (terrain) {
+                scene.remove(terrain);
+                terrain.geometry.dispose();
+                terrain.material.dispose();
+            }
+            
+            const mapSize = 256; // Assuming 256x256 heightmap
+            const worldSize = mapSize * PIXEL_SIZE; // 16,384 units
+            const heightScale = 4.0; // Height exaggeration
+            const segments = mapSize - 1;
+            
+            // Store terrain data for collision detection
+            terrainData.heightData = heightData;
+            terrainData.mapSize = mapSize;
+            terrainData.worldSize = worldSize;
+            terrainData.heightScale = heightScale;
+            
+            // Create geometry
+            const geometry = new THREE.PlaneGeometry(
+                worldSize, 
+                worldSize, 
+                segments, 
+                segments
+            );
+            
+            // Apply height data to vertices
+            const vertices = geometry.attributes.position.array;
+            for (let i = 0; i <= segments; i++) {
+                for (let j = 0; j <= segments; j++) {
+                    const mapX = j;
+                    const mapY = i;
+                    const idx = mapY * mapSize + mapX;
+                    const vertexIdx = (i * (segments + 1) + j) * 3;
+                    
+                    const height = heightData[idx] || 0;
+                    vertices[vertexIdx + 2] = height * heightScale;
+                }
+            }
+            
+            geometry.computeVertexNormals();
+            
+            // Create material with terrain colors
+            const colors = new Float32Array(vertices.length);
+            for (let i = 0; i < vertices.length; i += 3) {
+                const height = vertices[i + 2];
+                const normalizedHeight = height / (255 * heightScale);
+                
+                // Terrain color gradient
+                if (normalizedHeight < 0.2) {
+                    // Water/low areas - dark blue/green
+                    colors[i] = 0.0;
+                    colors[i + 1] = 0.1+Math.random() * 0.2;
+                    colors[i + 2] = 0.0;
+                } else if (normalizedHeight < 0.4) {
+                    // Grass - green
+                    colors[i] = 0.0;
+                    colors[i + 1] = 0.1+Math.random() * 0.3;
+                    colors[i + 2] = 0.0;
+                } else if (normalizedHeight < 0.9) {
+                    // Dirt/rock - brown
+                    colors[i] = 0.4;
+                    colors[i + 1] = 0.3;
+                    colors[i + 2] = 0.2;
+
+                } else {
+                    // Snow peaks - white
+                    colors[i] = 0.9;
+                    colors[i + 1] = 0.9;
+                    colors[i + 2] = 0.85;
+                }
+            }
+            
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+            
+            const material = new THREE.MeshStandardMaterial({
+                vertexColors: true,
+                flatShading: false,
+                side: THREE.DoubleSide
+            });
+            
+            terrain = new THREE.Mesh(geometry, material);
+            terrain.rotation.x = -Math.PI / 2; // Rotate to horizontal
+            terrain.position.set(-worldSize/2, 0, -worldSize/2);
+            
+            scene.add(terrain);
+            
+            // Start position at center of terrain, at good flying height
+            // Terrain center is at (0, 0, 0) after positioning
+            position.x = 128;
+            position.y = 500;
+            position.z = 128;
+            
+            // Update camera immediately
+            camera.position.set(position.x, position.y, position.z);
+            camera.rotation.set(cameraRotation.x, cameraRotation.y, cameraRotation.z);
+            
+            // Draw minimap
+            //drawMinimap(heightData, mapSize);
+            
+            // Create cloud plane at max height
+            createCloudPlane(heightData, mapSize, worldSize, heightScale);
+        }
+        
+        function createCloudPlane(heightData, mapSize, worldSize, heightScale) {
+            // Remove old cloud plane if exists
+            if (cloudPlane) {
+                scene.remove(cloudPlane);
+                cloudPlane.geometry.dispose();
+                cloudPlane.material.dispose();
+            }
+            
+            // Find maximum height
+            let maxHeight = 0;
+            for (let i = 0; i < heightData.length; i++) {
+                const height = heightData[i] || 0;
+                if (height > maxHeight) {
+                    maxHeight = height;
+                }
+            }
+            maxHeight += 10;
+            const maxWorldHeight = maxHeight * heightScale;
+            
+            // Create pixelated cloud texture
+            const textureSize = 256;
+            const pixelSize = 8; // Chunky pixels
+            const canvas = document.createElement('canvas');
+            canvas.width = textureSize;
+            canvas.height = textureSize;
+            const ctx = canvas.getContext('2d');
+            
+            // Fill with white background
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, textureSize, textureSize);
+            
+            // Add random spots of light gray and off-white
+            const numSpots = 150;
+            for (let i = 0; i < numSpots; i++) {
+                const x = Math.floor(Math.random() * (textureSize / pixelSize)) * pixelSize;
+                const y = Math.floor(Math.random() * (textureSize / pixelSize)) * pixelSize;
+                
+                // Randomly choose light gray or off-white
+                if (Math.random() > 0.5) {
+                    ctx.fillStyle = '#E0E0E0'; // Light gray
+                } else {
+                    ctx.fillStyle = '#F5F5F5'; // Off-white
+                }
+                
+                ctx.fillRect(x, y, pixelSize, pixelSize);
+            }
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.magFilter = THREE.NearestFilter;
+            texture.minFilter = THREE.NearestFilter;
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(1, 1);
+            
+            // Create plane geometry (same size as terrain)
+            const planeGeometry = new THREE.PlaneGeometry(worldSize, worldSize);
+            const planeMaterial = new THREE.MeshBasicMaterial({
+                map: texture,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.9
+            });
+            
+            cloudPlane = new THREE.Mesh(planeGeometry, planeMaterial);
+            cloudPlane.rotation.x = -Math.PI / 2; // Rotate to horizontal (same as terrain)
+            cloudPlane.position.set(-worldSize/2, maxWorldHeight, -worldSize/2);
+            
+            scene.add(cloudPlane);
+        }
+        
+        function drawMinimap(heightData, mapSize) {
+            if (!minimapCanvas || !minimapCtx || !heightData) return;
+            
+            // Show minimap
+            minimapCanvas.style.display = 'block';
+            
+            // Create image data from heightmap
+            const imageData = minimapCtx.createImageData(256, 256);
+            const data = imageData.data;
+            
+            for (let i = 0; i < mapSize; i++) {
+                for (let j = 0; j < mapSize; j++) {
+                    const idx = i * mapSize + j;
+                    const height = heightData[idx] || 0;
+                    // Flip Y axis: row 0 (top) becomes row 255 (bottom)
+                    const flippedI = mapSize - 1 - i;
+                    const pixelIdx = (flippedI * 256 + j) * 4;
+                    
+                    // Grayscale based on height
+                    data[pixelIdx] = height;     // R
+                    data[pixelIdx + 1] = height; // G
+                    data[pixelIdx + 2] = height; // B
+                    data[pixelIdx + 3] = 255;    // A
+                }
+            }
+            
+            minimapCtx.putImageData(imageData, 0, 0);
+            
+            // Cache the image data
+            minimapImageData = imageData;
+        }
+        
+        function updateMinimap() {
+            if (!minimapCanvas || !minimapCtx || !terrainData.heightData || !minimapImageData) return;
+            
+            // Restore cached minimap background
+            minimapCtx.putImageData(minimapImageData, 0, 0);
+            
+            // Convert world position to minimap coordinates
+            // Terrain extends from world (-worldSize/2, 0, -worldSize/2) to (worldSize/2, 0, worldSize/2)
+            // Heightmap pixel (j, i) maps to world position:
+            // - j=0, i=0 -> world (-worldSize/2, 0, -worldSize/2) [left, front]
+            // - j=255, i=255 -> world (worldSize/2, 0, worldSize/2) [right, back]
+            //
+            // So: world X from -worldSize/2 to +worldSize/2 maps to heightmap j from 0 to 255
+            //     world Z from -worldSize/2 to +worldSize/2 maps to heightmap i from 0 to 255
+            
+            // Convert world position to heightmap coordinates (0-255 range)
+            // World X: -worldSize/2 to +worldSize/2 -> heightmap j: 0 to 255
+            const heightmapJ = ((position.x + terrainData.worldSize / 2) / terrainData.worldSize) * 256;
+            // World Z: -worldSize/2 to +worldSize/2 -> heightmap i: 0 to 255
+            const heightmapI = ((position.z + terrainData.worldSize / 2) / terrainData.worldSize) * 256;
+            
+            // Convert to minimap canvas coordinates
+            // Minimap X = heightmap column j
+            const minimapX = heightmapJ;
+            // Minimap Y = heightmap row i (flipped because we flipped the minimap when drawing)
+            const minimapY = 255 - heightmapI;
+            
+            // Clamp to minimap bounds
+            const clampedX = Math.max(0, Math.min(255, minimapX));
+            const clampedY = Math.max(0, Math.min(255, minimapY));
+            
+            // Draw red dot for camera position
+            minimapCtx.fillStyle = 'red';
+            minimapCtx.beginPath();
+            minimapCtx.arc(clampedX, clampedY, 3, 0, Math.PI * 2);
+            minimapCtx.fill();
+            
+            // Draw a small white border around the dot for visibility
+            minimapCtx.strokeStyle = 'white';
+            minimapCtx.lineWidth = 1;
+            minimapCtx.stroke();
+        }
+        
+        function updateFlight(deltaTime) {
+            // Speed adjustment with +/- keys
+            if (keys['='] || keys['+']) {
+                currentSpeed += SPEED_CHANGE_RATE * deltaTime;
+                currentSpeed = Math.min(currentSpeed, BASE_SPEED * 3); // Max 3x base speed
+            }
+            if (keys['-'] || keys['_']) {
+                currentSpeed -= SPEED_CHANGE_RATE * deltaTime;
+                currentSpeed = Math.max(currentSpeed, BASE_SPEED * 0.1); // Min 10% base speed
+            }
+            
+            // Boost with Shift
+            const effectiveSpeed = keys.shift ? currentSpeed * 2 : currentSpeed;
+            const moveSpeed = effectiveSpeed * deltaTime;
+            
+            // Pitch control with W/S
+            if (keys['s']) {
+                cameraRotation.x += PITCH_SPEED;
+                cameraRotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, cameraRotation.x));
+            }
+            if (keys['w']) {
+                cameraRotation.x -= PITCH_SPEED;
+                cameraRotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, cameraRotation.x));
+            }
+            
+            // Calculate forward direction (yaw only, no pitch)
+            // Negated to fix backwards flight
+            const forwardX = -Math.sin(cameraRotation.y);
+            const forwardZ = -Math.cos(cameraRotation.y);
+            
+            // Calculate right vector for strafing
+            const rightX = Math.cos(cameraRotation.y);
+            const rightZ = -Math.sin(cameraRotation.y);
+            
+            // Movement (only if terrain exists)
+            if (terrain) {
+                // Always move forward at current speed
+                // Forward movement in horizontal plane
+                position.x += forwardX * moveSpeed;
+                position.z += forwardZ * moveSpeed;
+                
+                // Vertical movement based on pitch (cameraRotation.x)
+                // Negative pitch (nose down) = negative Y movement
+                // Positive pitch (nose up) = positive Y movement
+                const verticalSpeed = -Math.sin(-cameraRotation.x) * moveSpeed;
+                position.y += verticalSpeed;
+                
+                // Strafe left/right with A/D
+                if (keys['a']) {
+                    position.x -= rightX * moveSpeed * 0.5; // Slower strafe
+                    position.z -= rightZ * moveSpeed * 0.5;
+                }
+                if (keys['d']) {
+                    position.x += rightX * moveSpeed * 0.5;
+                    position.z += rightZ * moveSpeed * 0.5;
+                }
+                
+                // Direct vertical movement (optional, for fine control)
+                if (keys[' ']) { // Space - up
+                    position.y += moveSpeed * 0.5;
+                }
+                if (keys['c']) { // C - down
+                    position.y -= moveSpeed * 0.5;
+                }
+                
+                // Collision detection and height control
+                const terrainHeight = getTerrainHeight(position.x, position.z);
+                const minAllowedY = terrainHeight + MIN_HEIGHT_ABOVE_TERRAIN;
+                
+                // Prevent flying through terrain
+                if (position.y < minAllowedY) {
+                   // position.y = minAllowedY;
+                    // Reset pitch if we hit terrain
+                    if (cameraRotation.x < 0) {
+                        cameraRotation.x = -cameraRotation.x;
+                    }
+                }
+                
+                // Automatic height control - maintain minimum clearance
+                if (AUTO_HEIGHT_ENABLED && position.y < minAllowedY + 20) {
+                    //position.y = minAllowedY + 20;
+                }
+            }
+            
+            // Roll
+            if (keys['q']) {
+                cameraRotation.z += ROLL_SPEED;
+            }
+            if (keys['e']) {
+                cameraRotation.z -= ROLL_SPEED;
+            }
+            
+            // Always apply camera rotation and position
+            camera.rotation.set(cameraRotation.x, cameraRotation.y, cameraRotation.z);
+            camera.position.set(position.x, position.y, position.z);
+        }
+        
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        let lastTime = performance.now();
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            const currentTime = performance.now();
+            const deltaTime = (currentTime - lastTime) / 1000; // Convert to seconds
+            lastTime = currentTime;
+            
+            updateFlight(deltaTime);
+            updateMinimap();
+            renderer.render(scene, camera);
+        }
+        
+        init();
+    </script>
+</body>
+</html>
+

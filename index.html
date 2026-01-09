@@ -1,0 +1,1998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terrain Flight Simulator</title>
+    <style>
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            font-family: monospace;
+        }
+        canvas { display: block; }
+
+        #minimap {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 256px;
+            height: 256px;
+            border: 2px solid rgba(255,255,255,0.8);
+            background: rgba(0,0,0,0.8);
+            z-index: 99;
+            display: none;
+        }
+        #compass {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 60px;
+            height: 60px;
+            border: 2px solid rgba(255,255,255,0.8);
+            background: rgba(0,0,0,0.8);
+            border-radius: 50%;
+            z-index: 98;
+        }
+        #flightInfo {
+            position: absolute;
+            top: 80px;
+            right: 10px;
+            color: white;
+            font-family: monospace;
+            font-size: 11px;
+            background: rgba(0,0,0,0.8);
+            padding: 5px 8px;
+            border-radius: 3px;
+            z-index: 98;
+            line-height: 1.4;
+        }
+        #fpsCounter {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-family: monospace;
+            font-size: 14px;
+            background: rgba(0,0,0,0.8);
+            padding: 5px 10px;
+            border-radius: 3px;
+            z-index: 98;
+        }
+        #debugInfo {
+            position: absolute;
+            top: 45px;
+            left: 10px;
+            color: white;
+            font-family: monospace;
+            font-size: 11px;
+            background: rgba(0,0,0,0.8);
+            padding: 5px 10px;
+            border-radius: 3px;
+            z-index: 98;
+        }
+        #welcomeScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            color: white;
+            font-family: monospace;
+        }
+        #welcomeScreen h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        #welcomeScreen p {
+            font-size: 14px;
+            margin-bottom: 30px;
+            text-align: center;
+            max-width: 600px;
+            line-height: 1.6;
+        }
+        #startButton {
+            padding: 15px 40px;
+            font-size: 18px;
+            font-family: monospace;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        #startButton:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.8);
+        }
+        #controls {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            color: white;
+            font-family: monospace;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="welcomeScreen">
+        <h1>Terminal Velocity Flight Simulator</h1>
+        <p>This is only a test flight simulator of Terminal Velocity's Ymir's planet</p>
+        <button id="startButton">Start Flight</button>
+    </div>
+    
+    <canvas id="minimap"></canvas>
+    <canvas id="compass"></canvas>
+    <div id="flightInfo"></div>
+    <div id="fpsCounter">FPS: 0</div>
+    <div id="debugInfo">Height: --</div>
+    <audio id="backgroundMusic" loop>
+        <source src="tame.mp3" type="audio/mpeg">
+    </audio>
+    <div id="controls">
+        Always moving forward | W/S: Pitch up/down | A/D: Strafe | Mouse: Look/Pitch | Q/E: Roll | +/-: Speed | Shift: Boost | Space/C: Direct up/down
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        let scene, camera, renderer, terrain, skybox, cloudPlane;
+        let keys = {};
+        let mouseMovement = { x: 0, y: 0 };
+        let cameraRotation = { x: 0, y: 0, z: 0 };
+        let raycaster = null; // For collision detection
+        
+        // Rain system
+        let rainEnabled = false;
+        let rainParticles = null;
+        let rainGeometry = null;
+        let rainMaterial = null;
+        let rainVelocities = null; // Store velocities separately
+        let lightningFlash = 0.0;
+        let lightningTimer = 0.0;
+        let nextLightningTime = 0.0;
+        
+        // Minimap
+        let minimapCanvas, minimapCtx;
+        let minimapImageData = null; // Cached minimap image
+        
+        // Compass
+        let compassCanvas, compassCtx;
+        
+        // Music
+        let musicStarted = false;
+        
+        // Textures
+        let grassTexture = null;
+        let dirtTexture = null;
+        let snowTexture = null;
+        let rockTexture = null;
+        
+        // Seedable random number generator (Mulberry32)
+        function mulberry32(seed) {
+            return function() {
+                let t = seed += 0x6D2B79F5;
+                t = Math.imul(t ^ t >>> 15, t | 1);
+                t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+                return ((t ^ t >>> 14) >>> 0) / 4294967296;
+            };
+        }
+        
+        // Create grass texture
+        function createGrassTexture(seed = 12345) {
+            const size = 256;
+            const pixelSize =16;
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            const random = mulberry32(seed);
+            
+            // Base green color
+            ctx.fillStyle = '#4A7C59'; // Medium green
+            ctx.fillRect(0, 0, size, size);
+            
+            // Add random 8x8 pixel chunks
+            const numChunks = 2000;
+            for (let i = 0; i < numChunks; i++) {
+                const x = Math.floor(random() * (size / pixelSize)) * pixelSize;
+                const y = Math.floor(random() * (size / pixelSize)) * pixelSize;
+                
+                const rand = random();
+                if (rand < 0.5) {
+                    ctx.fillStyle = '#3A6B4760'; // Dark green
+                } else if (rand < 0.9) {
+                    ctx.fillStyle = '#5A8D6B10'; // Light green
+                } else {
+                    ctx.fillStyle = '#6B4E3D02'; // Brown spots
+                }
+                
+                ctx.fillRect(x, y, pixelSize, pixelSize);
+            }
+            document.body.appendChild(canvas);
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.magFilter = THREE.NearestFilter;
+            texture.minFilter = THREE.NearestFilter;
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            // Repeat 256 times so each heightmap pixel (128 units) shows the full 256x256 texture
+            texture.repeat.set(256, 256);
+            
+            return texture;
+        }
+        
+        // Create dirt/brown texture
+        function createDirtTexture(seed = 54321) {
+            const size = 256;
+            const pixelSize = 16;
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            const random = mulberry32(seed);
+            
+            // Base brown color
+            ctx.fillStyle = '#8B6F47'; // Medium brown
+            ctx.fillRect(0, 0, size, size);
+            
+            // Add random 8x8 pixel chunks with various brown shades
+            const numChunks = 2000;
+            for (let i = 0; i < numChunks; i++) {
+                const x = Math.floor(random() * (size / pixelSize)) * pixelSize;
+                const y = Math.floor(random() * (size / pixelSize)) * pixelSize;
+                
+                const rand = random();
+                if (rand < 0.3) {
+                    ctx.fillStyle = '#6B4F2F10'; // Dark brown
+                } else if (rand < 0.6) {
+                    ctx.fillStyle = '#9B7F5701'; // Light brown
+                } else if (rand < 0.8) {
+                    ctx.fillStyle = '#7A5E3E01'; // Medium-dark brown
+                } else {
+                    ctx.fillStyle = '#A68B6B02'; // Tan/light brown
+                }
+                
+                ctx.fillRect(x, y, pixelSize, pixelSize);
+            }
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.magFilter = THREE.NearestFilter;
+            texture.minFilter = THREE.NearestFilter;
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            // Repeat 256 times so each heightmap pixel (128 units) shows the full 256x256 texture
+            texture.repeat.set(256, 256);
+            
+            return texture;
+        }
+        
+        // Create snow texture
+        function createSnowTexture(seed = 98765) {
+            const size = 256;
+            const pixelSize = 16;
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            const random = mulberry32(seed);
+            
+            // Base white color
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, size, size);
+            
+            // Add random 16x16 pixel chunks with various white/light gray shades
+            const numChunks = 1500;
+            for (let i = 0; i < numChunks; i++) {
+                const x = Math.floor(random() * (size / pixelSize)) * pixelSize;
+                const y = Math.floor(random() * (size / pixelSize)) * pixelSize;
+                
+                const rand = random();
+                if (rand < 0.4) {
+                    ctx.fillStyle = '#F5F5F5'; // Off-white
+                } else if (rand < 0.7) {
+                    ctx.fillStyle = '#E8E8E8'; // Light gray
+                } else if (rand < 0.9) {
+                    ctx.fillStyle = '#F0F0F0'; // Very light gray
+                } else {
+                    ctx.fillStyle = '#DCDCDC'; // Slightly darker gray for contrast
+                }
+                
+                ctx.fillRect(x, y, pixelSize, pixelSize);
+            }
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.magFilter = THREE.NearestFilter;
+            texture.minFilter = THREE.NearestFilter;
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            // Repeat 256 times so each heightmap pixel (128 units) shows the full 256x256 texture
+            texture.repeat.set(256, 256);
+            
+            return texture;
+        }
+        
+        // Create rock texture
+        function createRockTexture(seed = 24680) {
+            const size = 256;
+            const pixelSize = 4; // Smaller chunks for more detail
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            const random = mulberry32(seed);
+            
+            // Base rock color (dark gray)
+            ctx.fillStyle = '#5A5A5A';
+            ctx.fillRect(0, 0, size, size);
+            
+            // Add many small pixel chunks with various rock shades for detailed texture
+            const numChunks = 8000; // More chunks for more detail
+            for (let i = 0; i < numChunks; i++) {
+                const x = Math.floor(random() * (size / pixelSize)) * pixelSize;
+                const y = Math.floor(random() * (size / pixelSize)) * pixelSize;
+                
+                const rand = random();
+                if (rand < 0.25) {
+                    ctx.fillStyle = '#4A4A4A'; // Dark gray
+                } else if (rand < 0.5) {
+                    ctx.fillStyle = '#6A6A6A'; // Medium gray
+                } else if (rand < 0.7) {
+                    ctx.fillStyle = '#3A3A3A'; // Very dark gray
+                } else if (rand < 0.85) {
+                    ctx.fillStyle = '#7A7A7A'; // Light gray
+                } else if (rand < 0.95) {
+                    ctx.fillStyle = '#5A5A5A'; // Base gray
+                } else {
+                    ctx.fillStyle = '#8A8A8A'; // Very light gray highlights
+                }
+                
+                ctx.fillRect(x, y, pixelSize, pixelSize);
+            }
+            
+            // Add some even smaller detail (1-2 pixel spots) for fine texture
+            for (let i = 0; i < 2000; i++) {
+                const x = Math.floor(random() * size);
+                const y = Math.floor(random() * size);
+                const spotSize = Math.random() < 0.5 ? 1 : 2;
+                
+                const rand = random();
+                if (rand < 0.5) {
+                    ctx.fillStyle = '#3A3A3A'; // Dark spots
+                } else {
+                    ctx.fillStyle = '#7A7A7A'; // Light spots
+                }
+                
+                ctx.fillRect(x, y, spotSize, spotSize);
+            }
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.magFilter = THREE.NearestFilter;
+            texture.minFilter = THREE.NearestFilter;
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            // Repeat 256 times so each heightmap pixel (128 units) shows the full 256x256 texture
+            texture.repeat.set(256, 256);
+            
+            return texture;
+        }
+        
+        // Terrain data for collision detection
+        let terrainData = {
+            heightData: null,
+            mapSize: 256,
+            worldSize: 0,
+            heightScale: 8.0
+        };
+        
+        // Terrain instances for seamless wrapping
+        let terrainInstances = []; // Array to store duplicate terrain instances for wrapping
+        let cloudPlaneInstances = []; // Array to store duplicate cloud plane instances for wrapping
+        let trees = []; // Array to store tree meshes
+        
+        // Flight parameters
+        const PIXEL_SIZE = 128; // Each pixel = 64x64 units
+        const BASE_SPEED = 192; // 8 pixels/second = 512 units/second
+        const MOUSE_SENSITIVITY = 0.002;
+        const MOUSE_PITCH_SENSITIVITY = 0.0008; // Slower pitch sensitivity for mouse
+        const ROLL_SPEED = 0.02;
+        const PITCH_SPEED = -0.03; // Speed for W/S pitch control
+        const MIN_HEIGHT_ABOVE_TERRAIN = 40; // Minimum clearance above terrain
+        const AUTO_HEIGHT_ENABLED = false; // Automatically maintain minimum height
+        const SPEED_CHANGE_RATE = 50; // Units per second speed change with +/-
+        
+        // Current flight speed (adjustable with +/-)
+        let currentSpeed = BASE_SPEED;
+        
+        // Camera position (cockpit view) - will be updated when terrain loads
+        let position = { x: 0, y: 800, z: 0 };
+        let velocity = { x: 0, y: 0, z: 0 };
+        
+
+        function makeSeamless(imageData, width, height, blendWidth = 64) {
+    const data = imageData.data;
+    
+    // Horizontal wrap (left-right)
+    for (let y = 0; y < height; y++) {
+        for (let x = 0; x < blendWidth; x++) {
+            const t = x / blendWidth; // 0 to 1
+            
+            const leftIdx = (y * width + x) * 4;
+            const rightIdx = (y * width + (width - 1 - x)) * 4;
+            
+            for (let c = 0; c < 3; c++) {
+                const avg = (data[leftIdx + c] + data[rightIdx + c]) / 2;
+                data[leftIdx + c] = data[leftIdx + c] * t + avg * (1 - t);
+                data[rightIdx + c] = data[rightIdx + c] * t + avg * (1 - t);
+            }
+        }
+    }
+    
+    // Vertical wrap (top-bottom)
+    for (let x = 0; x < width; x++) {
+        for (let y = 0; y < blendWidth; y++) {
+            const t = y / blendWidth;
+            
+            const topIdx = (y * width + x) * 4;
+            const bottomIdx = ((height - 1 - y) * width + x) * 4;
+            
+            for (let c = 0; c < 3; c++) {
+                const avg = (data[topIdx + c] + data[bottomIdx + c]) / 2;
+                data[topIdx + c] = data[topIdx + c] * t + avg * (1 - t);
+                data[bottomIdx + c] = data[bottomIdx + c] * t + avg * (1 - t);
+            }
+        }
+    }
+    
+    return imageData;
+}
+
+        function init() {
+            // Scene setup
+            scene = new THREE.Scene();
+            
+            // Fog for atmosphere
+            scene.fog = new THREE.FogExp2(0xB5B5B5, 0.0008); // Off-white fog (adjusted for large scale)
+            
+            // Camera (cockpit perspective - looking down at terrain)
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 10000);
+            camera.position.set(position.x, position.y, position.z);
+            camera.rotation.order = 'ZYX'; // Roll, Pitch, Yaw
+            cameraRotation.x = -0.3; // Start with downward tilt (cockpit view)
+            camera.rotation.set(cameraRotation.x, cameraRotation.y, cameraRotation.z);
+            
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setClearColor(0xCECECE); // Off-white background
+            document.body.appendChild(renderer.domElement);
+            
+            // Initialize raycaster for collision detection
+            raycaster = new THREE.Raycaster();
+            
+            // Initialize minimap
+            minimapCanvas = document.getElementById('minimap');
+            minimapCtx = minimapCanvas.getContext('2d');
+            minimapCanvas.width = 256;
+            minimapCanvas.height = 256;
+            
+            // Initialize compass
+            compassCanvas = document.getElementById('compass');
+            compassCtx = compassCanvas.getContext('2d');
+            compassCanvas.width = 60;
+            compassCanvas.height = 60;
+            
+            // Lights
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(100, 200, 100);
+            scene.add(directionalLight);
+            
+            // Create pixelated cloud skybox
+            //createSkybox();
+            
+            // Controls
+            setupControls();
+            
+            // Welcome screen start button handler
+            document.getElementById('startButton').addEventListener('click', startSimulator);
+            
+            // Window resize
+            window.addEventListener('resize', onWindowResize);
+            
+            animate();
+        }
+        
+        function createSkybox() {
+           
+        }
+        
+        function setupControls() {
+            // Keyboard controls
+            document.addEventListener('keydown', (e) => {
+                keys[e.key.toLowerCase()] = true;
+            });
+            
+            document.addEventListener('keyup', (e) => {
+                keys[e.key.toLowerCase()] = false;
+                
+                // Toggle rain with R key
+                if (e.key.toLowerCase() === 'r') {
+                    toggleRain();
+                }
+            });
+            
+            // Mouse look (only when clicking)
+            let isMouseDown = false;
+            renderer.domElement.addEventListener('mousedown', (e) => {
+                isMouseDown = true;
+                renderer.domElement.requestPointerLock();
+            });
+            
+            document.addEventListener('pointerlockchange', () => {
+                isMouseDown = document.pointerLockElement === renderer.domElement;
+            });
+            
+            document.addEventListener('mousemove', (e) => {
+                if (isMouseDown) {
+                    // Yaw (left/right)
+                    cameraRotation.y -= e.movementX * MOUSE_SENSITIVITY;
+                    // Pitch (up/down) - swapped direction and slower sensitivity
+                    // Mouse up (negative movementY) = pitch up, Mouse down (positive movementY) = pitch down
+                    cameraRotation.x -= e.movementY * MOUSE_PITCH_SENSITIVITY;
+                    cameraRotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, cameraRotation.x));
+                }
+            });
+            
+            document.addEventListener('click', () => {
+                if (document.pointerLockElement !== renderer.domElement) {
+                    renderer.domElement.requestPointerLock();
+                }
+            });
+        }
+        
+        function startSimulator() {
+            // Hide welcome screen
+            document.getElementById('welcomeScreen').style.display = 'none';
+            
+            // Load heightmap via HTTP
+            fetch('ymir.map')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to load heightmap');
+                    }
+                    return response.arrayBuffer();
+                })
+                .then(arrayBuffer => {
+                    const heightData = new Uint8Array(arrayBuffer);
+                    createTerrain(heightData);
+                    // Music will start after first frame renders (see animate function)
+                })
+                .catch(error => {
+                    console.error('Error loading heightmap:', error);
+                    alert('Failed to load heightmap. Please check that ymir.map exists.');
+                });
+        }
+        
+        function getTerrainHeight(worldX, worldZ) {
+            if (!terrain || !terrain.geometry) return 0;
+            
+            const worldSize = terrainData.worldSize; // 32768
+            const halfWorldSize = worldSize / 2; // 16384
+            
+            // Wrap world coordinates to terrain bounds (-16384 to +16384)
+            let wrappedX = worldX;
+            let wrappedZ = worldZ;
+            
+            while (wrappedX > halfWorldSize) wrappedX -= worldSize;
+            while (wrappedX < -halfWorldSize) wrappedX += worldSize;
+            while (wrappedZ > halfWorldSize) wrappedZ -= worldSize;
+            while (wrappedZ < -halfWorldSize) wrappedZ += worldSize;
+            
+            // PlaneGeometry vertices span from -worldSize/2 to +worldSize/2
+            // Convert world position to normalized coordinates (0 to 1)
+            const normalizedX = (wrappedX + halfWorldSize) / worldSize; // 0 to 1
+            const normalizedZ = (wrappedZ + halfWorldSize) / worldSize; // 0 to 1
+            
+            // Convert to grid coordinates (0 to 255 for a 256x256 heightmap)
+            const segments = terrainData.mapSize - 1; // 255
+            const gridX = normalizedX * segments;
+            const gridZ = normalizedZ * segments;
+            
+            // Get the four surrounding grid points
+            const x0 = Math.floor(gridX);
+            const z0 = Math.floor(gridZ);
+            const x1 = Math.min(x0 + 1, segments);
+            const z1 = Math.min(z0 + 1, segments);
+            
+            // Clamp to valid range
+            if (x0 < 0 || x0 > segments || z0 < 0 || z0 > segments) {
+                return 0;
+            }
+            
+            // Get vertex heights from geometry
+            // After rotation, Z component contains the height
+            const vertices = terrain.geometry.attributes.position.array;
+            const stride = segments + 1; // 256
+            
+            const i0 = (z0 * stride + x0) * 3 + 2;
+            const i1 = (z0 * stride + x1) * 3 + 2;
+            const i2 = (z1 * stride + x0) * 3 + 2;
+            const i3 = (z1 * stride + x1) * 3 + 2;
+            
+            const h0 = vertices[i0];
+            const h1 = vertices[i1];
+            const h2 = vertices[i2];
+            const h3 = vertices[i3];
+            
+            // Bilinear interpolation
+            const fx = gridX - x0;
+            const fz = gridZ - z0;
+            
+            const h01 = h0 * (1 - fx) + h1 * fx;
+            const h23 = h2 * (1 - fx) + h3 * fx;
+            
+            return h01 * (1 - fz) + h23 * fz;
+        }
+        
+        function checkTerrainCollision(pos, minClearance = 5) {
+            if (!terrain || !raycaster) return { collision: false, normal: null, distance: 0 };
+            
+            // Only check main terrain for performance (instances are duplicates anyway)
+            const terrainMeshes = [terrain];
+            
+            let closestIntersection = null;
+            let closestDistance = Infinity;
+            let closestNormal = null;
+            
+            // Only check straight down - much more efficient
+            const downDirection = new THREE.Vector3(0, -1, 0);
+            raycaster.set(pos, downDirection);
+            raycaster.far = minClearance + 50; // Only check reasonable distance
+            
+            const intersects = raycaster.intersectObjects(terrainMeshes, false);
+            
+            if (intersects.length > 0) {
+                const intersection = intersects[0];
+                const distance = intersection.distance;
+                
+                if (distance < minClearance) {
+                    closestDistance = distance;
+                    closestIntersection = intersection;
+                    
+                    // Get normal in world space
+                    if (intersection.face && intersection.face.normal) {
+                        closestNormal = intersection.face.normal.clone();
+                        // Transform normal to world space
+                        const normalMatrix = new THREE.Matrix3().getNormalMatrix(intersection.object.matrixWorld);
+                        closestNormal.applyMatrix3(normalMatrix);
+                        closestNormal.normalize();
+                    } else {
+                        closestNormal = new THREE.Vector3(0, 1, 0);
+                    }
+                    
+                    return {
+                        collision: true,
+                        normal: closestNormal,
+                        distance: closestDistance,
+                        point: intersection.point
+                    };
+                }
+            }
+            
+            return { collision: false, normal: null, distance: 0 };
+        }
+        
+        function makeHeightmapSeamless(heightData, mapSize) {
+            // Create a copy to avoid modifying the original during processing
+            const processedData = new Uint8Array(heightData);
+            
+            // Make horizontal edges seamless (top and bottom rows)
+            // Average 2 pixels on each side (4 total) and set all 4 to the same average
+            for (let x = 0; x < mapSize; x++) {
+                // Top edge: y=0 and y=1
+                const topIdx0 = 0 * mapSize + x; // Top row (y=0)
+                const topIdx1 = 1 * mapSize + x; // Second row (y=1)
+                // Bottom edge: y=mapSize-2 and y=mapSize-1
+                const bottomIdx0 = (mapSize - 2) * mapSize + x; // Second-to-last row
+                const bottomIdx1 = (mapSize - 1) * mapSize + x; // Bottom row
+                
+                // Get all 4 values
+                const val0 = processedData[topIdx0];
+                const val1 = processedData[topIdx1];
+                const val2 = processedData[bottomIdx0];
+                const val3 = processedData[bottomIdx1];
+                
+                // Average all 4 values and set all 4 to the same average
+                const avg = Math.round((val0 + val1 + val2 + val3) / 4);
+                processedData[topIdx0] = avg;
+                processedData[topIdx1] = avg;
+                processedData[bottomIdx0] = avg;
+                processedData[bottomIdx1] = avg;
+            }
+            
+            // Make vertical edges seamless (left and right columns)
+            // Average 2 pixels on each side (4 total) and set all 4 to the same average
+            for (let y = 0; y < mapSize; y++) {
+                // Left edge: x=0 and x=1
+                const leftIdx0 = y * mapSize + 0; // Left column (x=0)
+                const leftIdx1 = y * mapSize + 1; // Second column (x=1)
+                // Right edge: x=mapSize-2 and x=mapSize-1
+                const rightIdx0 = y * mapSize + (mapSize - 2); // Second-to-last column
+                const rightIdx1 = y * mapSize + (mapSize - 1); // Right column
+                
+                // Get all 4 values
+                const val0 = processedData[leftIdx0];
+                const val1 = processedData[leftIdx1];
+                const val2 = processedData[rightIdx0];
+                const val3 = processedData[rightIdx1];
+                
+                // Average all 4 values and set all 4 to the same average
+                const avg = Math.round((val0 + val1 + val2 + val3) / 4);
+                processedData[leftIdx0] = avg;
+                processedData[leftIdx1] = avg;
+                processedData[rightIdx0] = avg;
+                processedData[rightIdx1] = avg;
+            }
+            
+            return processedData;
+        }
+        
+        function createTerrain(heightData) {
+            // Remove old terrain if exists
+            if (terrain) {
+                scene.remove(terrain);
+                terrain.geometry.dispose();
+                terrain.material.dispose();
+            }
+            
+            // Remove old terrain instances
+            terrainInstances.forEach(instance => {
+                scene.remove(instance);
+                instance.geometry.dispose();
+                instance.material.dispose();
+            });
+            terrainInstances = [];
+            
+            const mapSize = 256; // Assuming 256x256 heightmap
+            
+            // Make heightmap edges seamless before processing
+            const seamlessHeightData = makeHeightmapSeamless(heightData, mapSize);
+            const worldSize = mapSize * PIXEL_SIZE; // 16,384 units
+            const heightScale = 4.0; // Height exaggeration
+            const segments = mapSize - 1;
+            
+            // Store terrain data for collision detection (use seamless version)
+            terrainData.heightData = seamlessHeightData;
+            terrainData.mapSize = mapSize;
+            terrainData.worldSize = worldSize;
+            terrainData.heightScale = heightScale;
+            
+            // Create geometry
+            const geometry = new THREE.PlaneGeometry(
+                worldSize, 
+                worldSize, 
+                segments, 
+                segments
+            );
+            
+            // Apply height data to vertices
+            const vertices = geometry.attributes.position.array;
+            for (let i = 0; i <= segments; i++) {
+                for (let j = 0; j <= segments; j++) {
+                    const mapX = j;
+                    const mapY = i;
+                    const idx = mapY * mapSize + mapX;
+                    const vertexIdx = (i * (segments + 1) + j) * 3;
+                    
+                    const height = seamlessHeightData[idx] || 0;
+                    vertices[vertexIdx + 2] = height * heightScale;
+                }
+            }
+            
+            geometry.computeVertexNormals();
+            
+            // Create material with terrain colors
+            const colors = new Float32Array(vertices.length);
+            for (let i = 0; i < vertices.length; i += 3) {
+                const height = vertices[i + 2];
+                const normalizedHeight = height / (255 * heightScale);
+                
+                // Terrain color gradient
+                if (normalizedHeight < 0.2) {
+                    // Water/low areas - dark blue/green
+                    colors[i] = 0.0;
+                    colors[i + 1] = 0.1+Math.random() * 0.2;
+                    colors[i + 2] = 0.0;
+                } else if (normalizedHeight < 0.4) {
+                    // Grass - green
+                    colors[i] = 0.0;
+                    colors[i + 1] = 0.1+Math.random() * 0.3;
+                    colors[i + 2] = 0.0;
+                } else if (normalizedHeight < 0.9) {
+                    // Dirt/rock - brown
+                    colors[i] = 0.4;
+                    colors[i + 1] = 0.3;
+                    colors[i + 2] = 0.2;
+
+                } else {
+                    // Snow peaks - white
+                    colors[i] = 0.9;
+                    colors[i + 1] = 0.9;
+                    colors[i + 2] = 0.85;
+                }
+            }
+            
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+            
+            // Create textures if not already created
+            // Change seeds to test different texture patterns, then save the best seed
+            if (!grassTexture) {
+                grassTexture = createGrassTexture(12345); // Seed for grass - change to test different patterns
+            }
+            if (!dirtTexture) {
+                dirtTexture = createDirtTexture(54321); // Seed for dirt - change to test different patterns
+            }
+            if (!snowTexture) {
+                snowTexture = createSnowTexture(98765); // Seed for snow - change to test different patterns
+            }
+            if (!rockTexture) {
+                rockTexture = createRockTexture(24680); // Seed for rock - change to test different patterns
+            }
+            
+            // Create shader material that blends textures based on vertex colors
+            const material = new THREE.ShaderMaterial({
+                uniforms: {
+                    grassTexture: { value: grassTexture },
+                    dirtTexture: { value: dirtTexture },
+                    snowTexture: { value: snowTexture },
+                    rockTexture: { value: rockTexture },
+                    fogColor: { value: new THREE.Color(0xB5B5B5) },
+                    fogDensity: { value: 0.0005 }
+                },
+                vertexShader: `
+                    varying vec3 vColor;
+                    varying vec2 vUv;
+                    varying vec3 vNormal;
+                    varying vec3 vWorldNormal; // World-space normal for steepness calculation
+                    varying vec3 vPosition;
+                    attribute vec3 color;
+                    
+                    void main() {
+                        vColor = color;
+                        vUv = uv;
+                        vNormal = normalize(normalMatrix * normal); // View-space normal for lighting
+                        // World-space normal (before view transformation) for steepness
+                        // Transform normal to world space using modelMatrix
+                        vWorldNormal = normalize((modelMatrix * vec4(normal, 0.0)).xyz);
+                        vPosition = (modelViewMatrix * vec4(position, 1.0)).xyz;
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                    }
+                `,
+                fragmentShader: `
+                    uniform sampler2D grassTexture;
+                    uniform sampler2D dirtTexture;
+                    uniform sampler2D snowTexture;
+                    uniform sampler2D rockTexture;
+                    uniform vec3 fogColor;
+                    uniform float fogDensity;
+                    varying vec3 vColor;
+                    varying vec2 vUv;
+                    varying vec3 vNormal;
+                    varying vec3 vWorldNormal; // World-space normal for steepness
+                    varying vec3 vPosition;
+                    
+                    // Simple hash function for noise
+                    float hash(vec2 p) {
+                        return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+                    }
+                    
+                    // Simple noise function (simplified Perlin noise)
+                    float noise(vec2 p) {
+                        vec2 i = floor(p);
+                        vec2 f = fract(p);
+                        f = f * f * (3.0 - 2.0 * f);
+                        
+                        float a = hash(i);
+                        float b = hash(i + vec2(1.0, 0.0));
+                        float c = hash(i + vec2(0.0, 1.0));
+                        float d = hash(i + vec2(1.0, 1.0));
+                        
+                        return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+                    }
+                    
+                    // Fractal noise (octaves)
+                    float fbm(vec2 p) {
+                        float value = 0.0;
+                        float amplitude = 0.5;
+                        for (int i = 0; i < 3; i++) {
+                            value += amplitude * noise(p);
+                            p *= 2.0;
+                            amplitude *= 0.5;
+                        }
+                        return value;
+                    }
+                    
+                    void main() {
+                        // Determine terrain type based on vertex colors:
+                        // Grass: green > 0.1, red < 0.3 (normalizedHeight 0.2-0.4)
+                        // Dirt: red > 0.3, green < 0.9 (normalizedHeight 0.4-0.9)
+                        // Water: green 0.1-0.3, red=0, blue=0
+                        // Snow: all channels high (normalizedHeight > 0.9)
+                        
+                        // Scale UVs to match texture repeat (256 repeats = 1 full texture per heightmap pixel)
+                        vec4 grass = texture2D(grassTexture, vUv * 256.0);
+                        vec4 dirt = texture2D(dirtTexture, vUv * 256.0);
+                        vec4 snow = texture2D(snowTexture, vUv * 256.0);
+                        vec4 rock = texture2D(rockTexture, vUv * 256.0);
+                        
+                        // Calculate normalized height from vertex color (green channel represents height)
+                        float normalizedHeight = vColor.g;
+                        
+                        // Edge detection for seamless blending (must be calculated first)
+                        // Detect proximity to edges (UV near 0.0 or 1.0)
+                        // Blend zone is 5% of the map (0.0-0.05 and 0.95-1.0)
+                        float edgeBlendZone = 0.05;
+                        float distToEdgeX = min(vUv.x, 1.0 - vUv.x);
+                        float distToEdgeY = min(vUv.y, 1.0 - vUv.y);
+                        float distToEdge = min(distToEdgeX, distToEdgeY);
+                        // edgeFactor: 0.0 at edges, 1.0 in center
+                        float edgeFactor = smoothstep(0.0, edgeBlendZone, distToEdge);
+                        
+                        // Detect steep terrain using world-space normal (view-independent)
+                        // World normal.y close to 1.0 = flat, close to 0.0 = steep
+                        // Use absolute value since terrain can be rotated
+                        float steepness = 1.0 - abs(vWorldNormal.y); // 0 = flat, 1 = vertical
+                        float isSteep = smoothstep(0.3, 0.7, steepness); // Steep areas have steepness > 0.3
+                        
+                        // Random rock placement using noise (for exposed rock patches)
+                        float rockNoise = fbm(vUv * 6.0); // Different scale for rock patches
+                        float randomRock = step(0.85, rockNoise); // 15% chance of random rock patches
+                        
+                        // Combine steepness and random placement
+                        // Don't apply rock to water areas (low height, green 0.1-0.3, red=0)
+                        float isWater = step(vColor.g, 0.3) * step(vColor.r, 0.1);
+                        float rockAmount = max(isSteep * 0.8, randomRock * 0.3); // Steep areas get more rock, random gets less
+                        rockAmount *= (1.0 - isWater); // No rock on water
+                        // Reduce rock variation near edges for smoother blending
+                        rockAmount *= edgeFactor;
+                        
+                        // Determine base terrain type
+                        // Lower snow threshold to make it appear at lower altitudes
+                        float isSnow = step(0.75, vColor.g) * step(0.75, vColor.r);
+                        float isGrassArea = step(0.1, vColor.g) * step(vColor.r, 0.3) * (1.0 - isSnow);
+                        float isDirtArea = step(0.3, vColor.r) * step(vColor.g, 0.75) * (1.0 - isSnow);
+                        float isOther = 1.0 - max(max(isGrassArea, isDirtArea), isSnow);
+                        
+                        // Use noise to create smooth blending between grass and dirt
+                        float noiseValue = fbm(vUv * 8.0); // Scale noise for finer detail
+                        
+                        // Reduce noise variation near edges for smoother blending
+                        float noiseVariationStrength = 0.15 * edgeFactor; // Fade noise near edges
+                        
+                        // Grass fades out as elevation increases (thins out)
+                        // Start fading at normalizedHeight 0.32, fully faded by 0.42, but keep at least 30% visible
+                        float grassFade = 0.8 - smoothstep(0.22, 0.42, normalizedHeight);
+                        grassFade = max(grassFade, 0.2); // Keep at least 30% grass visible
+                        
+                        // Calculate base blend: lower = more grass (0), higher = more dirt (1)
+                        // Grass areas are 0.2-0.4, dirt areas are 0.4-0.9
+                        // Transition zone is around 0.35-0.45
+                        float heightBlend = smoothstep(0.35, 0.35, normalizedHeight);
+                        
+                        // Add subtle noise variation (smaller influence, reduced near edges)
+                        float noiseVariation = (noiseValue - 0.5) * noiseVariationStrength;
+                        float grassDirtBlend = clamp(heightBlend + noiseVariation, 0.0, 1.0);
+                        
+                        // Invert so lower = more grass, higher = more dirt
+                        // grassDirtBlend: 0 = all dirt, 1 = all grass
+                        // We want: lower height = more grass, so invert
+                        grassDirtBlend = 0.8 - grassDirtBlend;
+                        
+                        // Apply grass fade (reduces grass at higher elevations)
+                        grassDirtBlend *= grassFade;
+                        
+                        // Blend grass and dirt textures (1.0 = all grass, 0.0 = all dirt)
+                        vec4 grassDirtMix = mix(dirt, grass, grassDirtBlend);
+                        
+                        // Apply rock texture to steep areas and random patches (but not on snow or water)
+                        vec4 terrainWithRock = mix(grassDirtMix, rock, rockAmount);
+                        
+                        // Calculate snow fade - snow fades out as we descend
+                        // Snow starts at normalizedHeight 0.75, fully fades out by 0.65
+                        float snowFade = smoothstep(0.65, 0.75, normalizedHeight);
+                        snowFade = clamp(snowFade, 0.0, 1.0);
+                        
+                        // Final texture blend - blend snow with underlying terrain
+                        vec4 texColor;
+                        if (isSnow > 0.5 || snowFade > 0.01) {
+                            // Blend snow with terrain (which may include rock)
+                            // At high elevations: snowFade = 1.0 (all snow)
+                            // At lower elevations: snowFade = 0.0 (all terrain with rock)
+                            texColor = mix(terrainWithRock, snow, snowFade);
+                        } else if (isGrassArea > 0.5 || isDirtArea > 0.5) {
+                            // Use terrain with rock blending
+                            texColor = terrainWithRock;
+                        } else {
+                            texColor = vec4(vColor, 1.0); // Water/other areas
+                        }
+                        
+                        // Calculate lighting (directional light from above-right)
+                        vec3 lightDir = normalize(vec3(1.0, 1.0, 1.0));
+                        float lightIntensity = max(dot(vNormal, lightDir), 0.0);
+                        // Add ambient light
+                        float ambient = 0.6;
+                        lightIntensity = ambient + (1.0 - ambient) * lightIntensity;
+                        
+                        // Apply lighting to texture
+                        texColor.rgb *= lightIntensity;
+                        
+                        // Apply fog (exponential fog)
+                        float fogDistance = length(vPosition);
+                        float fogFactor = exp(-fogDensity * fogDensity * fogDistance * fogDistance);
+                        fogFactor = clamp(fogFactor, 0.0, 1.0);
+                        texColor.rgb = mix(fogColor, texColor.rgb, fogFactor);
+                        
+                        gl_FragColor = texColor;
+                    }
+                `,
+                side: THREE.DoubleSide,
+                fog: true
+            });
+            
+   /*         terrain = new THREE.Mesh(geometry, material);
+            terrain.rotation.x = -Math.PI / 2; // Rotate to horizontal
+            terrain.position.set(-worldSize/2, 0, -worldSize/2);
+            
+            scene.add(terrain);*/AUTO_HEIGHT_ENABLED
+
+            terrain = new THREE.Mesh(geometry, material);
+            terrain.rotation.x = -Math.PI / 2;
+            terrain.position.set(0, 0, 0); // Center at origin
+            scene.add(terrain);
+
+            
+            // Create duplicate terrain instances at edges for seamless wrapping
+            // Main terrain is at (-worldSize/2, 0, -worldSize/2) to (+worldSize/2, 0, +worldSize/2)
+            const offsets = [
+                // Edges
+                { x: 0, z: worldSize },           // North
+                { x: 0, z: -worldSize },          // South
+                { x: worldSize, z: 0 },           // East
+                { x: -worldSize, z: 0 },          // West
+                // Corners
+                { x: worldSize, z: worldSize },   // Northeast
+                { x: -worldSize, z: worldSize },  // Northwest
+                { x: worldSize, z: -worldSize },  // Southeast
+                { x: -worldSize, z: -worldSize }  // Southwest
+            ];
+            
+            offsets.forEach(offset => {
+                const instance = new THREE.Mesh(geometry, material);
+                instance.rotation.x = -Math.PI / 2;
+                //instance.position.set(-worldSize/2 + offset.x, 0, -worldSize/2 + offset.z);
+                instance.position.set(offset.x, 0, offset.z);
+                scene.add(instance);
+                terrainInstances.push(instance);
+            });
+            
+            // Start position 64 pixels inward from the edge, at good flying height
+            // 64 pixels * PIXEL_SIZE = 64 * 128 = 8192 units
+            // Map extends from -worldSize/2 to +worldSize/2, so 64 pixels from edge is:
+            const startOffset = 64 * PIXEL_SIZE; // 8192 units
+            position.x = -worldSize / 2 + startOffset;
+            position.y = 800;
+            position.z = -worldSize / 2 + startOffset;
+            
+            // Update camera immediately
+            camera.position.set(position.x, position.y, position.z);
+            camera.rotation.set(cameraRotation.x, cameraRotation.y, cameraRotation.z);
+            
+            // Draw minimap
+            //drawMinimap(seamlessHeightData, mapSize);
+            
+            // Create cloud plane at max height
+            createCloudPlane(seamlessHeightData, mapSize, worldSize, heightScale);
+            
+            // Generate and place trees
+            createTrees(seamlessHeightData, mapSize, worldSize, heightScale);
+        }
+        
+        function createCloudPlane(heightData, mapSize, worldSize, heightScale) {
+            // Remove old cloud plane if exists
+            if (cloudPlane) {
+                scene.remove(cloudPlane);
+                cloudPlane.geometry.dispose();
+                cloudPlane.material.dispose();
+            }
+            
+            // Remove old cloud plane instances
+            cloudPlaneInstances.forEach(instance => {
+                scene.remove(instance);
+                instance.geometry.dispose();
+                instance.material.dispose();
+            });
+            cloudPlaneInstances = [];
+            
+            // Find maximum height
+            let maxHeight = 0;
+            for (let i = 0; i < heightData.length; i++) {
+                const height = heightData[i] || 0;
+                if (height > maxHeight) {
+                    maxHeight = height;
+                }
+            }
+            maxHeight -= 15;
+            const maxWorldHeight = maxHeight * heightScale;
+            
+            // Create cloud texture using Perlin noise
+            const textureSize = 2048;
+            const canvas = document.createElement('canvas');
+            canvas.width = textureSize;
+            canvas.height = textureSize;
+            const ctx = canvas.getContext('2d');
+            const imageData = ctx.createImageData(textureSize, textureSize);
+            let data = imageData.data;
+            // Use seeded random for deterministic clouds
+            const cloudSeed = 11111; // Seed for cloud generation
+            const random = mulberry32(cloudSeed);
+            
+            // Simple 2D noise function using seeded random
+            function noise2D(x, y) {
+                const X = Math.floor(x);
+                const Y = Math.floor(y);
+                const xf = x - X;
+                const yf = y - Y;
+                
+                // Hash grid coordinates
+                const hash1 = (X * 73856093) ^ (Y * 19349663);
+                const hash2 = ((X + 1) * 73856093) ^ (Y * 19349663);
+                const hash3 = (X * 73856093) ^ ((Y + 1) * 19349663);
+                const hash4 = ((X + 1) * 73856093) ^ ((Y + 1) * 19349663);
+                
+                // Get random values for each corner using seeded random
+                const r1 = mulberry32(cloudSeed + hash1)();
+                const r2 = mulberry32(cloudSeed + hash2)();
+                const r3 = mulberry32(cloudSeed + hash3)();
+                const r4 = mulberry32(cloudSeed + hash4)();
+                
+                // Smooth interpolation (smoothstep)
+                const u = xf * xf * (3.0 - 2.0 * xf);
+                const v = yf * yf * (3.0 - 2.0 * yf);
+                
+                // Bilinear interpolation
+                return r1 * (1.0 - u) * (1.0 - v) + 
+                       r2 * u * (1.0 - v) + 
+                       r3 * (1.0 - u) * v + 
+                       r4 * u * v;
+            }
+            
+            // Fractal Brownian Motion (multiple octaves) for cloud-like patterns
+            function fbm(x, y, octaves = 4) {
+                let value = 0.0;
+                let amplitude = 0.5;
+                let frequency = 0.03; // Scale for cloud detail
+                
+                for (let i = 0; i < octaves; i++) {
+                    value += amplitude * noise2D(x * frequency, y * frequency);
+                    frequency *= 2.0;
+                    amplitude *= 0.5;
+                }
+                
+                return value;
+            }
+            
+            // Generate cloud texture using noise
+            for (let y = 0; y < textureSize; y++) {
+                for (let x = 0; x < textureSize; x++) {
+                    // Generate noise value with multiple octaves for cloud-like patterns
+                    const noiseValue = fbm(x, y, 4);
+                    
+                    // Map noise to cloud colors
+                    // Use a threshold to create cloud formations
+                    // Higher noise = thicker clouds (lighter gray), lower noise = clear sky (white)
+                    let r, g, b;
+                    if (noiseValue > 0.0) {
+                        // Cloud areas - various shades of light gray/off-white
+                        // Remap noise from 0.4-1.0 to create cloud density variation
+                        const cloudDensity = (noiseValue - 0.4) / 0.6; // Normalize to 0-1
+                        // Create gradient from light gray to off-white based on density
+                        const brightness = 0.75 + cloudDensity * 0.25; // 0.75 (light gray) to 1.0 (white)
+                        r = g = b = Math.floor(brightness * 192);
+                    } else {
+                        // Clear sky areas - white background
+                        r = g = b = 255;
+                    }
+                    
+                    // Set pixel
+                    const idx = (y * textureSize + x) * 4;
+                    data[idx] = r;     // R
+                    data[idx + 1] = g; // G
+                    data[idx + 2] = b; // B
+                    data[idx + 3] = 255; // A
+                }
+            }
+            const newImageData = makeSeamless(imageData, 2048, 2048, 32);
+
+            ctx.putImageData(newImageData, 0, 0);
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.magFilter = THREE.NearestFilter;
+            texture.minFilter = THREE.NearestFilter;
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(1, 1);
+            
+            // Create plane geometry (same size as terrain)
+            const planeGeometry = new THREE.PlaneGeometry(worldSize, worldSize);
+            const planeMaterial = new THREE.MeshBasicMaterial({
+                map: texture,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.9
+            });
+            
+            cloudPlane = new THREE.Mesh(planeGeometry, planeMaterial);
+            cloudPlane.rotation.x = -Math.PI / 2; // Rotate to horizontal (same as terrain)
+            //cloudPlane.position.set(-worldSize/2, maxWorldHeight, -worldSize/2);
+            cloudPlane.position.set(0, maxWorldHeight, 0);
+            
+            scene.add(cloudPlane);
+            
+            // Create duplicate cloud plane instances at edges for seamless wrapping
+            const offsets = [
+                // Edges
+                { x: 0, z: worldSize },           // North
+                { x: 0, z: -worldSize },          // South
+                { x: worldSize, z: 0 },           // East
+                { x: -worldSize, z: 0 },          // West
+                // Corners
+                { x: worldSize, z: worldSize },   // Northeast
+                { x: -worldSize, z: worldSize },  // Northwest
+                { x: worldSize, z: -worldSize },  // Southeast
+                { x: -worldSize, z: -worldSize }  // Southwest
+            ];
+            
+            offsets.forEach(offset => {
+                const instance = new THREE.Mesh(planeGeometry, planeMaterial);
+                instance.rotation.x = -Math.PI / 2;
+                //instance.position.set(-worldSize/2 + offset.x, maxWorldHeight, -worldSize/2 + offset.z);
+                instance.position.set(offset.x, maxWorldHeight, offset.z);
+                scene.add(instance);
+                cloudPlaneInstances.push(instance);
+            });
+        }
+        
+        function isSuitableForTree(worldX, worldZ, heightData, mapSize, worldSize, heightScale) {
+            // Get terrain height at this position
+            const terrainHeight = getTerrainHeight(worldX, worldZ);
+            const normalizedHeight = terrainHeight / (255 * heightScale);
+            
+            // Trees should be on grass or dirt, not snow or rock
+            // Snow is at high elevations (normalizedHeight > 0.75)
+            // Water is at low elevations (normalizedHeight < 0.2)
+            // We want grass (0.2-0.4) or dirt (0.4-0.9), but not snow (>0.75)
+            if (normalizedHeight < 0.2 || normalizedHeight > 0.75) {
+                return false; // Too low (water) or too high (snow)
+            }
+            
+            // Check if it's not too steep (we can check this by sampling nearby heights)
+            const sampleDist = 50; // Sample distance
+            const h1 = getTerrainHeight(worldX + sampleDist, worldZ);
+            const h2 = getTerrainHeight(worldX - sampleDist, worldZ);
+            const h3 = getTerrainHeight(worldX, worldZ + sampleDist);
+            const h4 = getTerrainHeight(worldX, worldZ - sampleDist);
+            
+            const maxSlope = Math.max(
+                Math.abs(h1 - terrainHeight),
+                Math.abs(h2 - terrainHeight),
+                Math.abs(h3 - terrainHeight),
+                Math.abs(h4 - terrainHeight)
+            );
+            
+            // Reject if slope is too steep (more than 100 units difference)
+            if (maxSlope > 100) {
+                return false; // Too steep (likely rock)
+            }
+            
+            return true;
+        }
+        
+        // Shared tree geometries and materials for performance
+        let sharedTrunkGeometry = null;
+        let sharedTrunkMaterial = null;
+        let sharedBranchGeometry = null;
+        let sharedBranchMaterial = null;
+        
+        // Helper function to create a triangle geometry
+        function createTriangleGeometry(size) {
+            const geometry = new THREE.BufferGeometry();
+            const vertices = new Float32Array([
+                0, 0, 0,           // Bottom left
+                size, 0, 0,        // Bottom right
+                size / 2, size, 0  // Top center
+            ]);
+            const uvs = new Float32Array([
+                0, 0,    // Bottom left
+                1, 0,    // Bottom right
+                0.5, 1   // Top center
+            ]);
+            const indices = new Uint16Array([0, 1, 2]);
+            
+            geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+            geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+            geometry.setIndex(new THREE.BufferAttribute(indices, 1));
+            geometry.computeVertexNormals();
+            
+            return geometry;
+        }
+        
+        function createTree(worldX, worldZ, terrainHeight, treeRandom) {
+            // Create shared geometries and materials if not exists
+            // Make sure textures are available
+            if (!sharedTrunkGeometry && dirtTexture && grassTexture) {
+                // Trunk: simple cylinder (4 segments for performance)
+                sharedTrunkGeometry = new THREE.CylinderGeometry(2.5, 3, 40, 4);
+                sharedTrunkMaterial = new THREE.MeshStandardMaterial({
+                    map: dirtTexture,
+                    color: 0xffffff, // White to let texture show through
+                    flatShading: true // Simpler lighting for performance
+                });
+                
+                // Branch: triangle geometry (shared base, will be scaled per tree)
+                sharedBranchGeometry = createTriangleGeometry(20);
+                sharedBranchMaterial = new THREE.MeshStandardMaterial({
+                    map: grassTexture,
+                    color: 0xffffff, // White to let texture show through
+                    side: THREE.DoubleSide,
+                    transparent: true,
+                    alphaTest: 0.1,
+                    flatShading: true // Simpler lighting for performance
+                });
+            }
+            
+            // If textures aren't ready yet, skip tree creation
+            if (!sharedTrunkGeometry || !sharedTrunkMaterial || !sharedBranchGeometry || !sharedBranchMaterial) {
+                return null;
+            }
+            
+            // Create tree group
+            const treeGroup = new THREE.Group();
+            
+            // Trunk: use shared geometry with slight variation
+            const trunkHeight = 30 + treeRandom() * 20; // 30-50 units tall
+            const trunkScale = trunkHeight / 40; // Scale based on desired height
+            const trunk = new THREE.Mesh(sharedTrunkGeometry, sharedTrunkMaterial);
+            trunk.scale.set(1, trunkScale, 1);
+            trunk.position.y = terrainHeight + trunkHeight / 2;
+            treeGroup.add(trunk);
+            
+            // Branches: multiple layers of horizontal triangles (pine tree style)
+            // Create 4-6 layers of branches going up the trunk
+            const numLayers = 1; //4 + Math.floor(treeRandom() * 3); // 4-6 layers
+            const baseBranchSize = 50 + treeRandom() * 10; // 20-30 units base size
+            const baseRotation = treeRandom() * Math.PI * 2; // Random base rotation for all layers
+            
+            const yAxis = new THREE.Vector3(0, 1, 0)
+
+           // for (let layer = 0; layer < numLayers; layer++) {
+                // Branch size decreases as we go up (conical shape)
+                const layerProgress =0 // 0 at bottom, 1 at top
+                const branchSize = baseBranchSize * (1 - layerProgress * 0.6); // Reduce by 60% at top
+                const branchScale = branchSize / 20;
+                const branchHeight = branchScale*(1+Math.random());    
+                // Position layer along trunk (starting at 30% up, ending at 90% up)
+                const layerY = terrainHeight + trunkHeight * 0.3;
+                
+                // Two perpendicular triangles at this layer
+                // Triangle base (shortest side) stands vertically at trunk, extends horizontally outward
+                // Triangle geometry: base along X (0,0,0 to size,0,0), extends in +Y
+                // We rotate so base is vertical (along Y) and triangle extends horizontally (in +Z)
+                const branch1 = new THREE.Mesh(sharedBranchGeometry, sharedBranchMaterial);
+                //branch1.rotation.y = baseRotation; // Rotate around Y for random orientation
+                branch1.scale.set(branchScale, branchHeight, 1);
+                branch1.position.set(-branchSize/2, layerY, 0); // Center on trunk
+                //branch1.rotation.x = Math.PI / 2; // Rotate so base is vertical, triangle extends in +Z
+                
+
+                treeGroup.add(branch1);
+                
+                const branch2 = new THREE.Mesh(sharedBranchGeometry, sharedBranchMaterial);
+                branch2.scale.set(branchScale, branchHeight, 1);
+                branch2.position.set(0, layerY,branchSize/2); // Same position
+                //branch2.rotation.x = Math.PI / 2; // Rotate so base is vertical
+                branch2.rotation.y = (45 * Math.PI / 2); // Perpendicular (90 degrees rotated)
+                treeGroup.add(branch2);
+
+
+                
+                
+           // }
+            
+            // Position tree at world coordinates
+            treeGroup.position.set(worldX, 0, worldZ);
+            
+            return treeGroup;
+        }
+        
+        function createTrees(heightData, mapSize, worldSize, heightScale) {
+            // Make sure textures are available before creating trees
+            if (!dirtTexture || !grassTexture) {
+                console.warn('Textures not ready for tree creation');
+                return;
+            }
+            
+            // Remove old trees
+            trees.forEach(tree => {
+                scene.remove(tree);
+                tree.traverse(child => {
+                    if (child.geometry && child.geometry !== sharedTrunkGeometry && child.geometry !== sharedBranchGeometry) {
+                        child.geometry.dispose();
+                    }
+                    if (child.material && child.material !== sharedTrunkMaterial && child.material !== sharedBranchMaterial) {
+                        child.material.dispose();
+                    }
+                });
+            });
+            trees = [];
+            
+            // Clean up shared geometries if they exist (will be recreated)
+            if (sharedTrunkGeometry) {
+                sharedTrunkGeometry.dispose();
+                sharedTrunkGeometry = null;
+            }
+            if (sharedBranchGeometry) {
+                sharedBranchGeometry.dispose();
+                sharedBranchGeometry = null;
+            }
+            if (sharedTrunkMaterial) {
+                sharedTrunkMaterial.dispose();
+                sharedTrunkMaterial = null;
+            }
+            if (sharedBranchMaterial) {
+                sharedBranchMaterial.dispose();
+                sharedBranchMaterial = null;
+            }
+            
+            // Tree placement: 1-2 trees per 512x512 area (reduced for performance)
+            const cellSize = 512; // 512x512 world coordinate cells
+            const halfWorldSize = worldSize / 2;
+            const treeRandom = mulberry32(99999); // Seeded random for tree placement
+            const maxTrees = 1500; // Limit total trees for performance
+            let treeCounter = 0;
+            
+            // Divide map into cells
+            for (let cellX = -halfWorldSize; cellX < halfWorldSize && treeCounter < maxTrees; cellX += cellSize) {
+                for (let cellZ = -halfWorldSize; cellZ < halfWorldSize && treeCounter < maxTrees; cellZ += cellSize) {
+                    // Determine how many trees in this cell (1-2, reduced from 1-3)
+                    const treeCount = Math.floor(treeRandom() * 2) + 1; // 1 or 2
+                    
+                    for (let i = 0; i < treeCount && treeCounter < maxTrees; i++) {
+                        // Random position within cell
+                        const treeX = cellX + treeRandom() * cellSize;
+                        const treeZ = cellZ + treeRandom() * cellSize;
+                        
+                        // Check if suitable for tree
+                        if (isSuitableForTree(treeX, treeZ, heightData, mapSize, worldSize, heightScale)) {
+                            const terrainHeight = getTerrainHeight(treeX, treeZ);
+                            const tree = createTree(treeX, treeZ, terrainHeight, treeRandom);
+                            if (tree) {
+                                scene.add(tree);
+                                trees.push(tree);
+                                treeCounter++;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            console.log(`Created ${treeCounter} trees`);
+        }
+        
+        function createRain(cloudHeight) {
+            if (!terrain) return;
+            
+            // Remove old rain if exists
+            if (rainParticles) {
+                scene.remove(rainParticles);
+                rainGeometry.dispose();
+                rainMaterial.dispose();
+            }
+            
+            // Create rain particles
+            const rainCount = 30000; // Increased from 5000 for more intensity
+            const rainLength = 20; // Shorter rain streaks
+            
+            // Store velocities separately
+            rainVelocities = new Float32Array(rainCount * 3);
+            
+            // Create line segments for rain (each particle becomes a line)
+            rainGeometry = new THREE.BufferGeometry();
+            const linePositions = new Float32Array(rainCount * 6); // 2 points per line
+            
+            // Initialize rain particles below cloud deck
+            for (let i = 0; i < rainCount; i++) {
+                const i3 = i * 3;
+                const i6 = i * 6;
+                
+                // Random position below cloud
+                const x = (Math.random() - 0.5) * terrainData.worldSize * 2;
+                const y = cloudHeight - Math.random() * 500; // Start below cloud
+                const z = (Math.random() - 0.5) * terrainData.worldSize * 2;
+                
+                // Start point
+                linePositions[i6] = x;
+                linePositions[i6 + 1] = y;
+                linePositions[i6 + 2] = z;
+                // End point (slightly below for rain streak)
+                linePositions[i6 + 3] = x;
+                linePositions[i6 + 4] = y - rainLength;
+                linePositions[i6 + 5] = z;
+                
+                // Random velocities (falling down) - much faster
+                rainVelocities[i3] = (Math.random() - 0.5) * 3; // Slight horizontal drift
+                rainVelocities[i3 + 1] = -400 - Math.random() * 300; // Much faster falling speed (400-700 units/sec)
+                rainVelocities[i3 + 2] = (Math.random() - 0.5) * 3;
+            }
+            
+            rainGeometry.setAttribute('position', new THREE.BufferAttribute(linePositions, 3));
+            
+            // Rain material - use lines for better visibility
+            rainMaterial = new THREE.LineBasicMaterial({
+                color: 0xBBBBBB,
+                transparent: true,
+                opacity: 0.8
+            });
+            
+            // Create line segments
+            rainParticles = new THREE.LineSegments(rainGeometry, rainMaterial);
+            scene.add(rainParticles);
+        }
+        
+        function toggleRain() {
+            rainEnabled = !rainEnabled;
+            
+            if (rainEnabled) {
+                // Get cloud height
+                const cloudHeight = cloudPlane ? cloudPlane.position.y : 1000;
+                createRain(cloudHeight);
+                // Initialize lightning timer
+                nextLightningTime = Math.random() * 3 + 2; // First lightning in 2-5 seconds
+            } else {
+                // Remove rain
+                if (rainParticles) {
+                    scene.remove(rainParticles);
+                    rainGeometry.dispose();
+                    rainMaterial.dispose();
+                    rainParticles = null;
+                    rainGeometry = null;
+                    rainVelocities = null;
+                }
+                lightningFlash = 0.0;
+            }
+        }
+        
+        function updateRain(deltaTime) {
+            if (!rainEnabled || !rainParticles || !rainVelocities) return;
+            
+            const positions = rainGeometry.attributes.position.array;
+            const cloudHeight = cloudPlane ? cloudPlane.position.y : 1000;
+            const rainLength = 20; // Match the length used in createRain
+            
+            // Update rain particles (each has 2 points: start and end)
+            for (let i = 0; i < positions.length; i += 6) {
+                const particleIdx = (i / 6) * 3;
+                
+                // Update start point position based on velocity
+                positions[i] += rainVelocities[particleIdx] * deltaTime;
+                positions[i + 1] += rainVelocities[particleIdx + 1] * deltaTime;
+                positions[i + 2] += rainVelocities[particleIdx + 2] * deltaTime;
+                
+                // Update end point (keep it rainLength units below start)
+                positions[i + 3] = positions[i];
+                positions[i + 4] = positions[i + 1] - rainLength;
+                positions[i + 5] = positions[i + 2];
+                
+                // Reset particle if it falls below terrain or goes above cloud
+                const terrainHeight = getTerrainHeight(positions[i], positions[i + 2]);
+                if (positions[i + 1] < terrainHeight + 10 || positions[i + 1] > cloudHeight) {
+                    // Respawn below cloud
+                    const x = (Math.random() - 0.5) * terrainData.worldSize * 2;
+                    const y = cloudHeight - Math.random() * 100;
+                    const z = (Math.random() - 0.5) * terrainData.worldSize * 2;
+                    
+                    positions[i] = x;
+                    positions[i + 1] = y;
+                    positions[i + 2] = z;
+                    positions[i + 3] = x;
+                    positions[i + 4] = y - rainLength;
+                    positions[i + 5] = z;
+                }
+            }
+            
+            rainGeometry.attributes.position.needsUpdate = true;
+            
+            // Update lightning
+            if (rainEnabled) {
+                lightningTimer += deltaTime;
+                
+                if (lightningTimer >= nextLightningTime) {
+                    // Flash lightning
+                    lightningFlash = 1.0;
+                    lightningTimer = 0.0;
+                    nextLightningTime = Math.random() * 5 + 3; // Next lightning in 3-8 seconds
+                }
+                
+                // Fade lightning flash
+                if (lightningFlash > 0) {
+                    lightningFlash -= deltaTime * 3; // Fade over ~0.33 seconds
+                    lightningFlash = Math.max(0, lightningFlash);
+                }
+            }
+        }
+        
+        function drawMinimap(heightData, mapSize) {
+            if (!minimapCanvas || !minimapCtx || !heightData) return;
+            
+            // Show minimap
+            minimapCanvas.style.display = 'block';
+            
+            // Create image data from heightmap
+            const imageData = minimapCtx.createImageData(256, 256);
+            const data = imageData.data;
+            
+            for (let i = 0; i < mapSize; i++) {
+                for (let j = 0; j < mapSize; j++) {
+                    const idx = i * mapSize + j;
+                    const height = heightData[idx] || 0;
+                    // Flip Y axis: row 0 (top) becomes row 255 (bottom)
+                    const flippedI = mapSize - 1 - i;
+                    const pixelIdx = (flippedI * 256 + j) * 4;
+                    
+                    // Grayscale based on height
+                    data[pixelIdx] = height;     // R
+                    data[pixelIdx + 1] = height; // G
+                    data[pixelIdx + 2] = height; // B
+                    data[pixelIdx + 3] = 255;    // A
+                }
+            }
+            
+            minimapCtx.putImageData(imageData, 0, 0);
+            
+            // Cache the image data
+            minimapImageData = imageData;
+        }
+        
+        function updateMinimap() {
+            if (!minimapCanvas || !minimapCtx || !terrainData.heightData || !minimapImageData) return;
+            
+            // Restore cached minimap background
+            minimapCtx.putImageData(minimapImageData, 0, 0);
+            
+            // Convert world position to minimap coordinates
+            // Terrain extends from world (-worldSize/2, 0, -worldSize/2) to (worldSize/2, 0, worldSize/2)
+            // Heightmap pixel (j, i) maps to world position:
+            // - j=0, i=0 -> world (-worldSize/2, 0, -worldSize/2) [left, front]
+            // - j=255, i=255 -> world (worldSize/2, 0, worldSize/2) [right, back]
+            //
+            // So: world X from -worldSize/2 to +worldSize/2 maps to heightmap j from 0 to 255
+            //     world Z from -worldSize/2 to +worldSize/2 maps to heightmap i from 0 to 255
+            
+            // Convert world position to heightmap coordinates (0-255 range)
+            // World X: -worldSize/2 to +worldSize/2 -> heightmap j: 0 to 255
+            const heightmapJ = ((position.x + terrainData.worldSize / 2) / terrainData.worldSize) * 256;
+            // World Z: -worldSize/2 to +worldSize/2 -> heightmap i: 0 to 255
+            const heightmapI = ((position.z + terrainData.worldSize / 2) / terrainData.worldSize) * 256;
+            
+            // Convert to minimap canvas coordinates
+            // Minimap X = heightmap column j
+            const minimapX = heightmapJ;
+            // Minimap Y = heightmap row i (flipped because we flipped the minimap when drawing)
+            const minimapY = 255 - heightmapI;
+            
+            // Clamp to minimap bounds
+            const clampedX = Math.max(0, Math.min(255, minimapX));
+            const clampedY = Math.max(0, Math.min(255, minimapY));
+            
+            // Draw red dot for camera position
+            minimapCtx.fillStyle = 'red';
+            minimapCtx.beginPath();
+            minimapCtx.arc(clampedX, clampedY, 3, 0, Math.PI * 2);
+            minimapCtx.fill();
+            
+            // Draw a small white border around the dot for visibility
+            minimapCtx.strokeStyle = 'white';
+            minimapCtx.lineWidth = 1;
+            minimapCtx.stroke();
+        }
+        
+        function updateCompass() {
+            if (!compassCanvas || !compassCtx) return;
+            
+            const centerX = compassCanvas.width / 2;
+            const centerY = compassCanvas.height / 2;
+            const radius = 25;
+            
+            // Clear the flight director
+            compassCtx.clearRect(0, 0, compassCanvas.width, compassCanvas.height);
+            
+            // Draw simple circle border
+            compassCtx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+            compassCtx.lineWidth = 1.5;
+            compassCtx.beginPath();
+            compassCtx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+            compassCtx.stroke();
+            
+            // Calculate direction to center in world space
+            const dx = 0 - position.x; // Delta X to center
+            const dz = 0 - position.z; // Delta Z to center
+            const distToCenter = Math.sqrt(dx * dx + dz * dz);
+            
+            // If we're at the center, don't draw arrow
+            if (distToCenter < 1) return;
+            
+            // Normalize direction vector to center
+            const dirToCenterX = dx / distToCenter;
+            const dirToCenterZ = dz / distToCenter;
+            
+            // Camera's forward direction vector (from updateFlight)
+            const forwardX = -Math.sin(cameraRotation.y);
+            const forwardZ = -Math.cos(cameraRotation.y);
+            
+            // Camera's right direction vector
+            const rightX = Math.cos(cameraRotation.y);
+            const rightZ = -Math.sin(cameraRotation.y);
+            
+            // Project direction to center onto camera's forward and right vectors
+            // This gives us the relative direction in camera space
+            const forwardComponent = dirToCenterX * forwardX + dirToCenterZ * forwardZ;
+            const rightComponent = dirToCenterX * rightX + dirToCenterZ * rightZ;
+            
+            // Calculate angle relative to forward direction
+            // forwardComponent > 0 means center is ahead, < 0 means behind
+            // rightComponent > 0 means center is to the right, < 0 means to the left
+            let relativeAngle = Math.atan2(rightComponent, forwardComponent);
+            
+            // Normalize to -PI to PI range
+            while (relativeAngle > Math.PI) relativeAngle -= Math.PI * 2;
+            while (relativeAngle < -Math.PI) relativeAngle += Math.PI * 2;
+            
+            // Draw arrow pointing to center (flight director)
+            // When center is straight ahead: relativeAngle = 0 (points up)
+            // When center is to the right: relativeAngle = PI/2 (points right)
+            // When center is behind: relativeAngle = PI (points down)
+            // When center is to the left: relativeAngle = -PI/2 (points left)
+            const arrowLength = radius - 3;
+            const arrowEndX = centerX + Math.cos(relativeAngle+Math.PI/2) * arrowLength;
+            const arrowEndY = centerY + Math.sin(relativeAngle+Math.PI/2) * arrowLength;
+            
+            // Draw arrow shaft
+            compassCtx.strokeStyle = 'rgba(255, 255, 0, 0.9)'; // Yellow arrow
+            compassCtx.lineWidth = 2.5;
+            compassCtx.beginPath();
+            compassCtx.moveTo(centerX, centerY);
+            compassCtx.lineTo(arrowEndX, arrowEndY);
+            compassCtx.stroke();
+            
+            // Draw arrowhead
+           
+            compassCtx.fillStyle = 'rgba(255, 255, 0, 0.9)';
+            compassCtx.fill();
+            
+            // Draw center dot
+            compassCtx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+            compassCtx.beginPath();
+            compassCtx.arc(centerX, centerY, 2, 0, Math.PI * 2);
+            compassCtx.fill();
+        }
+        
+        function updateFlight(deltaTime) {
+            // Speed adjustment with +/- keys
+            if (keys['='] || keys['+']) {
+                currentSpeed += SPEED_CHANGE_RATE * deltaTime;
+                currentSpeed = Math.min(currentSpeed, BASE_SPEED * 3); // Max 3x base speed
+            }
+            if (keys['-'] || keys['_']) {
+                currentSpeed -= SPEED_CHANGE_RATE * deltaTime;
+                currentSpeed = Math.max(currentSpeed, BASE_SPEED * 0.1); // Min 10% base speed
+            }
+            
+            // Boost with Shift
+            const effectiveSpeed = keys.shift ? currentSpeed * 2 : currentSpeed;
+            const moveSpeed = effectiveSpeed * deltaTime;
+            
+            // Pitch control with W/S
+            if (keys['s']) {
+                cameraRotation.x += PITCH_SPEED;
+                cameraRotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, cameraRotation.x));
+            }
+            if (keys['w']) {
+                cameraRotation.x -= PITCH_SPEED;
+                cameraRotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, cameraRotation.x));
+            }
+            
+            // Calculate forward direction (yaw only, no pitch)
+            // Negated to fix backwards flight
+            const forwardX = -Math.sin(cameraRotation.y);
+            const forwardZ = -Math.cos(cameraRotation.y);
+            
+            // Calculate right vector for strafing
+            const rightX = Math.cos(cameraRotation.y);
+            const rightZ = -Math.sin(cameraRotation.y);
+            
+            // Movement (only if terrain exists)
+            if (terrain) {
+                // Always move forward at current speed
+                // Forward movement in horizontal plane
+                position.x += forwardX * moveSpeed;
+                position.z += forwardZ * moveSpeed;
+                
+                // Vertical movement based on pitch (cameraRotation.x)
+                // Negative pitch (nose down) = negative Y movement
+                // Positive pitch (nose up) = positive Y movement
+                const verticalSpeed = -Math.sin(-cameraRotation.x) * moveSpeed;
+                position.y += verticalSpeed;
+                
+                // Strafe left/right with A/D
+                if (keys['a']) {
+                    position.x -= rightX * moveSpeed * 0.5; // Slower strafe
+                    position.z -= rightZ * moveSpeed * 0.5;
+                }
+                if (keys['d']) {
+                    position.x += rightX * moveSpeed * 0.5;
+                    position.z += rightZ * moveSpeed * 0.5;
+                }
+                
+                // Direct vertical movement (optional, for fine control)
+                if (keys[' ']) { // Space - up
+                    position.y += moveSpeed * 0.5;
+                }
+                if (keys['c']) { // C - down
+                    position.y -= moveSpeed * 0.5;
+                }
+                
+                // Map wraparound - teleport to opposite side when crossing boundaries
+                // Terrain extends from -worldSize/2 to +worldSize/2 in world space
+                const halfWorldSize = terrainData.worldSize / 2;
+                const worldSize = terrainData.worldSize;
+                
+                // Wrap X coordinate (East/West)
+                // If we go past the east edge (+halfWorldSize), wrap to west side
+                while (position.x > halfWorldSize) {
+                    position.x -= worldSize;
+                }
+                // If we go past the west edge (-halfWorldSize), wrap to east side
+                while (position.x < -halfWorldSize) {
+                    position.x += worldSize;
+                }
+                
+                // Wrap Z coordinate (North/South)
+                // If we go past the north edge (+halfWorldSize), wrap to south side
+                while (position.z > halfWorldSize) {
+                    position.z -= worldSize;
+                }
+                // If we go past the south edge (-halfWorldSize), wrap to north side
+                while (position.z < -halfWorldSize) {
+                    position.z += worldSize;
+                }
+                
+                // Collision detection using bilinear interpolation from geometry
+                // This gives smooth height values that work on slopes, valleys, and hills
+                const minClearance = MIN_HEIGHT_ABOVE_TERRAIN;
+                const terrainHeight = getTerrainHeight(position.x, position.z);
+                const minAllowedY = terrainHeight + minClearance;
+                
+                // Safety check: if camera goes below terrain surface, immediately jump back to minimum distance
+                if (position.y < terrainHeight) {
+                    position.y = minAllowedY;
+                }
+                
+                // Enforce minimum height above terrain (bilinear interpolation handles slopes correctly)
+                if (position.y < minAllowedY) {
+                    position.y = minAllowedY;
+                }
+            }
+            
+            // Roll
+            if (keys['q']) {
+                cameraRotation.z += ROLL_SPEED;
+            }
+            if (keys['e']) {
+                cameraRotation.z -= ROLL_SPEED;
+            }
+            
+            // Always apply camera rotation and position
+            camera.rotation.set(cameraRotation.x, cameraRotation.y, cameraRotation.z);
+            camera.position.set(position.x, position.y, position.z);
+        }
+        
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        let lastTime = performance.now();
+        let fps = 0;
+        let fpsUpdateTime = 0;
+        let frameCount = 0;
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            const currentTime = performance.now();
+            const deltaTime = (currentTime - lastTime) / 1000; // Convert to seconds
+            lastTime = currentTime;
+            
+            // Calculate FPS (update every 0.5 seconds)
+            frameCount++;
+            if (currentTime - fpsUpdateTime >= 500) {
+                fps = Math.round((frameCount * 1000) / (currentTime - fpsUpdateTime));
+                frameCount = 0;
+                fpsUpdateTime = currentTime;
+                
+                // Update FPS display
+                const fpsCounter = document.getElementById('fpsCounter');
+                if (fpsCounter) {
+                    fpsCounter.textContent = `FPS: ${fps}`;
+                }
+            }
+            
+            // Update debug info (camera position and height relative to terrain)
+            if (terrain) {
+                const terrainHeight = getTerrainHeight(position.x, position.z);
+                const relativeHeight = position.y - terrainHeight;
+                const debugInfo = document.getElementById('debugInfo');
+                if (debugInfo) {
+                    debugInfo.innerHTML = 
+                        `X: ${position.x.toFixed(1)} | Z: ${position.z.toFixed(1)}<br>` +
+                        `Height: ${relativeHeight.toFixed(1)} (min: ${MIN_HEIGHT_ABOVE_TERRAIN})`;
+                }
+            }
+            
+            // Start background music after first frame renders
+            if (!musicStarted && terrain) {
+                const music = document.getElementById('backgroundMusic');
+                if (music) {
+                    music.play().catch(err => {
+                        console.log('Audio play failed:', err);
+                    });
+                    musicStarted = true;
+                }
+            }
+            
+            updateFlight(deltaTime);
+            updateRain(deltaTime);
+            updateMinimap();
+            updateCompass();
+            
+            // Apply lightning flash effect
+            if (lightningFlash > 0) {
+                // Brighten the scene during lightning
+                const flashIntensity = lightningFlash * 0.3; // 30% brightness increase
+                renderer.setClearColor(new THREE.Color(0xCECECE).lerp(new THREE.Color(0xFFFFFF), flashIntensity));
+            } else {
+                renderer.setClearColor(0xCECECE); // Normal off-white background
+            }
+            
+            renderer.render(scene, camera);
+        }
+        
+        init();
+    </script>
+</body>
+</html>
+
