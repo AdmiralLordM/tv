@@ -3,12 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-fullscreen">
+    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon.png">
+    <link rel="icon" sizes="192x192" href="icon.png">
     <title>Terrain Flight Simulator</title>
     <style>
         body { 
             margin: 0; 
             overflow: hidden; 
             font-family: monospace;
+            position: fixed;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
         }
         canvas { display: block; }
 
@@ -70,6 +80,21 @@
             padding: 5px 10px;
             border-radius: 3px;
             z-index: 98;
+        }
+        #touchIndicator {
+            position: fixed;
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 3px solid rgba(255, 255, 255, 0.6);
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+            pointer-events: none;
+            z-index: 97;
+            display: none;
+            transform: translate(-50%, -50%);
         }
         #welcomeScreen {
             position: fixed;
@@ -136,6 +161,7 @@
     
     <canvas id="minimap"></canvas>
     <canvas id="compass"></canvas>
+    <div id="touchIndicator"></div>
     <div id="flightInfo"></div>
     <div id="fpsCounter">FPS: 0</div>
     <div id="debugInfo">Height: --</div>
@@ -148,6 +174,17 @@
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
+        function goFullscreen() {
+            const elem = document.documentElement;
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen();
+            } else if (elem.webkitRequestFullscreen) { // Safari
+                elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) { // IE11
+                elem.msRequestFullscreen();
+            }
+        }
+
         let scene, camera, renderer, terrain, skybox, cloudPlane;
         let keys = {};
         let mouseMovement = { x: 0, y: 0 };
@@ -562,9 +599,78 @@
                     renderer.domElement.requestPointerLock();
                 }
             });
+            
+            // Touch controls
+            const touchIndicator = document.getElementById('touchIndicator');
+            let touchStartX = 0;
+            let touchStartY = 0;
+            let touchActive = false;
+            const TOUCH_SENSITIVITY = 0.002; // Similar to mouse sensitivity
+            const TOUCH_PITCH_SENSITIVITY = 0.0008; // Similar to mouse pitch sensitivity
+            const TOUCH_AREA_START = 0.25; // Right 75% of screen (starts at 25% from left)
+            
+            renderer.domElement.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const touchX = touch.clientX;
+                const screenWidth = window.innerWidth;
+                
+                // Only respond to touches in the right 75% of screen
+                if (touchX >= screenWidth * TOUCH_AREA_START) {
+                    touchStartX = touchX;
+                    touchStartY = touch.clientY;
+                    touchActive = true;
+                    
+                    // Show indicator at touch position
+                    touchIndicator.style.left = touchX + 'px';
+                    touchIndicator.style.top = touch.clientY + 'px';
+                    touchIndicator.style.display = 'block';
+                }
+            });
+            
+            renderer.domElement.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                if (!touchActive) return;
+                
+                const touch = e.touches[0];
+                const currentX = touch.clientX;
+                const currentY = touch.clientY;
+                
+                // Calculate relative movement from last position
+                const deltaX = currentX - touchStartX;
+                const deltaY = currentY - touchStartY;
+                
+                // Update indicator position
+                touchIndicator.style.left = currentX + 'px';
+                touchIndicator.style.top = currentY + 'px';
+                
+                // Apply yaw (left/right) - negative deltaX = turn left, positive = turn right
+                cameraRotation.y -= deltaX * TOUCH_SENSITIVITY;
+                
+                // Apply pitch (up/down) - negative deltaY = pitch up, positive = pitch down
+                cameraRotation.x -= deltaY * TOUCH_PITCH_SENSITIVITY;
+                cameraRotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, cameraRotation.x));
+                
+                // Update start position for next move (relative movement)
+                touchStartX = currentX;
+                touchStartY = currentY;
+            });
+            
+            renderer.domElement.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                touchActive = false;
+                touchIndicator.style.display = 'none';
+            });
+            
+            renderer.domElement.addEventListener('touchcancel', (e) => {
+                e.preventDefault();
+                touchActive = false;
+                touchIndicator.style.display = 'none';
+            });
         }
         
         function startSimulator() {
+            goFullscreen();
             // Hide welcome screen
             document.getElementById('welcomeScreen').style.display = 'none';
             
