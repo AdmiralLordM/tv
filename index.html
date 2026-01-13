@@ -9,7 +9,7 @@
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon.png">
     <link rel="icon" sizes="192x192" href="icon.png">
-    <title>Terrain Flight Simulator</title>
+    <title>Terminal Velocity Flight Simulator</title>
     <style>
         body { 
             margin: 0; 
@@ -175,14 +175,14 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
         function goFullscreen() {
-            const elem = document.documentElement;
+          /*  const elem = document.documentElement;
             if (elem.requestFullscreen) {
                 elem.requestFullscreen();
             } else if (elem.webkitRequestFullscreen) { // Safari
                 elem.webkitRequestFullscreen();
             } else if (elem.msRequestFullscreen) { // IE11
                 elem.msRequestFullscreen();
-            }
+            }*/
         }
 
         let scene, camera, renderer, terrain, skybox, cloudPlane;
@@ -216,6 +216,8 @@
         let dirtTexture = null;
         let snowTexture = null;
         let rockTexture = null;
+        let treeTexture = null;
+        let treeCreationParams = null; // Store parameters for delayed tree creation
         
         // Seedable random number generator (Mulberry32)
         function mulberry32(seed) {
@@ -439,18 +441,18 @@
         let trees = []; // Array to store tree meshes
         
         // Flight parameters
-        const PIXEL_SIZE = 128; // Each pixel = 64x64 units
-        const BASE_SPEED = 192; // 8 pixels/second = 512 units/second
-        const MOUSE_SENSITIVITY = 0.002;
-        const MOUSE_PITCH_SENSITIVITY = 0.0008; // Slower pitch sensitivity for mouse
+        const PIXEL_SIZE = 512; // Each pixel = 64x64 units
+        const BASE_SPEED = 256; // 8 pixels/second = 512 units/second
+        const MOUSE_SENSITIVITY = 0.0002;
+        const MOUSE_PITCH_SENSITIVITY = 0.0002; // Slower pitch sensitivity for mouse
         const ROLL_SPEED = 0.02;
         const PITCH_SPEED = -0.03; // Speed for W/S pitch control
-        const MIN_HEIGHT_ABOVE_TERRAIN = 40; // Minimum clearance above terrain
+        const MIN_HEIGHT_ABOVE_TERRAIN = 160; // Minimum clearance above terrain
         const AUTO_HEIGHT_ENABLED = false; // Automatically maintain minimum height
-        const SPEED_CHANGE_RATE = 50; // Units per second speed change with +/-
+        const SPEED_CHANGE_RATE = 128; // Units per second speed change with +/-
         
         // Current flight speed (adjustable with +/-)
-        let currentSpeed = BASE_SPEED;
+        let currentSpeed = BASE_SPEED*3;
         
         // Camera position (cockpit view) - will be updated when terrain loads
         let position = { x: 0, y: 800, z: 0 };
@@ -500,10 +502,13 @@
             scene = new THREE.Scene();
             
             // Fog for atmosphere
-            scene.fog = new THREE.FogExp2(0xB5B5B5, 0.0008); // Off-white fog (adjusted for large scale)
+            scene.fog = new THREE.FogExp2(0xB5B5B5, 0.0003); // Off-white fog (adjusted for large scale)
             
             // Camera (cockpit perspective - looking down at terrain)
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 10000);
+            camera = new THREE.PerspectiveCamera(64, window.innerWidth / window.innerHeight, 1, 10000);
+            camera.near = 0.1;
+            camera.far = 20000;
+            camera.updateProjectionMatrix();
             camera.position.set(position.x, position.y, position.z);
             camera.rotation.order = 'ZYX'; // Roll, Pitch, Yaw
             cameraRotation.x = -0.3; // Start with downward tilt (cockpit view)
@@ -878,7 +883,7 @@
             // Make heightmap edges seamless before processing
             const seamlessHeightData = makeHeightmapSeamless(heightData, mapSize);
             const worldSize = mapSize * PIXEL_SIZE; // 16,384 units
-            const heightScale = 4.0; // Height exaggeration
+            const heightScale = 16.0; // Height exaggeration
             const segments = mapSize - 1;
             
             // Store terrain data for collision detection (use seamless version)
@@ -959,6 +964,29 @@
                 rockTexture = createRockTexture(24680); // Seed for rock - change to test different patterns
             }
             
+            // Load tree texture
+            if (!treeTexture) {
+                const textureLoader = new THREE.TextureLoader();
+                treeTexture = textureLoader.load('tree.png', (texture) => {
+                    texture.wrapS = THREE.ClampToEdgeWrapping;
+                    texture.wrapT = THREE.ClampToEdgeWrapping;
+                    texture.flipY = true;
+                    // If tree creation parameters are stored, create trees now
+                    if (treeCreationParams) {
+                        createTrees(treeCreationParams.heightData, treeCreationParams.mapSize, 
+                                   treeCreationParams.worldSize, treeCreationParams.heightScale);
+                        treeCreationParams = null;
+                    }
+                }, undefined, (err) => {
+                    console.error('Error loading tree texture:', err);
+                });
+            } else if (treeTexture.image && treeTexture.image.complete && treeCreationParams) {
+                // Texture already loaded, create trees immediately
+                createTrees(treeCreationParams.heightData, treeCreationParams.mapSize, 
+                           treeCreationParams.worldSize, treeCreationParams.heightScale);
+                treeCreationParams = null;
+            }
+            
             // Create shader material that blends textures based on vertex colors
             const material = new THREE.ShaderMaterial({
                 uniforms: {
@@ -967,7 +995,7 @@
                     snowTexture: { value: snowTexture },
                     rockTexture: { value: rockTexture },
                     fogColor: { value: new THREE.Color(0xB5B5B5) },
-                    fogDensity: { value: 0.0005 }
+                    fogDensity: { value: 0.0001 }
                 },
                 vertexShader: `
                     varying vec3 vColor;
@@ -1198,10 +1226,11 @@
             // Start position 64 pixels inward from the edge, at good flying height
             // 64 pixels * PIXEL_SIZE = 64 * 128 = 8192 units
             // Map extends from -worldSize/2 to +worldSize/2, so 64 pixels from edge is:
-            const startOffset = 64 * PIXEL_SIZE; // 8192 units
-            position.x = -worldSize / 2 + startOffset;
+            const startOffsetX = 39 * PIXEL_SIZE; // 8192 units
+            const startOffsetZ = 233 * PIXEL_SIZE; // 8192 units
+            position.x = -worldSize / 2 + startOffsetX;
             position.y = 800;
-            position.z = -worldSize / 2 + startOffset;
+            position.z = -worldSize / 2 + startOffsetZ;
             
             // Update camera immediately
             camera.position.set(position.x, position.y, position.z);
@@ -1241,7 +1270,7 @@
                     maxHeight = height;
                 }
             }
-            maxHeight -= 15;
+            maxHeight += 25;
             const maxWorldHeight = maxHeight * heightScale;
             
             // Create cloud texture using Perlin noise
@@ -1417,116 +1446,53 @@
             return true;
         }
         
-        // Shared tree geometries and materials for performance
-        let sharedTrunkGeometry = null;
-        let sharedTrunkMaterial = null;
-        let sharedBranchGeometry = null;
-        let sharedBranchMaterial = null;
-        
-        // Helper function to create a triangle geometry
-        function createTriangleGeometry(size) {
-            const geometry = new THREE.BufferGeometry();
-            const vertices = new Float32Array([
-                0, 0, 0,           // Bottom left
-                size, 0, 0,        // Bottom right
-                size / 2, size, 0  // Top center
-            ]);
-            const uvs = new Float32Array([
-                0, 0,    // Bottom left
-                1, 0,    // Bottom right
-                0.5, 1   // Top center
-            ]);
-            const indices = new Uint16Array([0, 1, 2]);
-            
-            geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
-            geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
-            geometry.setIndex(new THREE.BufferAttribute(indices, 1));
-            geometry.computeVertexNormals();
-            
-            return geometry;
-        }
+        // Shared tree geometry and material for billboard performance
+        let sharedTreeGeometry = null;
+        let sharedTreeMaterial = null;
         
         function createTree(worldX, worldZ, terrainHeight, treeRandom) {
-            // Create shared geometries and materials if not exists
-            // Make sure textures are available
-            if (!sharedTrunkGeometry && dirtTexture && grassTexture) {
-                // Trunk: simple cylinder (4 segments for performance)
-                sharedTrunkGeometry = new THREE.CylinderGeometry(2.5, 3, 40, 4);
-                sharedTrunkMaterial = new THREE.MeshStandardMaterial({
-                    map: dirtTexture,
-                    color: 0xffffff, // White to let texture show through
-                    flatShading: true // Simpler lighting for performance
-                });
+            // Create shared geometry and material if not exists
+            // Make sure tree texture is available
+            if (!sharedTreeGeometry && treeTexture) {
+                // Create a plane geometry for the billboard
+                // Size will be adjusted per tree
+                sharedTreeGeometry = new THREE.PlaneGeometry(1, 1);
                 
-                // Branch: triangle geometry (shared base, will be scaled per tree)
-                sharedBranchGeometry = createTriangleGeometry(20);
-                sharedBranchMaterial = new THREE.MeshStandardMaterial({
-                    map: grassTexture,
+                // Create material with tree texture
+                sharedTreeMaterial = new THREE.MeshStandardMaterial({
+                    map: treeTexture,
                     color: 0xffffff, // White to let texture show through
                     side: THREE.DoubleSide,
                     transparent: true,
                     alphaTest: 0.1,
-                    flatShading: true // Simpler lighting for performance
+                    depthWrite: false // Important for transparency
                 });
             }
             
-            // If textures aren't ready yet, skip tree creation
-            if (!sharedTrunkGeometry || !sharedTrunkMaterial || !sharedBranchGeometry || !sharedBranchMaterial) {
+            // If texture isn't ready yet, skip tree creation
+            if (!sharedTreeGeometry || !sharedTreeMaterial || !treeTexture) {
                 return null;
             }
             
             // Create tree group
             const treeGroup = new THREE.Group();
             
-            // Trunk: use shared geometry with slight variation
-            const trunkHeight = 30 + treeRandom() * 20; // 30-50 units tall
-            const trunkScale = trunkHeight / 40; // Scale based on desired height
-            const trunk = new THREE.Mesh(sharedTrunkGeometry, sharedTrunkMaterial);
-            trunk.scale.set(1, trunkScale, 1);
-            trunk.position.y = terrainHeight + trunkHeight / 2;
-            treeGroup.add(trunk);
+            // Tree size variation
+            const treeSize = 150 + treeRandom() * 60; // 40-70 units tall
+            const treeWidth = treeSize * 0.6; // Width is 60% of height
             
-            // Branches: multiple layers of horizontal triangles (pine tree style)
-            // Create 4-6 layers of branches going up the trunk
-            const numLayers = 1; //4 + Math.floor(treeRandom() * 3); // 4-6 layers
-            const baseBranchSize = 50 + treeRandom() * 10; // 20-30 units base size
-            const baseRotation = treeRandom() * Math.PI * 2; // Random base rotation for all layers
+            // Create first billboard plane (facing forward, along Z axis)
+            const billboard1 = new THREE.Mesh(sharedTreeGeometry, sharedTreeMaterial);
+            billboard1.scale.set(treeWidth, treeSize, 1);
+            billboard1.position.y = terrainHeight + treeSize / 2;
+            treeGroup.add(billboard1);
             
-            const yAxis = new THREE.Vector3(0, 1, 0)
-
-           // for (let layer = 0; layer < numLayers; layer++) {
-                // Branch size decreases as we go up (conical shape)
-                const layerProgress =0 // 0 at bottom, 1 at top
-                const branchSize = baseBranchSize * (1 - layerProgress * 0.6); // Reduce by 60% at top
-                const branchScale = branchSize / 20;
-                const branchHeight = branchScale*(1+Math.random());    
-                // Position layer along trunk (starting at 30% up, ending at 90% up)
-                const layerY = terrainHeight + trunkHeight * 0.3;
-                
-                // Two perpendicular triangles at this layer
-                // Triangle base (shortest side) stands vertically at trunk, extends horizontally outward
-                // Triangle geometry: base along X (0,0,0 to size,0,0), extends in +Y
-                // We rotate so base is vertical (along Y) and triangle extends horizontally (in +Z)
-                const branch1 = new THREE.Mesh(sharedBranchGeometry, sharedBranchMaterial);
-                //branch1.rotation.y = baseRotation; // Rotate around Y for random orientation
-                branch1.scale.set(branchScale, branchHeight, 1);
-                branch1.position.set(-branchSize/2, layerY, 0); // Center on trunk
-                //branch1.rotation.x = Math.PI / 2; // Rotate so base is vertical, triangle extends in +Z
-                
-
-                treeGroup.add(branch1);
-                
-                const branch2 = new THREE.Mesh(sharedBranchGeometry, sharedBranchMaterial);
-                branch2.scale.set(branchScale, branchHeight, 1);
-                branch2.position.set(0, layerY,branchSize/2); // Same position
-                //branch2.rotation.x = Math.PI / 2; // Rotate so base is vertical
-                branch2.rotation.y = (45 * Math.PI / 2); // Perpendicular (90 degrees rotated)
-                treeGroup.add(branch2);
-
-
-                
-                
-           // }
+            // Create second billboard plane (rotated 90 degrees around Y axis)
+            const billboard2 = new THREE.Mesh(sharedTreeGeometry, sharedTreeMaterial);
+            billboard2.scale.set(treeWidth, treeSize, 1);
+            billboard2.position.y = terrainHeight + treeSize / 2;
+            billboard2.rotation.y = Math.PI / 2; // Rotate 90 degrees
+            treeGroup.add(billboard2);
             
             // Position tree at world coordinates
             treeGroup.position.set(worldX, 0, worldZ);
@@ -1535,9 +1501,11 @@
         }
         
         function createTrees(heightData, mapSize, worldSize, heightScale) {
-            // Make sure textures are available before creating trees
-            if (!dirtTexture || !grassTexture) {
-                console.warn('Textures not ready for tree creation');
+            // Make sure tree texture is available before creating trees
+            if (!treeTexture) {
+                console.warn('Tree texture not ready for tree creation, storing parameters for later');
+                // Store parameters to create trees once texture loads
+                treeCreationParams = { heightData, mapSize, worldSize, heightScale };
                 return;
             }
             
@@ -1545,32 +1513,24 @@
             trees.forEach(tree => {
                 scene.remove(tree);
                 tree.traverse(child => {
-                    if (child.geometry && child.geometry !== sharedTrunkGeometry && child.geometry !== sharedBranchGeometry) {
+                    if (child.geometry && child.geometry !== sharedTreeGeometry) {
                         child.geometry.dispose();
                     }
-                    if (child.material && child.material !== sharedTrunkMaterial && child.material !== sharedBranchMaterial) {
+                    if (child.material && child.material !== sharedTreeMaterial) {
                         child.material.dispose();
                     }
                 });
             });
             trees = [];
             
-            // Clean up shared geometries if they exist (will be recreated)
-            if (sharedTrunkGeometry) {
-                sharedTrunkGeometry.dispose();
-                sharedTrunkGeometry = null;
+            // Clean up shared geometry and material if they exist (will be recreated)
+            if (sharedTreeGeometry) {
+                sharedTreeGeometry.dispose();
+                sharedTreeGeometry = null;
             }
-            if (sharedBranchGeometry) {
-                sharedBranchGeometry.dispose();
-                sharedBranchGeometry = null;
-            }
-            if (sharedTrunkMaterial) {
-                sharedTrunkMaterial.dispose();
-                sharedTrunkMaterial = null;
-            }
-            if (sharedBranchMaterial) {
-                sharedBranchMaterial.dispose();
-                sharedBranchMaterial = null;
+            if (sharedTreeMaterial) {
+                sharedTreeMaterial.dispose();
+                sharedTreeMaterial = null;
             }
             
             // Tree placement: 1-2 trees per 512x512 area (reduced for performance)
@@ -1909,15 +1869,15 @@
             // Speed adjustment with +/- keys
             if (keys['='] || keys['+']) {
                 currentSpeed += SPEED_CHANGE_RATE * deltaTime;
-                currentSpeed = Math.min(currentSpeed, BASE_SPEED * 3); // Max 3x base speed
+                currentSpeed = Math.min(currentSpeed, BASE_SPEED * 4); // Max 3x base speed
             }
             if (keys['-'] || keys['_']) {
                 currentSpeed -= SPEED_CHANGE_RATE * deltaTime;
-                currentSpeed = Math.max(currentSpeed, BASE_SPEED * 0.1); // Min 10% base speed
+                currentSpeed = Math.max(currentSpeed, BASE_SPEED * 0.01); // Min 10% base speed
             }
             
             // Boost with Shift
-            const effectiveSpeed = keys.shift ? currentSpeed * 2 : currentSpeed;
+            const effectiveSpeed = keys.shift ? BASE_SPEED * 4 : currentSpeed;
             const moveSpeed = effectiveSpeed * deltaTime;
             
             // Pitch control with W/S
@@ -1963,12 +1923,12 @@
                 }
                 
                 // Direct vertical movement (optional, for fine control)
-                if (keys[' ']) { // Space - up
+               /* if (keys[' ']) { // Space - up
                     position.y += moveSpeed * 0.5;
                 }
                 if (keys['c']) { // C - down
                     position.y -= moveSpeed * 0.5;
-                }
+                }*/
                 
                 // Map wraparound - teleport to opposite side when crossing boundaries
                 // Terrain extends from -worldSize/2 to +worldSize/2 in world space
@@ -2061,11 +2021,28 @@
             if (terrain) {
                 const terrainHeight = getTerrainHeight(position.x, position.z);
                 const relativeHeight = position.y - terrainHeight;
+                
+                // Calculate heightmap sector/pixel index
+                const worldSize = terrainData.worldSize;
+                const halfWorldSize = worldSize / 2;
+                let wrappedX = position.x;
+                let wrappedZ = position.z;
+                while (wrappedX > halfWorldSize) wrappedX -= worldSize;
+                while (wrappedX < -halfWorldSize) wrappedX += worldSize;
+                while (wrappedZ > halfWorldSize) wrappedZ -= worldSize;
+                while (wrappedZ < -halfWorldSize) wrappedZ += worldSize;
+                const normalizedX = (wrappedX + halfWorldSize) / worldSize;
+                const normalizedZ = (wrappedZ + halfWorldSize) / worldSize;
+                const segments = terrainData.mapSize - 1;
+                const pixelX = Math.floor(normalizedX * segments);
+                const pixelZ = Math.floor(normalizedZ * segments);
+                
                 const debugInfo = document.getElementById('debugInfo');
                 if (debugInfo) {
                     debugInfo.innerHTML = 
                         `X: ${position.x.toFixed(1)} | Z: ${position.z.toFixed(1)}<br>` +
-                        `Height: ${relativeHeight.toFixed(1)} (min: ${MIN_HEIGHT_ABOVE_TERRAIN})`;
+                        `Height: ${relativeHeight.toFixed(1)} (min: ${MIN_HEIGHT_ABOVE_TERRAIN})<br>` +
+                        `Sector: [${pixelX}, ${pixelZ}]`;
                 }
             }
             
@@ -2082,7 +2059,7 @@
             
             updateFlight(deltaTime);
             updateRain(deltaTime);
-            updateMinimap();
+            //updateMinimap();
             updateCompass();
             
             // Apply lightning flash effect
