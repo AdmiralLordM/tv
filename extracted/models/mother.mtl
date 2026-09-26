@@ -1,0 +1,23 @@
+newmtl mother1
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0 0 0
+map_Kd textures/mother1.png
+
+newmtl mother2
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0 0 0
+map_Kd textures/mother2.png
+
+newmtl momwing1
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0 0 0
+map_Kd textures/momwing1.png
+
+newmtl mback1
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0 0 0
+map_Kd textures/mback1.png

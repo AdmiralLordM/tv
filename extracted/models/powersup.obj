@@ -1,0 +1,13 @@
+# Terminal Velocity model powersup.bin
+# vertex units = file integers / 4456
+mtllib powersup.mtl
+v 3.676840 3.676840 0.000000
+v -3.676840 3.676840 0.000000
+v -3.676840 -3.676840 0.000000
+v 3.676840 -3.676840 0.000000
+vt 0.015686 0.011765
+vt 0.988235 0.011765
+vt 0.988235 0.984314
+vt 0.015686 0.984314
+usemtl sprmis00_alpha
+f 4/1 3/2 2/3 1/4

@@ -1,0 +1,16 @@
+newmtl yellow12
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0 0 0
+map_Kd textures/yellow12.png
+
+newmtl alien13
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0 0 0
+map_Kd textures/alien13.png
+
+newmtl pal_000
+Kd 0.0000 0.0000 0.0000
+Ka 0 0 0
+Ks 0 0 0

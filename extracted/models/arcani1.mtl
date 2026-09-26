@@ -1,0 +1,41 @@
+newmtl arbsyl2
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0 0 0
+map_Kd textures/arbsyl2.png
+
+newmtl arcbos3
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0 0 0
+map_Kd textures/arcbos3.png
+
+newmtl arctarg
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0 0 0
+map_Kd textures/arctarg.png
+
+newmtl arcbos4
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0 0 0
+map_Kd textures/arcbos4.png
+
+newmtl arcbos8
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0 0 0
+map_Kd textures/arcbos8.png
+
+newmtl arbsyl1
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0 0 0
+map_Kd textures/arbsyl1.png
+
+newmtl arcbos5
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0 0 0
+map_Kd textures/arcbos5.png

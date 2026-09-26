@@ -1,0 +1,47 @@
+newmtl fogsht
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0 0 0
+map_Kd textures/fogsht.png
+
+newmtl citygrid
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0 0 0
+map_Kd textures/citygrid.png
+
+newmtl raycan7
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0 0 0
+map_Kd textures/raycan7.png
+
+newmtl towrmid
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0 0 0
+map_Kd textures/towrmid.png
+
+newmtl topvew
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0 0 0
+map_Kd textures/topvew.png
+
+newmtl dronetxt
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0 0 0
+map_Kd textures/dronetxt.png
+
+newmtl ref
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0 0 0
+map_Kd textures/ref.png
+
+newmtl bildy2
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0 0 0
+map_Kd textures/bildy2.png

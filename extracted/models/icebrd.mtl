@@ -1,0 +1,29 @@
+newmtl icetop5
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0 0 0
+map_Kd textures/icetop5.png
+
+newmtl icebot
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0 0 0
+map_Kd textures/icebot.png
+
+newmtl icetop3
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0 0 0
+map_Kd textures/icetop3.png
+
+newmtl icewing
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0 0 0
+map_Kd textures/icewing.png
+
+newmtl icebak02
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0 0 0
+map_Kd textures/icebak02.png

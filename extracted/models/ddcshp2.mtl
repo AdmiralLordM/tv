@@ -1,0 +1,58 @@
+newmtl tpart
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0 0 0
+map_Kd textures/tpart.png
+
+newmtl sf
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0 0 0
+map_Kd textures/sf.png
+
+newmtl borg1
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0 0 0
+map_Kd textures/borg1.png
+
+newmtl linebars
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0 0 0
+map_Kd textures/linebars.png
+
+newmtl pal_000
+Kd 0.0000 0.0000 0.0000
+Ka 0 0 0
+Ks 0 0 0
+
+newmtl shipplat
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0 0 0
+map_Kd textures/shipplat.png
+
+newmtl bildy
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0 0 0
+map_Kd textures/bildy.png
+
+newmtl cruiser
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0 0 0
+map_Kd textures/cruiser.png
+
+newmtl metal2
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0 0 0
+map_Kd textures/metal2.png
+
+newmtl transtxt
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0 0 0
+map_Kd textures/transtxt.png

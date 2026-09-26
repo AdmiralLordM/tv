@@ -1,0 +1,40 @@
+globe.bin
+canyon0.raw
+OBJECTIVE: Crythania
+LOCATION: 61 Cygnus 
+DISTANCE: 11.3 L.Y. from Earth
+
+Earth Fleet Intelligence 
+reports that a huge warship, 
+the Crythanian Hellhawk, is 
+being readied for the second 
+Earth assault. With a thick
+hull and powerful weapons, the
+Hellhawk was to be the pride of
+ASFAR, able to defend its 
+perimeters with overwhelming 
+force.  Now it has turned on 
+its own, for whatever reason, 
+and you must destroy her
+before she launches.
+
+Approach on the opposite side 
+of the Ankarna mountain range, 
+fly through the canyons and 
+surprise them at the Ankarnan 
+Depot.
+
+Take out as many forces
+as possible along the way.
+
+A note of warning: the
+Perimeter Defense Computers
+are sending very erratic data.
+
+Good luck.
+
+|
+| PREPARING TACTICAL REPORT
+|
+.
+

@@ -1,0 +1,16 @@
+newmtl base
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0 0 0
+map_Kd textures/base.png
+
+newmtl pal_001
+Kd 0.0275 0.0275 0.0275
+Ka 0 0 0
+Ks 0 0 0
+
+newmtl dash
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0 0 0
+map_Kd textures/dash.png

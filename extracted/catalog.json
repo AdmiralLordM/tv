@@ -1,0 +1,8934 @@
+{
+  "screens": [
+    {
+      "name": "brief",
+      "file": "screens/brief.png",
+      "width": 320,
+      "height": 200,
+      "palette": "vga"
+    },
+    {
+      "name": "credits",
+      "file": "screens/credits.png",
+      "width": 320,
+      "height": 200,
+      "palette": "vga"
+    },
+    {
+      "name": "help1",
+      "file": "screens/help1.png",
+      "width": 256,
+      "height": 108,
+      "palette": "vga"
+    },
+    {
+      "name": "help2",
+      "file": "screens/help2.png",
+      "width": 256,
+      "height": 108,
+      "palette": "vga"
+    },
+    {
+      "name": "help3",
+      "file": "screens/help3.png",
+      "width": 256,
+      "height": 108,
+      "palette": "vga"
+    },
+    {
+      "name": "help4",
+      "file": "screens/help4.png",
+      "width": 256,
+      "height": 108,
+      "palette": "vga"
+    },
+    {
+      "name": "help5",
+      "file": "screens/help5.png",
+      "width": 256,
+      "height": 108,
+      "palette": "vga"
+    },
+    {
+      "name": "help6",
+      "file": "screens/help6.png",
+      "width": 256,
+      "height": 108,
+      "palette": "vga"
+    },
+    {
+      "name": "help7",
+      "file": "screens/help7.png",
+      "width": 256,
+      "height": 108,
+      "palette": "vga"
+    },
+    {
+      "name": "infobar",
+      "file": "screens/infobar.png",
+      "width": 320,
+      "height": 25,
+      "palette": "vga"
+    },
+    {
+      "name": "inst",
+      "file": "screens/inst.png",
+      "width": 320,
+      "height": 200,
+      "palette": "vga"
+    },
+    {
+      "name": "mapback",
+      "file": "screens/mapback.png",
+      "width": 320,
+      "height": 200,
+      "palette": "vga"
+    },
+    {
+      "name": "order1",
+      "file": "screens/order1.png",
+      "width": 256,
+      "height": 108,
+      "palette": "vga"
+    },
+    {
+      "name": "order2",
+      "file": "screens/order2.png",
+      "width": 256,
+      "height": 108,
+      "palette": "vga"
+    },
+    {
+      "name": "order3",
+      "file": "screens/order3.png",
+      "width": 256,
+      "height": 108,
+      "palette": "vga"
+    },
+    {
+      "name": "order4",
+      "file": "screens/order4.png",
+      "width": 256,
+      "height": 108,
+      "palette": "vga"
+    },
+    {
+      "name": "order5",
+      "file": "screens/order5.png",
+      "width": 256,
+      "height": 108,
+      "palette": "vga"
+    },
+    {
+      "name": "order6",
+      "file": "screens/order6.png",
+      "width": 256,
+      "height": 108,
+      "palette": "vga"
+    },
+    {
+      "name": "order7",
+      "file": "screens/order7.png",
+      "width": 256,
+      "height": 108,
+      "palette": "vga"
+    },
+    {
+      "name": "planet",
+      "file": "screens/planet.png",
+      "width": 320,
+      "height": 200,
+      "palette": "vga"
+    },
+    {
+      "name": "publish",
+      "file": "screens/publish.png",
+      "width": 320,
+      "height": 200,
+      "palette": "publish"
+    },
+    {
+      "name": "reg1",
+      "file": "screens/reg1.png",
+      "width": 320,
+      "height": 200,
+      "palette": "reg1"
+    },
+    {
+      "name": "reg2",
+      "file": "screens/reg2.png",
+      "width": 320,
+      "height": 200,
+      "palette": "reg2"
+    },
+    {
+      "name": "savesc",
+      "file": "screens/savesc.png",
+      "width": 320,
+      "height": 200,
+      "palette": "vga"
+    },
+    {
+      "name": "statbar",
+      "file": "screens/statbar.png",
+      "width": 320,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "svga1",
+      "file": "screens/svga1.png",
+      "width": 256,
+      "height": 108,
+      "palette": "vga"
+    },
+    {
+      "name": "title",
+      "file": "screens/title.png",
+      "width": 320,
+      "height": 200,
+      "palette": "vga"
+    },
+    {
+      "name": "trilogo",
+      "file": "screens/trilogo.png",
+      "width": 320,
+      "height": 200,
+      "palette": "trilogo"
+    },
+    {
+      "name": "vel2",
+      "file": "screens/vel2.png",
+      "width": 320,
+      "height": 200,
+      "palette": "vga"
+    }
+  ],
+  "textures": [
+    {
+      "name": "afbody",
+      "file": "textures/afbody.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien6"
+    },
+    {
+      "name": "afight2a",
+      "file": "textures/afight2a.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien"
+    },
+    {
+      "name": "afight2b",
+      "file": "textures/afight2b.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien"
+    },
+    {
+      "name": "afpanel1",
+      "file": "textures/afpanel1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien6"
+    },
+    {
+      "name": "afpanel2",
+      "file": "textures/afpanel2.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien6"
+    },
+    {
+      "name": "aftxt",
+      "file": "textures/aftxt.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien"
+    },
+    {
+      "name": "alien13",
+      "file": "textures/alien13.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien6"
+    },
+    {
+      "name": "alshptxt",
+      "file": "textures/alshptxt.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "ampad",
+      "file": "textures/ampad.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien"
+    },
+    {
+      "name": "ant0000",
+      "file": "textures/ant0000.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "ant0004",
+      "file": "textures/ant0004.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "ant0008",
+      "file": "textures/ant0008.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "ant0012",
+      "file": "textures/ant0012.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "apanel1",
+      "file": "textures/apanel1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien"
+    },
+    {
+      "name": "apanel2",
+      "file": "textures/apanel2.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien"
+    },
+    {
+      "name": "apanel3",
+      "file": "textures/apanel3.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien"
+    },
+    {
+      "name": "apanel4",
+      "file": "textures/apanel4.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien"
+    },
+    {
+      "name": "apanel5",
+      "file": "textures/apanel5.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien"
+    },
+    {
+      "name": "apanel6",
+      "file": "textures/apanel6.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien"
+    },
+    {
+      "name": "apanel7",
+      "file": "textures/apanel7.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien"
+    },
+    {
+      "name": "apanel8",
+      "file": "textures/apanel8.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien"
+    },
+    {
+      "name": "apanel9",
+      "file": "textures/apanel9.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien"
+    },
+    {
+      "name": "apanent",
+      "file": "textures/apanent.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien3"
+    },
+    {
+      "name": "apanent2",
+      "file": "textures/apanent2.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien"
+    },
+    {
+      "name": "arbsyl1",
+      "file": "textures/arbsyl1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "arbsyl2",
+      "file": "textures/arbsyl2.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "arcbos3",
+      "file": "textures/arcbos3.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "arcbos4",
+      "file": "textures/arcbos4.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "arcbos5",
+      "file": "textures/arcbos5.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "arcbos8",
+      "file": "textures/arcbos8.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "arctarg",
+      "file": "textures/arctarg.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "arm",
+      "file": "textures/arm.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "atm0",
+      "file": "textures/atm0.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "atm1",
+      "file": "textures/atm1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "atm2",
+      "file": "textures/atm2.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "atm3",
+      "file": "textures/atm3.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "back2",
+      "file": "textures/back2.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "backside",
+      "file": "textures/backside.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "base",
+      "file": "textures/base.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "bemm2",
+      "file": "textures/bemm2.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "bfirj0",
+      "file": "textures/bfirj0.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "bfirj1",
+      "file": "textures/bfirj1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "bfirj2",
+      "file": "textures/bfirj2.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "bfirj3",
+      "file": "textures/bfirj3.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "bguard",
+      "file": "textures/bguard.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "bigdirt",
+      "file": "textures/bigdirt.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyn-t1"
+    },
+    {
+      "name": "bigdirt1",
+      "file": "textures/bigdirt1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyn-t1"
+    },
+    {
+      "name": "bigex1",
+      "file": "textures/bigex1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "bigex10",
+      "file": "textures/bigex10.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "bigex11",
+      "file": "textures/bigex11.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "bigex12",
+      "file": "textures/bigex12.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "bigex13",
+      "file": "textures/bigex13.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "bigex14",
+      "file": "textures/bigex14.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "bigex15",
+      "file": "textures/bigex15.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "bigex16",
+      "file": "textures/bigex16.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "bigex2",
+      "file": "textures/bigex2.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "bigex3",
+      "file": "textures/bigex3.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "bigex4",
+      "file": "textures/bigex4.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "bigex5",
+      "file": "textures/bigex5.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "bigex6",
+      "file": "textures/bigex6.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "bigex7",
+      "file": "textures/bigex7.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "bigex8",
+      "file": "textures/bigex8.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "bigex9",
+      "file": "textures/bigex9.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "bigside",
+      "file": "textures/bigside.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "bildy",
+      "file": "textures/bildy.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "bildy2",
+      "file": "textures/bildy2.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "billow1",
+      "file": "textures/billow1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "billow10",
+      "file": "textures/billow10.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "billow11",
+      "file": "textures/billow11.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "billow12",
+      "file": "textures/billow12.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "billow13",
+      "file": "textures/billow13.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "billow14",
+      "file": "textures/billow14.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "billow15",
+      "file": "textures/billow15.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "billow16",
+      "file": "textures/billow16.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "billow2",
+      "file": "textures/billow2.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "billow3",
+      "file": "textures/billow3.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "billow4",
+      "file": "textures/billow4.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "billow5",
+      "file": "textures/billow5.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "billow6",
+      "file": "textures/billow6.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "billow7",
+      "file": "textures/billow7.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "billow8",
+      "file": "textures/billow8.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "billow9",
+      "file": "textures/billow9.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "bkcorner",
+      "file": "textures/bkcorner.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "blades",
+      "file": "textures/blades.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "blak",
+      "file": "textures/blak.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien6"
+    },
+    {
+      "name": "blast1",
+      "file": "textures/blast1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "blast10",
+      "file": "textures/blast10.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "blast11",
+      "file": "textures/blast11.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "blast12",
+      "file": "textures/blast12.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "blast13",
+      "file": "textures/blast13.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "blast14",
+      "file": "textures/blast14.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "blast15",
+      "file": "textures/blast15.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "blast16",
+      "file": "textures/blast16.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "blast2",
+      "file": "textures/blast2.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "blast3",
+      "file": "textures/blast3.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "blast4",
+      "file": "textures/blast4.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "blast5",
+      "file": "textures/blast5.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "blast6",
+      "file": "textures/blast6.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "blast7",
+      "file": "textures/blast7.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "blast8",
+      "file": "textures/blast8.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "blast9",
+      "file": "textures/blast9.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "blue",
+      "file": "textures/blue.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "bluetrt",
+      "file": "textures/bluetrt.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "bord2",
+      "file": "textures/bord2.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien"
+    },
+    {
+      "name": "borg1",
+      "file": "textures/borg1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien"
+    },
+    {
+      "name": "boss0",
+      "file": "textures/boss0.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "boss1",
+      "file": "textures/boss1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "bsidea",
+      "file": "textures/bsidea.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "bsideb",
+      "file": "textures/bsideb.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "btl",
+      "file": "textures/btl.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "btll",
+      "file": "textures/btll.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "btm1",
+      "file": "textures/btm1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien"
+    },
+    {
+      "name": "btr",
+      "file": "textures/btr.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "btsl",
+      "file": "textures/btsl.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "btst",
+      "file": "textures/btst.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "bttt",
+      "file": "textures/bttt.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "bullet",
+      "file": "textures/bullet.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "bunkl",
+      "file": "textures/bunkl.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "burn",
+      "file": "textures/burn.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "canbase0",
+      "file": "textures/canbase0.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "canbase1",
+      "file": "textures/canbase1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "canbase2",
+      "file": "textures/canbase2.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "canbase3",
+      "file": "textures/canbase3.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "canbase4",
+      "file": "textures/canbase4.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "canbase5",
+      "file": "textures/canbase5.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "canbase6",
+      "file": "textures/canbase6.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "canbase7",
+      "file": "textures/canbase7.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "canbase8",
+      "file": "textures/canbase8.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "canhole",
+      "file": "textures/canhole.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "canmet",
+      "file": "textures/canmet.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "canpad",
+      "file": "textures/canpad.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "canyn-t1",
+      "file": "textures/canyn-t1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "canyn-t2",
+      "file": "textures/canyn-t2.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "canyon0",
+      "file": "textures/canyon0.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "canyon1",
+      "file": "textures/canyon1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "canyon10",
+      "file": "textures/canyon10.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "canyon11",
+      "file": "textures/canyon11.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "canyon12",
+      "file": "textures/canyon12.png",
+      "width": 64,
+      "height": 64,
+      "palette": "multi2"
+    },
+    {
+      "name": "canyon13",
+      "file": "textures/canyon13.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "canyon14",
+      "file": "textures/canyon14.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "canyon15",
+      "file": "textures/canyon15.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "canyon16",
+      "file": "textures/canyon16.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "canyon2",
+      "file": "textures/canyon2.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "canyon3",
+      "file": "textures/canyon3.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "canyon4",
+      "file": "textures/canyon4.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "canyon5",
+      "file": "textures/canyon5.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "canyon6",
+      "file": "textures/canyon6.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "canyon7",
+      "file": "textures/canyon7.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "canyon8",
+      "file": "textures/canyon8.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "canyon9",
+      "file": "textures/canyon9.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "check0",
+      "file": "textures/check0.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "check1",
+      "file": "textures/check1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "citygrid",
+      "file": "textures/citygrid.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "cloudx",
+      "file": "textures/cloudx.png",
+      "width": 64,
+      "height": 64,
+      "palette": "cloudx"
+    },
+    {
+      "name": "compan1",
+      "file": "textures/compan1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "compan2",
+      "file": "textures/compan2.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "compan3",
+      "file": "textures/compan3.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "compan4",
+      "file": "textures/compan4.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "compan5",
+      "file": "textures/compan5.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "connecta",
+      "file": "textures/connecta.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien"
+    },
+    {
+      "name": "controls",
+      "file": "textures/controls.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "cruiser",
+      "file": "textures/cruiser.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "dash",
+      "file": "textures/dash.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "denter",
+      "file": "textures/denter.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "dirtylit",
+      "file": "textures/dirtylit.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyn-t1"
+    },
+    {
+      "name": "discy1",
+      "file": "textures/discy1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien6"
+    },
+    {
+      "name": "dish",
+      "file": "textures/dish.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "dishg",
+      "file": "textures/dishg.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien"
+    },
+    {
+      "name": "dishpo01",
+      "file": "textures/dishpo01.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien"
+    },
+    {
+      "name": "dronetxt",
+      "file": "textures/dronetxt.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien6"
+    },
+    {
+      "name": "drtop",
+      "file": "textures/drtop.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "electri0",
+      "file": "textures/electri0.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "electri1",
+      "file": "textures/electri1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "electri2",
+      "file": "textures/electri2.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "electri3",
+      "file": "textures/electri3.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "enca0000",
+      "file": "textures/enca0000.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "enca0001",
+      "file": "textures/enca0001.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "enca0002",
+      "file": "textures/enca0002.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "enca0003",
+      "file": "textures/enca0003.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "entun0",
+      "file": "textures/entun0.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "entun1",
+      "file": "textures/entun1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "exp1",
+      "file": "textures/exp1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "exp2",
+      "file": "textures/exp2.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "extun0",
+      "file": "textures/extun0.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "extun1",
+      "file": "textures/extun1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "fintail",
+      "file": "textures/fintail.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "firbal0",
+      "file": "textures/firbal0.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "firbal1",
+      "file": "textures/firbal1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "firbal2",
+      "file": "textures/firbal2.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "firbal3",
+      "file": "textures/firbal3.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "fire",
+      "file": "textures/fire.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien6"
+    },
+    {
+      "name": "fireb00",
+      "file": "textures/fireb00.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "fireb04",
+      "file": "textures/fireb04.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "fireb08",
+      "file": "textures/fireb08.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "fireb12",
+      "file": "textures/fireb12.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "floor",
+      "file": "textures/floor.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien6"
+    },
+    {
+      "name": "floor1",
+      "file": "textures/floor1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien6"
+    },
+    {
+      "name": "fogsht",
+      "file": "textures/fogsht.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "frag1",
+      "file": "textures/frag1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "frag2",
+      "file": "textures/frag2.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "frag3",
+      "file": "textures/frag3.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "frontsid",
+      "file": "textures/frontsid.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "gbutt",
+      "file": "textures/gbutt.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien6"
+    },
+    {
+      "name": "gidmis",
+      "file": "textures/gidmis.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "gmis00",
+      "file": "textures/gmis00.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "gmis04",
+      "file": "textures/gmis04.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "gmis08",
+      "file": "textures/gmis08.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "gmis12",
+      "file": "textures/gmis12.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "grate2",
+      "file": "textures/grate2.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "grave1",
+      "file": "textures/grave1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "grave2",
+      "file": "textures/grave2.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "graymarb",
+      "file": "textures/graymarb.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "gside1",
+      "file": "textures/gside1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien6"
+    },
+    {
+      "name": "gunn",
+      "file": "textures/gunn.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "gunny",
+      "file": "textures/gunny.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "hang14",
+      "file": "textures/hang14.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien3"
+    },
+    {
+      "name": "hang4",
+      "file": "textures/hang4.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien6"
+    },
+    {
+      "name": "hang5",
+      "file": "textures/hang5.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "hangf5",
+      "file": "textures/hangf5.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien-t1"
+    },
+    {
+      "name": "hangf5r",
+      "file": "textures/hangf5r.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien6"
+    },
+    {
+      "name": "hangfl",
+      "file": "textures/hangfl.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien6"
+    },
+    {
+      "name": "hangflr",
+      "file": "textures/hangflr.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien6"
+    },
+    {
+      "name": "hangs",
+      "file": "textures/hangs.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien6"
+    },
+    {
+      "name": "hangt",
+      "file": "textures/hangt.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien3"
+    },
+    {
+      "name": "hawkbot2",
+      "file": "textures/hawkbot2.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "hawktop4",
+      "file": "textures/hawktop4.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "hawkw5",
+      "file": "textures/hawkw5.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "hbak",
+      "file": "textures/hbak.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "hcirc6",
+      "file": "textures/hcirc6.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien6"
+    },
+    {
+      "name": "hfro",
+      "file": "textures/hfro.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "hittop",
+      "file": "textures/hittop.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "hittopd",
+      "file": "textures/hittopd.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "hitz",
+      "file": "textures/hitz.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "hkyle1",
+      "file": "textures/hkyle1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien6"
+    },
+    {
+      "name": "hsidea",
+      "file": "textures/hsidea.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "hsign",
+      "file": "textures/hsign.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien6"
+    },
+    {
+      "name": "hull",
+      "file": "textures/hull.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "ice3",
+      "file": "textures/ice3.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "icebaby",
+      "file": "textures/icebaby.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic-t1"
+    },
+    {
+      "name": "icebaby2",
+      "file": "textures/icebaby2.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic-t1"
+    },
+    {
+      "name": "icebak02",
+      "file": "textures/icebak02.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "icebase1",
+      "file": "textures/icebase1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "icebase2",
+      "file": "textures/icebase2.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "icebase3",
+      "file": "textures/icebase3.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "icebase4",
+      "file": "textures/icebase4.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "icebase5",
+      "file": "textures/icebase5.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "icebase6",
+      "file": "textures/icebase6.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "icebase7",
+      "file": "textures/icebase7.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "icebase8",
+      "file": "textures/icebase8.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "icebase9",
+      "file": "textures/icebase9.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "icebot",
+      "file": "textures/icebot.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "icedo1",
+      "file": "textures/icedo1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "iceg0",
+      "file": "textures/iceg0.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "iceg1",
+      "file": "textures/iceg1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "iceg2",
+      "file": "textures/iceg2.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "iceg3",
+      "file": "textures/iceg3.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "iceg4",
+      "file": "textures/iceg4.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "iceg5",
+      "file": "textures/iceg5.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "iceg6",
+      "file": "textures/iceg6.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "iceg7",
+      "file": "textures/iceg7.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "iceg8",
+      "file": "textures/iceg8.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "iceho",
+      "file": "textures/iceho.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "icehole",
+      "file": "textures/icehole.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "icejoe",
+      "file": "textures/icejoe.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "icelit3",
+      "file": "textures/icelit3.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic-t1"
+    },
+    {
+      "name": "icelitw1",
+      "file": "textures/icelitw1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "icestckl",
+      "file": "textures/icestckl.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "icestckr",
+      "file": "textures/icestckr.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "icetest",
+      "file": "textures/icetest.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "icetop3",
+      "file": "textures/icetop3.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "icetop5",
+      "file": "textures/icetop5.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "icewing",
+      "file": "textures/icewing.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "invi0000",
+      "file": "textures/invi0000.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "invi0004",
+      "file": "textures/invi0004.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "invi0008",
+      "file": "textures/invi0008.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "invi0012",
+      "file": "textures/invi0012.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "invin00",
+      "file": "textures/invin00.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "invin04",
+      "file": "textures/invin04.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "invin08",
+      "file": "textures/invin08.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "invin12",
+      "file": "textures/invin12.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "invis",
+      "file": "textures/invis.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "iris",
+      "file": "textures/iris.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic-t1"
+    },
+    {
+      "name": "jump0",
+      "file": "textures/jump0.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "jump1",
+      "file": "textures/jump1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "laser00",
+      "file": "textures/laser00.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "laser04",
+      "file": "textures/laser04.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "laser08",
+      "file": "textures/laser08.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "laser12",
+      "file": "textures/laser12.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "lasr1",
+      "file": "textures/lasr1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "lbll",
+      "file": "textures/lbll.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "leftside",
+      "file": "textures/leftside.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "lgwing",
+      "file": "textures/lgwing.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien6"
+    },
+    {
+      "name": "linebars",
+      "file": "textures/linebars.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "ltop",
+      "file": "textures/ltop.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "ltopl",
+      "file": "textures/ltopl.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "ltopr",
+      "file": "textures/ltopr.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "m1",
+      "file": "textures/m1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "m2",
+      "file": "textures/m2.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "m3",
+      "file": "textures/m3.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "mainmis",
+      "file": "textures/mainmis.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "maintp",
+      "file": "textures/maintp.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "mark0",
+      "file": "textures/mark0.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "mark1",
+      "file": "textures/mark1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "mark10",
+      "file": "textures/mark10.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "mark11",
+      "file": "textures/mark11.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "mark12",
+      "file": "textures/mark12.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "mark13",
+      "file": "textures/mark13.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "mark14",
+      "file": "textures/mark14.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "mark15",
+      "file": "textures/mark15.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "mark16",
+      "file": "textures/mark16.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "mark17",
+      "file": "textures/mark17.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "mark18",
+      "file": "textures/mark18.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "mark19",
+      "file": "textures/mark19.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "mark2",
+      "file": "textures/mark2.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "mark20",
+      "file": "textures/mark20.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "mark21",
+      "file": "textures/mark21.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "mark22",
+      "file": "textures/mark22.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "mark23",
+      "file": "textures/mark23.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "mark24",
+      "file": "textures/mark24.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "mark25",
+      "file": "textures/mark25.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "mark26",
+      "file": "textures/mark26.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "mark27",
+      "file": "textures/mark27.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "mark28",
+      "file": "textures/mark28.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "mark29",
+      "file": "textures/mark29.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "mark3",
+      "file": "textures/mark3.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "mark30",
+      "file": "textures/mark30.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "mark31",
+      "file": "textures/mark31.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "mark32",
+      "file": "textures/mark32.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "mark4",
+      "file": "textures/mark4.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "mark5",
+      "file": "textures/mark5.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "mark6",
+      "file": "textures/mark6.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "mark7",
+      "file": "textures/mark7.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "mark8",
+      "file": "textures/mark8.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "mark9",
+      "file": "textures/mark9.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "markmtl4",
+      "file": "textures/markmtl4.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "markmtlx",
+      "file": "textures/markmtlx.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien6"
+    },
+    {
+      "name": "mback1",
+      "file": "textures/mback1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "mbot",
+      "file": "textures/mbot.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien"
+    },
+    {
+      "name": "metal2",
+      "file": "textures/metal2.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "middsid",
+      "file": "textures/middsid.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "middsidb",
+      "file": "textures/middsidb.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "mido",
+      "file": "textures/mido.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "midsid",
+      "file": "textures/midsid.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "midtl",
+      "file": "textures/midtl.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "misfin",
+      "file": "textures/misfin.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "miss",
+      "file": "textures/miss.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "miss0000",
+      "file": "textures/miss0000.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "miss0002",
+      "file": "textures/miss0002.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "miss0004",
+      "file": "textures/miss0004.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "miss0006",
+      "file": "textures/miss0006.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "missle",
+      "file": "textures/missle.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien"
+    },
+    {
+      "name": "miswing",
+      "file": "textures/miswing.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "momwing1",
+      "file": "textures/momwing1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "mother1",
+      "file": "textures/mother1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "mother2",
+      "file": "textures/mother2.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "mplanet",
+      "file": "textures/mplanet.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "msslfir0",
+      "file": "textures/msslfir0.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "msslfir1",
+      "file": "textures/msslfir1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "msslfir2",
+      "file": "textures/msslfir2.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "msslfir3",
+      "file": "textures/msslfir3.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "navpan2",
+      "file": "textures/navpan2.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien"
+    },
+    {
+      "name": "navpanls",
+      "file": "textures/navpanls.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien"
+    },
+    {
+      "name": "navtar01",
+      "file": "textures/navtar01.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "ndor",
+      "file": "textures/ndor.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "ndor1",
+      "file": "textures/ndor1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "newsky",
+      "file": "textures/newsky.png",
+      "width": 64,
+      "height": 64,
+      "palette": "sunset"
+    },
+    {
+      "name": "nl",
+      "file": "textures/nl.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "nnl",
+      "file": "textures/nnl.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "nr",
+      "file": "textures/nr.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "panl",
+      "file": "textures/panl.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien3"
+    },
+    {
+      "name": "pb03",
+      "file": "textures/pb03.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "pball1",
+      "file": "textures/pball1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "pball2",
+      "file": "textures/pball2.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "pball3",
+      "file": "textures/pball3.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "pball4",
+      "file": "textures/pball4.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "pdoor",
+      "file": "textures/pdoor.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyn-t1"
+    },
+    {
+      "name": "pine",
+      "file": "textures/pine.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "pipe",
+      "file": "textures/pipe.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "plasma00",
+      "file": "textures/plasma00.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "plasma04",
+      "file": "textures/plasma04.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "plasma08",
+      "file": "textures/plasma08.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "plasma12",
+      "file": "textures/plasma12.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "plate",
+      "file": "textures/plate.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic-t2"
+    },
+    {
+      "name": "pole",
+      "file": "textures/pole.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "por",
+      "file": "textures/por.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "ptunn",
+      "file": "textures/ptunn.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyn-t1"
+    },
+    {
+      "name": "puff1",
+      "file": "textures/puff1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "puff2",
+      "file": "textures/puff2.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "puff3",
+      "file": "textures/puff3.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "puff4",
+      "file": "textures/puff4.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "pulse0",
+      "file": "textures/pulse0.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "pulse1",
+      "file": "textures/pulse1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "pulse2",
+      "file": "textures/pulse2.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "pulse3",
+      "file": "textures/pulse3.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "purfrin0",
+      "file": "textures/purfrin0.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "purfrin1",
+      "file": "textures/purfrin1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "purfrin2",
+      "file": "textures/purfrin2.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "purfrin3",
+      "file": "textures/purfrin3.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "raycan2",
+      "file": "textures/raycan2.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "raycan7",
+      "file": "textures/raycan7.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "raycanon",
+      "file": "textures/raycanon.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "ref",
+      "file": "textures/ref.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "refine",
+      "file": "textures/refine.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic-t2"
+    },
+    {
+      "name": "reflbx",
+      "file": "textures/reflbx.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien3"
+    },
+    {
+      "name": "reflct",
+      "file": "textures/reflct.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien3"
+    },
+    {
+      "name": "rgwing",
+      "file": "textures/rgwing.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien6"
+    },
+    {
+      "name": "rightsid",
+      "file": "textures/rightsid.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "ring3",
+      "file": "textures/ring3.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "rtop1",
+      "file": "textures/rtop1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic-t2"
+    },
+    {
+      "name": "rustplat",
+      "file": "textures/rustplat.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien"
+    },
+    {
+      "name": "sat5",
+      "file": "textures/sat5.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "sbodya",
+      "file": "textures/sbodya.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "sf",
+      "file": "textures/sf.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "shadow",
+      "file": "textures/shadow.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "shei0000",
+      "file": "textures/shei0000.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "shei0004",
+      "file": "textures/shei0004.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "shei0008",
+      "file": "textures/shei0008.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "shei0012",
+      "file": "textures/shei0012.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "sheild0",
+      "file": "textures/sheild0.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "sheild1",
+      "file": "textures/sheild1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "sheild2",
+      "file": "textures/sheild2.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "sheild3",
+      "file": "textures/sheild3.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "shipbak",
+      "file": "textures/shipbak.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "shipplat",
+      "file": "textures/shipplat.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien3"
+    },
+    {
+      "name": "shiptop",
+      "file": "textures/shiptop.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "shiptxt",
+      "file": "textures/shiptxt.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien3"
+    },
+    {
+      "name": "shld",
+      "file": "textures/shld.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "shld1",
+      "file": "textures/shld1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "side01",
+      "file": "textures/side01.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "sky",
+      "file": "textures/sky.png",
+      "width": 64,
+      "height": 64,
+      "palette": "dsrtsky"
+    },
+    {
+      "name": "snback",
+      "file": "textures/snback.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "snoring",
+      "file": "textures/snoring.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "snowbot2",
+      "file": "textures/snowbot2.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "snowtop5",
+      "file": "textures/snowtop5.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "snwing",
+      "file": "textures/snwing.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "sprmis00",
+      "file": "textures/sprmis00.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "sprmis04",
+      "file": "textures/sprmis04.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "sprmis08",
+      "file": "textures/sprmis08.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "sprmis12",
+      "file": "textures/sprmis12.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "sptxt",
+      "file": "textures/sptxt.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien3"
+    },
+    {
+      "name": "sqglsr",
+      "file": "textures/sqglsr.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "standsi1",
+      "file": "textures/standsi1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "tankplt",
+      "file": "textures/tankplt.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "tanktop",
+      "file": "textures/tanktop.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "targ0",
+      "file": "textures/targ0.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "targ1",
+      "file": "textures/targ1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "tipt",
+      "file": "textures/tipt.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien"
+    },
+    {
+      "name": "topvew",
+      "file": "textures/topvew.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "topview",
+      "file": "textures/topview.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "towrmid",
+      "file": "textures/towrmid.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "tp1",
+      "file": "textures/tp1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "tpart",
+      "file": "textures/tpart.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "tpdish",
+      "file": "textures/tpdish.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien3"
+    },
+    {
+      "name": "transtxt",
+      "file": "textures/transtxt.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyon"
+    },
+    {
+      "name": "tread",
+      "file": "textures/tread.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "tree",
+      "file": "textures/tree.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "tri0",
+      "file": "textures/tri0.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien"
+    },
+    {
+      "name": "tri1",
+      "file": "textures/tri1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien"
+    },
+    {
+      "name": "tri10",
+      "file": "textures/tri10.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien"
+    },
+    {
+      "name": "tri11",
+      "file": "textures/tri11.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien"
+    },
+    {
+      "name": "tri12",
+      "file": "textures/tri12.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien"
+    },
+    {
+      "name": "tri13",
+      "file": "textures/tri13.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien"
+    },
+    {
+      "name": "tri14",
+      "file": "textures/tri14.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien"
+    },
+    {
+      "name": "tri15",
+      "file": "textures/tri15.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien"
+    },
+    {
+      "name": "tri2",
+      "file": "textures/tri2.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien"
+    },
+    {
+      "name": "tri3",
+      "file": "textures/tri3.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien"
+    },
+    {
+      "name": "tri4",
+      "file": "textures/tri4.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien"
+    },
+    {
+      "name": "tri5",
+      "file": "textures/tri5.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien"
+    },
+    {
+      "name": "tri6",
+      "file": "textures/tri6.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien"
+    },
+    {
+      "name": "tri7",
+      "file": "textures/tri7.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien"
+    },
+    {
+      "name": "tri8",
+      "file": "textures/tri8.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien"
+    },
+    {
+      "name": "tri9",
+      "file": "textures/tri9.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien"
+    },
+    {
+      "name": "tripmis1",
+      "file": "textures/tripmis1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "turret",
+      "file": "textures/turret.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "vgradbum",
+      "file": "textures/vgradbum.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien"
+    },
+    {
+      "name": "vside",
+      "file": "textures/vside.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "warhed",
+      "file": "textures/warhed.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "wheel01",
+      "file": "textures/wheel01.png",
+      "width": 64,
+      "height": 64,
+      "palette": "artic"
+    },
+    {
+      "name": "window1",
+      "file": "textures/window1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien6"
+    },
+    {
+      "name": "yellow12",
+      "file": "textures/yellow12.png",
+      "width": 64,
+      "height": 64,
+      "palette": "alien6"
+    },
+    {
+      "name": "zap00",
+      "file": "textures/zap00.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "zap04",
+      "file": "textures/zap04.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "zap08",
+      "file": "textures/zap08.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "zap12",
+      "file": "textures/zap12.png",
+      "width": 64,
+      "height": 64,
+      "palette": "vga"
+    },
+    {
+      "name": "zdoor1",
+      "file": "textures/zdoor1.png",
+      "width": 64,
+      "height": 64,
+      "palette": "canyn-t1"
+    }
+  ],
+  "sprites": [
+    {
+      "name": "afbody",
+      "file": "sprites/afbody.png",
+      "palette": "alien6"
+    },
+    {
+      "name": "afight2a",
+      "file": "sprites/afight2a.png",
+      "palette": "alien"
+    },
+    {
+      "name": "afight2b",
+      "file": "sprites/afight2b.png",
+      "palette": "alien"
+    },
+    {
+      "name": "afpanel1",
+      "file": "sprites/afpanel1.png",
+      "palette": "alien6"
+    },
+    {
+      "name": "afpanel2",
+      "file": "sprites/afpanel2.png",
+      "palette": "alien6"
+    },
+    {
+      "name": "aftxt",
+      "file": "sprites/aftxt.png",
+      "palette": "alien"
+    },
+    {
+      "name": "alien13",
+      "file": "sprites/alien13.png",
+      "palette": "alien6"
+    },
+    {
+      "name": "alshptxt",
+      "file": "sprites/alshptxt.png",
+      "palette": "vga"
+    },
+    {
+      "name": "ant0000",
+      "file": "sprites/ant0000.png",
+      "palette": "vga"
+    },
+    {
+      "name": "ant0004",
+      "file": "sprites/ant0004.png",
+      "palette": "vga"
+    },
+    {
+      "name": "ant0008",
+      "file": "sprites/ant0008.png",
+      "palette": "vga"
+    },
+    {
+      "name": "ant0012",
+      "file": "sprites/ant0012.png",
+      "palette": "vga"
+    },
+    {
+      "name": "arbsyl1",
+      "file": "sprites/arbsyl1.png",
+      "palette": "vga"
+    },
+    {
+      "name": "arbsyl2",
+      "file": "sprites/arbsyl2.png",
+      "palette": "vga"
+    },
+    {
+      "name": "arcbos3",
+      "file": "sprites/arcbos3.png",
+      "palette": "vga"
+    },
+    {
+      "name": "arcbos4",
+      "file": "sprites/arcbos4.png",
+      "palette": "vga"
+    },
+    {
+      "name": "arcbos5",
+      "file": "sprites/arcbos5.png",
+      "palette": "vga"
+    },
+    {
+      "name": "arcbos8",
+      "file": "sprites/arcbos8.png",
+      "palette": "vga"
+    },
+    {
+      "name": "arctarg",
+      "file": "sprites/arctarg.png",
+      "palette": "vga"
+    },
+    {
+      "name": "arm",
+      "file": "sprites/arm.png",
+      "palette": "vga"
+    },
+    {
+      "name": "atm0",
+      "file": "sprites/atm0.png",
+      "palette": "vga"
+    },
+    {
+      "name": "atm1",
+      "file": "sprites/atm1.png",
+      "palette": "vga"
+    },
+    {
+      "name": "atm2",
+      "file": "sprites/atm2.png",
+      "palette": "vga"
+    },
+    {
+      "name": "atm3",
+      "file": "sprites/atm3.png",
+      "palette": "vga"
+    },
+    {
+      "name": "back2",
+      "file": "sprites/back2.png",
+      "palette": "vga"
+    },
+    {
+      "name": "backside",
+      "file": "sprites/backside.png",
+      "palette": "artic"
+    },
+    {
+      "name": "base",
+      "file": "sprites/base.png",
+      "palette": "vga"
+    },
+    {
+      "name": "bemm2",
+      "file": "sprites/bemm2.png",
+      "palette": "vga"
+    },
+    {
+      "name": "bfirj0",
+      "file": "sprites/bfirj0.png",
+      "palette": "vga"
+    },
+    {
+      "name": "bfirj1",
+      "file": "sprites/bfirj1.png",
+      "palette": "vga"
+    },
+    {
+      "name": "bfirj2",
+      "file": "sprites/bfirj2.png",
+      "palette": "vga"
+    },
+    {
+      "name": "bfirj3",
+      "file": "sprites/bfirj3.png",
+      "palette": "vga"
+    },
+    {
+      "name": "bguard",
+      "file": "sprites/bguard.png",
+      "palette": "artic"
+    },
+    {
+      "name": "bigex1",
+      "file": "sprites/bigex1.png",
+      "palette": "vga"
+    },
+    {
+      "name": "bigex10",
+      "file": "sprites/bigex10.png",
+      "palette": "vga"
+    },
+    {
+      "name": "bigex11",
+      "file": "sprites/bigex11.png",
+      "palette": "vga"
+    },
+    {
+      "name": "bigex12",
+      "file": "sprites/bigex12.png",
+      "palette": "vga"
+    },
+    {
+      "name": "bigex13",
+      "file": "sprites/bigex13.png",
+      "palette": "vga"
+    },
+    {
+      "name": "bigex14",
+      "file": "sprites/bigex14.png",
+      "palette": "vga"
+    },
+    {
+      "name": "bigex15",
+      "file": "sprites/bigex15.png",
+      "palette": "vga"
+    },
+    {
+      "name": "bigex16",
+      "file": "sprites/bigex16.png",
+      "palette": "vga"
+    },
+    {
+      "name": "bigex2",
+      "file": "sprites/bigex2.png",
+      "palette": "vga"
+    },
+    {
+      "name": "bigex3",
+      "file": "sprites/bigex3.png",
+      "palette": "vga"
+    },
+    {
+      "name": "bigex4",
+      "file": "sprites/bigex4.png",
+      "palette": "vga"
+    },
+    {
+      "name": "bigex5",
+      "file": "sprites/bigex5.png",
+      "palette": "vga"
+    },
+    {
+      "name": "bigex6",
+      "file": "sprites/bigex6.png",
+      "palette": "vga"
+    },
+    {
+      "name": "bigex7",
+      "file": "sprites/bigex7.png",
+      "palette": "vga"
+    },
+    {
+      "name": "bigex8",
+      "file": "sprites/bigex8.png",
+      "palette": "vga"
+    },
+    {
+      "name": "bigex9",
+      "file": "sprites/bigex9.png",
+      "palette": "vga"
+    },
+    {
+      "name": "bigside",
+      "file": "sprites/bigside.png",
+      "palette": "vga"
+    },
+    {
+      "name": "bildy",
+      "file": "sprites/bildy.png",
+      "palette": "canyon"
+    },
+    {
+      "name": "bildy2",
+      "file": "sprites/bildy2.png",
+      "palette": "canyon"
+    },
+    {
+      "name": "billow1",
+      "file": "sprites/billow1.png",
+      "palette": "vga"
+    },
+    {
+      "name": "billow10",
+      "file": "sprites/billow10.png",
+      "palette": "vga"
+    },
+    {
+      "name": "billow11",
+      "file": "sprites/billow11.png",
+      "palette": "vga"
+    },
+    {
+      "name": "billow12",
+      "file": "sprites/billow12.png",
+      "palette": "vga"
+    },
+    {
+      "name": "billow13",
+      "file": "sprites/billow13.png",
+      "palette": "vga"
+    },
+    {
+      "name": "billow14",
+      "file": "sprites/billow14.png",
+      "palette": "vga"
+    },
+    {
+      "name": "billow15",
+      "file": "sprites/billow15.png",
+      "palette": "vga"
+    },
+    {
+      "name": "billow16",
+      "file": "sprites/billow16.png",
+      "palette": "vga"
+    },
+    {
+      "name": "billow2",
+      "file": "sprites/billow2.png",
+      "palette": "vga"
+    },
+    {
+      "name": "billow3",
+      "file": "sprites/billow3.png",
+      "palette": "vga"
+    },
+    {
+      "name": "billow4",
+      "file": "sprites/billow4.png",
+      "palette": "vga"
+    },
+    {
+      "name": "billow5",
+      "file": "sprites/billow5.png",
+      "palette": "vga"
+    },
+    {
+      "name": "billow6",
+      "file": "sprites/billow6.png",
+      "palette": "vga"
+    },
+    {
+      "name": "billow7",
+      "file": "sprites/billow7.png",
+      "palette": "vga"
+    },
+    {
+      "name": "billow8",
+      "file": "sprites/billow8.png",
+      "palette": "vga"
+    },
+    {
+      "name": "billow9",
+      "file": "sprites/billow9.png",
+      "palette": "vga"
+    },
+    {
+      "name": "bkcorner",
+      "file": "sprites/bkcorner.png",
+      "palette": "vga"
+    },
+    {
+      "name": "blades",
+      "file": "sprites/blades.png",
+      "palette": "vga"
+    },
+    {
+      "name": "blast1",
+      "file": "sprites/blast1.png",
+      "palette": "vga"
+    },
+    {
+      "name": "blast10",
+      "file": "sprites/blast10.png",
+      "palette": "vga"
+    },
+    {
+      "name": "blast11",
+      "file": "sprites/blast11.png",
+      "palette": "vga"
+    },
+    {
+      "name": "blast12",
+      "file": "sprites/blast12.png",
+      "palette": "vga"
+    },
+    {
+      "name": "blast13",
+      "file": "sprites/blast13.png",
+      "palette": "vga"
+    },
+    {
+      "name": "blast14",
+      "file": "sprites/blast14.png",
+      "palette": "vga"
+    },
+    {
+      "name": "blast15",
+      "file": "sprites/blast15.png",
+      "palette": "vga"
+    },
+    {
+      "name": "blast16",
+      "file": "sprites/blast16.png",
+      "palette": "vga"
+    },
+    {
+      "name": "blast2",
+      "file": "sprites/blast2.png",
+      "palette": "vga"
+    },
+    {
+      "name": "blast3",
+      "file": "sprites/blast3.png",
+      "palette": "vga"
+    },
+    {
+      "name": "blast4",
+      "file": "sprites/blast4.png",
+      "palette": "vga"
+    },
+    {
+      "name": "blast5",
+      "file": "sprites/blast5.png",
+      "palette": "vga"
+    },
+    {
+      "name": "blast6",
+      "file": "sprites/blast6.png",
+      "palette": "vga"
+    },
+    {
+      "name": "blast7",
+      "file": "sprites/blast7.png",
+      "palette": "vga"
+    },
+    {
+      "name": "blast8",
+      "file": "sprites/blast8.png",
+      "palette": "vga"
+    },
+    {
+      "name": "blast9",
+      "file": "sprites/blast9.png",
+      "palette": "vga"
+    },
+    {
+      "name": "blue",
+      "file": "sprites/blue.png",
+      "palette": "canyon"
+    },
+    {
+      "name": "bluetrt",
+      "file": "sprites/bluetrt.png",
+      "palette": "canyon"
+    },
+    {
+      "name": "bord2",
+      "file": "sprites/bord2.png",
+      "palette": "alien"
+    },
+    {
+      "name": "borg1",
+      "file": "sprites/borg1.png",
+      "palette": "alien"
+    },
+    {
+      "name": "boss0",
+      "file": "sprites/boss0.png",
+      "palette": "vga"
+    },
+    {
+      "name": "boss1",
+      "file": "sprites/boss1.png",
+      "palette": "vga"
+    },
+    {
+      "name": "bsidea",
+      "file": "sprites/bsidea.png",
+      "palette": "vga"
+    },
+    {
+      "name": "bsideb",
+      "file": "sprites/bsideb.png",
+      "palette": "vga"
+    },
+    {
+      "name": "btl",
+      "file": "sprites/btl.png",
+      "palette": "artic"
+    },
+    {
+      "name": "btll",
+      "file": "sprites/btll.png",
+      "palette": "artic"
+    },
+    {
+      "name": "btm1",
+      "file": "sprites/btm1.png",
+      "palette": "alien"
+    },
+    {
+      "name": "btr",
+      "file": "sprites/btr.png",
+      "palette": "artic"
+    },
+    {
+      "name": "btsl",
+      "file": "sprites/btsl.png",
+      "palette": "artic"
+    },
+    {
+      "name": "btst",
+      "file": "sprites/btst.png",
+      "palette": "artic"
+    },
+    {
+      "name": "bttt",
+      "file": "sprites/bttt.png",
+      "palette": "artic"
+    },
+    {
+      "name": "bullet",
+      "file": "sprites/bullet.png",
+      "palette": "vga"
+    },
+    {
+      "name": "bunkl",
+      "file": "sprites/bunkl.png",
+      "palette": "artic"
+    },
+    {
+      "name": "burn",
+      "file": "sprites/burn.png",
+      "palette": "vga"
+    },
+    {
+      "name": "canmet",
+      "file": "sprites/canmet.png",
+      "palette": "canyon"
+    },
+    {
+      "name": "check0",
+      "file": "sprites/check0.png",
+      "palette": "vga"
+    },
+    {
+      "name": "check1",
+      "file": "sprites/check1.png",
+      "palette": "vga"
+    },
+    {
+      "name": "citygrid",
+      "file": "sprites/citygrid.png",
+      "palette": "canyon"
+    },
+    {
+      "name": "cloudx",
+      "file": "sprites/cloudx.png",
+      "palette": "cloudx"
+    },
+    {
+      "name": "connecta",
+      "file": "sprites/connecta.png",
+      "palette": "alien"
+    },
+    {
+      "name": "controls",
+      "file": "sprites/controls.png",
+      "palette": "vga"
+    },
+    {
+      "name": "cruiser",
+      "file": "sprites/cruiser.png",
+      "palette": "canyon"
+    },
+    {
+      "name": "dash",
+      "file": "sprites/dash.png",
+      "palette": "vga"
+    },
+    {
+      "name": "denter",
+      "file": "sprites/denter.png",
+      "palette": "vga"
+    },
+    {
+      "name": "discy1",
+      "file": "sprites/discy1.png",
+      "palette": "alien6"
+    },
+    {
+      "name": "dish",
+      "file": "sprites/dish.png",
+      "palette": "vga"
+    },
+    {
+      "name": "dishg",
+      "file": "sprites/dishg.png",
+      "palette": "alien"
+    },
+    {
+      "name": "dishpo01",
+      "file": "sprites/dishpo01.png",
+      "palette": "alien"
+    },
+    {
+      "name": "dronetxt",
+      "file": "sprites/dronetxt.png",
+      "palette": "alien6"
+    },
+    {
+      "name": "drtop",
+      "file": "sprites/drtop.png",
+      "palette": "artic"
+    },
+    {
+      "name": "electri0",
+      "file": "sprites/electri0.png",
+      "palette": "vga"
+    },
+    {
+      "name": "electri1",
+      "file": "sprites/electri1.png",
+      "palette": "vga"
+    },
+    {
+      "name": "electri2",
+      "file": "sprites/electri2.png",
+      "palette": "vga"
+    },
+    {
+      "name": "electri3",
+      "file": "sprites/electri3.png",
+      "palette": "vga"
+    },
+    {
+      "name": "enca0000",
+      "file": "sprites/enca0000.png",
+      "palette": "vga"
+    },
+    {
+      "name": "enca0001",
+      "file": "sprites/enca0001.png",
+      "palette": "vga"
+    },
+    {
+      "name": "enca0002",
+      "file": "sprites/enca0002.png",
+      "palette": "vga"
+    },
+    {
+      "name": "enca0003",
+      "file": "sprites/enca0003.png",
+      "palette": "vga"
+    },
+    {
+      "name": "entun0",
+      "file": "sprites/entun0.png",
+      "palette": "vga"
+    },
+    {
+      "name": "entun1",
+      "file": "sprites/entun1.png",
+      "palette": "vga"
+    },
+    {
+      "name": "exp1",
+      "file": "sprites/exp1.png",
+      "palette": "vga"
+    },
+    {
+      "name": "exp2",
+      "file": "sprites/exp2.png",
+      "palette": "vga"
+    },
+    {
+      "name": "extun0",
+      "file": "sprites/extun0.png",
+      "palette": "vga"
+    },
+    {
+      "name": "extun1",
+      "file": "sprites/extun1.png",
+      "palette": "vga"
+    },
+    {
+      "name": "fintail",
+      "file": "sprites/fintail.png",
+      "palette": "vga"
+    },
+    {
+      "name": "firbal0",
+      "file": "sprites/firbal0.png",
+      "palette": "vga"
+    },
+    {
+      "name": "firbal1",
+      "file": "sprites/firbal1.png",
+      "palette": "vga"
+    },
+    {
+      "name": "firbal2",
+      "file": "sprites/firbal2.png",
+      "palette": "vga"
+    },
+    {
+      "name": "firbal3",
+      "file": "sprites/firbal3.png",
+      "palette": "vga"
+    },
+    {
+      "name": "fire",
+      "file": "sprites/fire.png",
+      "palette": "alien6"
+    },
+    {
+      "name": "fireb00",
+      "file": "sprites/fireb00.png",
+      "palette": "vga"
+    },
+    {
+      "name": "fireb04",
+      "file": "sprites/fireb04.png",
+      "palette": "vga"
+    },
+    {
+      "name": "fireb08",
+      "file": "sprites/fireb08.png",
+      "palette": "vga"
+    },
+    {
+      "name": "fireb12",
+      "file": "sprites/fireb12.png",
+      "palette": "vga"
+    },
+    {
+      "name": "fogsht",
+      "file": "sprites/fogsht.png",
+      "palette": "canyon"
+    },
+    {
+      "name": "frag1",
+      "file": "sprites/frag1.png",
+      "palette": "vga"
+    },
+    {
+      "name": "frag2",
+      "file": "sprites/frag2.png",
+      "palette": "vga"
+    },
+    {
+      "name": "frag3",
+      "file": "sprites/frag3.png",
+      "palette": "vga"
+    },
+    {
+      "name": "frontsid",
+      "file": "sprites/frontsid.png",
+      "palette": "artic"
+    },
+    {
+      "name": "gbutt",
+      "file": "sprites/gbutt.png",
+      "palette": "alien6"
+    },
+    {
+      "name": "gidmis",
+      "file": "sprites/gidmis.png",
+      "palette": "vga"
+    },
+    {
+      "name": "gmis00",
+      "file": "sprites/gmis00.png",
+      "palette": "vga"
+    },
+    {
+      "name": "gmis04",
+      "file": "sprites/gmis04.png",
+      "palette": "vga"
+    },
+    {
+      "name": "gmis08",
+      "file": "sprites/gmis08.png",
+      "palette": "vga"
+    },
+    {
+      "name": "gmis12",
+      "file": "sprites/gmis12.png",
+      "palette": "vga"
+    },
+    {
+      "name": "grate2",
+      "file": "sprites/grate2.png",
+      "palette": "artic"
+    },
+    {
+      "name": "graymarb",
+      "file": "sprites/graymarb.png",
+      "palette": "vga"
+    },
+    {
+      "name": "gside1",
+      "file": "sprites/gside1.png",
+      "palette": "alien6"
+    },
+    {
+      "name": "gunn",
+      "file": "sprites/gunn.png",
+      "palette": "vga"
+    },
+    {
+      "name": "gunny",
+      "file": "sprites/gunny.png",
+      "palette": "canyon"
+    },
+    {
+      "name": "hang5",
+      "file": "sprites/hang5.png",
+      "palette": "artic"
+    },
+    {
+      "name": "hawkbot2",
+      "file": "sprites/hawkbot2.png",
+      "palette": "canyon"
+    },
+    {
+      "name": "hawktop4",
+      "file": "sprites/hawktop4.png",
+      "palette": "canyon"
+    },
+    {
+      "name": "hawkw5",
+      "file": "sprites/hawkw5.png",
+      "palette": "canyon"
+    },
+    {
+      "name": "hbak",
+      "file": "sprites/hbak.png",
+      "palette": "vga"
+    },
+    {
+      "name": "hfro",
+      "file": "sprites/hfro.png",
+      "palette": "vga"
+    },
+    {
+      "name": "hittop",
+      "file": "sprites/hittop.png",
+      "palette": "artic"
+    },
+    {
+      "name": "hittopd",
+      "file": "sprites/hittopd.png",
+      "palette": "artic"
+    },
+    {
+      "name": "hitz",
+      "file": "sprites/hitz.png",
+      "palette": "artic"
+    },
+    {
+      "name": "hsidea",
+      "file": "sprites/hsidea.png",
+      "palette": "vga"
+    },
+    {
+      "name": "hull",
+      "file": "sprites/hull.png",
+      "palette": "artic"
+    },
+    {
+      "name": "ice3",
+      "file": "sprites/ice3.png",
+      "palette": "artic"
+    },
+    {
+      "name": "icebak02",
+      "file": "sprites/icebak02.png",
+      "palette": "artic"
+    },
+    {
+      "name": "icebot",
+      "file": "sprites/icebot.png",
+      "palette": "artic"
+    },
+    {
+      "name": "iceho",
+      "file": "sprites/iceho.png",
+      "palette": "vga"
+    },
+    {
+      "name": "icetest",
+      "file": "sprites/icetest.png",
+      "palette": "artic"
+    },
+    {
+      "name": "icetop3",
+      "file": "sprites/icetop3.png",
+      "palette": "artic"
+    },
+    {
+      "name": "icetop5",
+      "file": "sprites/icetop5.png",
+      "palette": "artic"
+    },
+    {
+      "name": "icewing",
+      "file": "sprites/icewing.png",
+      "palette": "artic"
+    },
+    {
+      "name": "invi0000",
+      "file": "sprites/invi0000.png",
+      "palette": "vga"
+    },
+    {
+      "name": "invi0004",
+      "file": "sprites/invi0004.png",
+      "palette": "vga"
+    },
+    {
+      "name": "invi0008",
+      "file": "sprites/invi0008.png",
+      "palette": "vga"
+    },
+    {
+      "name": "invi0012",
+      "file": "sprites/invi0012.png",
+      "palette": "vga"
+    },
+    {
+      "name": "invin00",
+      "file": "sprites/invin00.png",
+      "palette": "vga"
+    },
+    {
+      "name": "invin04",
+      "file": "sprites/invin04.png",
+      "palette": "vga"
+    },
+    {
+      "name": "invin08",
+      "file": "sprites/invin08.png",
+      "palette": "vga"
+    },
+    {
+      "name": "invin12",
+      "file": "sprites/invin12.png",
+      "palette": "vga"
+    },
+    {
+      "name": "invis",
+      "file": "sprites/invis.png",
+      "palette": "vga"
+    },
+    {
+      "name": "jump0",
+      "file": "sprites/jump0.png",
+      "palette": "vga"
+    },
+    {
+      "name": "jump1",
+      "file": "sprites/jump1.png",
+      "palette": "vga"
+    },
+    {
+      "name": "laser00",
+      "file": "sprites/laser00.png",
+      "palette": "vga"
+    },
+    {
+      "name": "laser04",
+      "file": "sprites/laser04.png",
+      "palette": "vga"
+    },
+    {
+      "name": "laser08",
+      "file": "sprites/laser08.png",
+      "palette": "vga"
+    },
+    {
+      "name": "laser12",
+      "file": "sprites/laser12.png",
+      "palette": "vga"
+    },
+    {
+      "name": "lasr1",
+      "file": "sprites/lasr1.png",
+      "palette": "vga"
+    },
+    {
+      "name": "lbll",
+      "file": "sprites/lbll.png",
+      "palette": "artic"
+    },
+    {
+      "name": "leftside",
+      "file": "sprites/leftside.png",
+      "palette": "artic"
+    },
+    {
+      "name": "lgwing",
+      "file": "sprites/lgwing.png",
+      "palette": "alien6"
+    },
+    {
+      "name": "linebars",
+      "file": "sprites/linebars.png",
+      "palette": "canyon"
+    },
+    {
+      "name": "ltop",
+      "file": "sprites/ltop.png",
+      "palette": "artic"
+    },
+    {
+      "name": "ltopl",
+      "file": "sprites/ltopl.png",
+      "palette": "artic"
+    },
+    {
+      "name": "ltopr",
+      "file": "sprites/ltopr.png",
+      "palette": "artic"
+    },
+    {
+      "name": "m1",
+      "file": "sprites/m1.png",
+      "palette": "vga"
+    },
+    {
+      "name": "m2",
+      "file": "sprites/m2.png",
+      "palette": "vga"
+    },
+    {
+      "name": "m3",
+      "file": "sprites/m3.png",
+      "palette": "vga"
+    },
+    {
+      "name": "mainmis",
+      "file": "sprites/mainmis.png",
+      "palette": "vga"
+    },
+    {
+      "name": "maintp",
+      "file": "sprites/maintp.png",
+      "palette": "artic"
+    },
+    {
+      "name": "markmtl4",
+      "file": "sprites/markmtl4.png",
+      "palette": "vga"
+    },
+    {
+      "name": "mback1",
+      "file": "sprites/mback1.png",
+      "palette": "canyon"
+    },
+    {
+      "name": "mbot",
+      "file": "sprites/mbot.png",
+      "palette": "alien"
+    },
+    {
+      "name": "metal2",
+      "file": "sprites/metal2.png",
+      "palette": "canyon"
+    },
+    {
+      "name": "middsid",
+      "file": "sprites/middsid.png",
+      "palette": "artic"
+    },
+    {
+      "name": "middsidb",
+      "file": "sprites/middsidb.png",
+      "palette": "artic"
+    },
+    {
+      "name": "mido",
+      "file": "sprites/mido.png",
+      "palette": "artic"
+    },
+    {
+      "name": "midsid",
+      "file": "sprites/midsid.png",
+      "palette": "artic"
+    },
+    {
+      "name": "midtl",
+      "file": "sprites/midtl.png",
+      "palette": "artic"
+    },
+    {
+      "name": "misfin",
+      "file": "sprites/misfin.png",
+      "palette": "vga"
+    },
+    {
+      "name": "miss",
+      "file": "sprites/miss.png",
+      "palette": "vga"
+    },
+    {
+      "name": "miss0000",
+      "file": "sprites/miss0000.png",
+      "palette": "vga"
+    },
+    {
+      "name": "miss0002",
+      "file": "sprites/miss0002.png",
+      "palette": "vga"
+    },
+    {
+      "name": "miss0004",
+      "file": "sprites/miss0004.png",
+      "palette": "vga"
+    },
+    {
+      "name": "miss0006",
+      "file": "sprites/miss0006.png",
+      "palette": "vga"
+    },
+    {
+      "name": "missle",
+      "file": "sprites/missle.png",
+      "palette": "alien"
+    },
+    {
+      "name": "miswing",
+      "file": "sprites/miswing.png",
+      "palette": "vga"
+    },
+    {
+      "name": "momwing1",
+      "file": "sprites/momwing1.png",
+      "palette": "canyon"
+    },
+    {
+      "name": "mother1",
+      "file": "sprites/mother1.png",
+      "palette": "canyon"
+    },
+    {
+      "name": "mother2",
+      "file": "sprites/mother2.png",
+      "palette": "canyon"
+    },
+    {
+      "name": "mplanet",
+      "file": "sprites/mplanet.png",
+      "palette": "vga"
+    },
+    {
+      "name": "msslfir0",
+      "file": "sprites/msslfir0.png",
+      "palette": "vga"
+    },
+    {
+      "name": "msslfir1",
+      "file": "sprites/msslfir1.png",
+      "palette": "vga"
+    },
+    {
+      "name": "msslfir2",
+      "file": "sprites/msslfir2.png",
+      "palette": "vga"
+    },
+    {
+      "name": "msslfir3",
+      "file": "sprites/msslfir3.png",
+      "palette": "vga"
+    },
+    {
+      "name": "navpan2",
+      "file": "sprites/navpan2.png",
+      "palette": "alien"
+    },
+    {
+      "name": "navpanls",
+      "file": "sprites/navpanls.png",
+      "palette": "alien"
+    },
+    {
+      "name": "navtar01",
+      "file": "sprites/navtar01.png",
+      "palette": "vga"
+    },
+    {
+      "name": "ndor",
+      "file": "sprites/ndor.png",
+      "palette": "artic"
+    },
+    {
+      "name": "ndor1",
+      "file": "sprites/ndor1.png",
+      "palette": "artic"
+    },
+    {
+      "name": "newsky",
+      "file": "sprites/newsky.png",
+      "palette": "sunset"
+    },
+    {
+      "name": "nl",
+      "file": "sprites/nl.png",
+      "palette": "artic"
+    },
+    {
+      "name": "nnl",
+      "file": "sprites/nnl.png",
+      "palette": "artic"
+    },
+    {
+      "name": "nr",
+      "file": "sprites/nr.png",
+      "palette": "artic"
+    },
+    {
+      "name": "panl",
+      "file": "sprites/panl.png",
+      "palette": "alien3"
+    },
+    {
+      "name": "pb03",
+      "file": "sprites/pb03.png",
+      "palette": "canyon"
+    },
+    {
+      "name": "pball1",
+      "file": "sprites/pball1.png",
+      "palette": "vga"
+    },
+    {
+      "name": "pball2",
+      "file": "sprites/pball2.png",
+      "palette": "vga"
+    },
+    {
+      "name": "pball3",
+      "file": "sprites/pball3.png",
+      "palette": "vga"
+    },
+    {
+      "name": "pball4",
+      "file": "sprites/pball4.png",
+      "palette": "vga"
+    },
+    {
+      "name": "pine",
+      "file": "sprites/pine.png",
+      "palette": "artic"
+    },
+    {
+      "name": "pipe",
+      "file": "sprites/pipe.png",
+      "palette": "vga"
+    },
+    {
+      "name": "plasma00",
+      "file": "sprites/plasma00.png",
+      "palette": "vga"
+    },
+    {
+      "name": "plasma04",
+      "file": "sprites/plasma04.png",
+      "palette": "vga"
+    },
+    {
+      "name": "plasma08",
+      "file": "sprites/plasma08.png",
+      "palette": "vga"
+    },
+    {
+      "name": "plasma12",
+      "file": "sprites/plasma12.png",
+      "palette": "vga"
+    },
+    {
+      "name": "pole",
+      "file": "sprites/pole.png",
+      "palette": "vga"
+    },
+    {
+      "name": "por",
+      "file": "sprites/por.png",
+      "palette": "artic"
+    },
+    {
+      "name": "puff1",
+      "file": "sprites/puff1.png",
+      "palette": "vga"
+    },
+    {
+      "name": "puff2",
+      "file": "sprites/puff2.png",
+      "palette": "vga"
+    },
+    {
+      "name": "puff3",
+      "file": "sprites/puff3.png",
+      "palette": "vga"
+    },
+    {
+      "name": "puff4",
+      "file": "sprites/puff4.png",
+      "palette": "vga"
+    },
+    {
+      "name": "pulse0",
+      "file": "sprites/pulse0.png",
+      "palette": "vga"
+    },
+    {
+      "name": "pulse1",
+      "file": "sprites/pulse1.png",
+      "palette": "vga"
+    },
+    {
+      "name": "pulse2",
+      "file": "sprites/pulse2.png",
+      "palette": "vga"
+    },
+    {
+      "name": "pulse3",
+      "file": "sprites/pulse3.png",
+      "palette": "vga"
+    },
+    {
+      "name": "purfrin0",
+      "file": "sprites/purfrin0.png",
+      "palette": "vga"
+    },
+    {
+      "name": "purfrin1",
+      "file": "sprites/purfrin1.png",
+      "palette": "vga"
+    },
+    {
+      "name": "purfrin2",
+      "file": "sprites/purfrin2.png",
+      "palette": "vga"
+    },
+    {
+      "name": "purfrin3",
+      "file": "sprites/purfrin3.png",
+      "palette": "vga"
+    },
+    {
+      "name": "raycan2",
+      "file": "sprites/raycan2.png",
+      "palette": "canyon"
+    },
+    {
+      "name": "raycan7",
+      "file": "sprites/raycan7.png",
+      "palette": "canyon"
+    },
+    {
+      "name": "raycanon",
+      "file": "sprites/raycanon.png",
+      "palette": "canyon"
+    },
+    {
+      "name": "ref",
+      "file": "sprites/ref.png",
+      "palette": "canyon"
+    },
+    {
+      "name": "reflbx",
+      "file": "sprites/reflbx.png",
+      "palette": "alien3"
+    },
+    {
+      "name": "reflct",
+      "file": "sprites/reflct.png",
+      "palette": "alien3"
+    },
+    {
+      "name": "rgwing",
+      "file": "sprites/rgwing.png",
+      "palette": "alien6"
+    },
+    {
+      "name": "rightsid",
+      "file": "sprites/rightsid.png",
+      "palette": "artic"
+    },
+    {
+      "name": "ring3",
+      "file": "sprites/ring3.png",
+      "palette": "artic"
+    },
+    {
+      "name": "sat5",
+      "file": "sprites/sat5.png",
+      "palette": "artic"
+    },
+    {
+      "name": "sbodya",
+      "file": "sprites/sbodya.png",
+      "palette": "vga"
+    },
+    {
+      "name": "sf",
+      "file": "sprites/sf.png",
+      "palette": "artic"
+    },
+    {
+      "name": "shadow",
+      "file": "sprites/shadow.png",
+      "palette": "vga"
+    },
+    {
+      "name": "shei0000",
+      "file": "sprites/shei0000.png",
+      "palette": "vga"
+    },
+    {
+      "name": "shei0004",
+      "file": "sprites/shei0004.png",
+      "palette": "vga"
+    },
+    {
+      "name": "shei0008",
+      "file": "sprites/shei0008.png",
+      "palette": "vga"
+    },
+    {
+      "name": "shei0012",
+      "file": "sprites/shei0012.png",
+      "palette": "vga"
+    },
+    {
+      "name": "sheild0",
+      "file": "sprites/sheild0.png",
+      "palette": "vga"
+    },
+    {
+      "name": "sheild1",
+      "file": "sprites/sheild1.png",
+      "palette": "vga"
+    },
+    {
+      "name": "sheild2",
+      "file": "sprites/sheild2.png",
+      "palette": "vga"
+    },
+    {
+      "name": "sheild3",
+      "file": "sprites/sheild3.png",
+      "palette": "vga"
+    },
+    {
+      "name": "shipbak",
+      "file": "sprites/shipbak.png",
+      "palette": "vga"
+    },
+    {
+      "name": "shipplat",
+      "file": "sprites/shipplat.png",
+      "palette": "alien3"
+    },
+    {
+      "name": "shiptop",
+      "file": "sprites/shiptop.png",
+      "palette": "vga"
+    },
+    {
+      "name": "shiptxt",
+      "file": "sprites/shiptxt.png",
+      "palette": "alien3"
+    },
+    {
+      "name": "shld",
+      "file": "sprites/shld.png",
+      "palette": "vga"
+    },
+    {
+      "name": "shld1",
+      "file": "sprites/shld1.png",
+      "palette": "vga"
+    },
+    {
+      "name": "side01",
+      "file": "sprites/side01.png",
+      "palette": "vga"
+    },
+    {
+      "name": "sky",
+      "file": "sprites/sky.png",
+      "palette": "dsrtsky"
+    },
+    {
+      "name": "snback",
+      "file": "sprites/snback.png",
+      "palette": "artic"
+    },
+    {
+      "name": "snowbot2",
+      "file": "sprites/snowbot2.png",
+      "palette": "artic"
+    },
+    {
+      "name": "snowtop5",
+      "file": "sprites/snowtop5.png",
+      "palette": "artic"
+    },
+    {
+      "name": "snwing",
+      "file": "sprites/snwing.png",
+      "palette": "artic"
+    },
+    {
+      "name": "sprmis00",
+      "file": "sprites/sprmis00.png",
+      "palette": "vga"
+    },
+    {
+      "name": "sprmis04",
+      "file": "sprites/sprmis04.png",
+      "palette": "vga"
+    },
+    {
+      "name": "sprmis08",
+      "file": "sprites/sprmis08.png",
+      "palette": "vga"
+    },
+    {
+      "name": "sprmis12",
+      "file": "sprites/sprmis12.png",
+      "palette": "vga"
+    },
+    {
+      "name": "sptxt",
+      "file": "sprites/sptxt.png",
+      "palette": "alien3"
+    },
+    {
+      "name": "sqglsr",
+      "file": "sprites/sqglsr.png",
+      "palette": "vga"
+    },
+    {
+      "name": "standsi1",
+      "file": "sprites/standsi1.png",
+      "palette": "vga"
+    },
+    {
+      "name": "tankplt",
+      "file": "sprites/tankplt.png",
+      "palette": "artic"
+    },
+    {
+      "name": "tanktop",
+      "file": "sprites/tanktop.png",
+      "palette": "artic"
+    },
+    {
+      "name": "targ0",
+      "file": "sprites/targ0.png",
+      "palette": "vga"
+    },
+    {
+      "name": "targ1",
+      "file": "sprites/targ1.png",
+      "palette": "vga"
+    },
+    {
+      "name": "tipt",
+      "file": "sprites/tipt.png",
+      "palette": "alien"
+    },
+    {
+      "name": "topvew",
+      "file": "sprites/topvew.png",
+      "palette": "canyon"
+    },
+    {
+      "name": "topview",
+      "file": "sprites/topview.png",
+      "palette": "artic"
+    },
+    {
+      "name": "towrmid",
+      "file": "sprites/towrmid.png",
+      "palette": "canyon"
+    },
+    {
+      "name": "tp1",
+      "file": "sprites/tp1.png",
+      "palette": "vga"
+    },
+    {
+      "name": "tpart",
+      "file": "sprites/tpart.png",
+      "palette": "canyon"
+    },
+    {
+      "name": "tpdish",
+      "file": "sprites/tpdish.png",
+      "palette": "alien3"
+    },
+    {
+      "name": "transtxt",
+      "file": "sprites/transtxt.png",
+      "palette": "canyon"
+    },
+    {
+      "name": "tread",
+      "file": "sprites/tread.png",
+      "palette": "artic"
+    },
+    {
+      "name": "tree",
+      "file": "sprites/tree.png",
+      "palette": "artic"
+    },
+    {
+      "name": "tripmis1",
+      "file": "sprites/tripmis1.png",
+      "palette": "vga"
+    },
+    {
+      "name": "turret",
+      "file": "sprites/turret.png",
+      "palette": "artic"
+    },
+    {
+      "name": "vgradbum",
+      "file": "sprites/vgradbum.png",
+      "palette": "alien"
+    },
+    {
+      "name": "vside",
+      "file": "sprites/vside.png",
+      "palette": "vga"
+    },
+    {
+      "name": "warhed",
+      "file": "sprites/warhed.png",
+      "palette": "vga"
+    },
+    {
+      "name": "wheel01",
+      "file": "sprites/wheel01.png",
+      "palette": "artic"
+    },
+    {
+      "name": "yellow12",
+      "file": "sprites/yellow12.png",
+      "palette": "alien6"
+    },
+    {
+      "name": "zap00",
+      "file": "sprites/zap00.png",
+      "palette": "vga"
+    },
+    {
+      "name": "zap04",
+      "file": "sprites/zap04.png",
+      "palette": "vga"
+    },
+    {
+      "name": "zap08",
+      "file": "sprites/zap08.png",
+      "palette": "vga"
+    },
+    {
+      "name": "zap12",
+      "file": "sprites/zap12.png",
+      "palette": "vga"
+    }
+  ],
+  "sheets": [
+    {
+      "name": "ant",
+      "file": "effects/sheets/ant.png",
+      "frames": 4,
+      "source": "sequence"
+    },
+    {
+      "name": "atm",
+      "file": "effects/sheets/atm.png",
+      "frames": 4,
+      "source": "sequence"
+    },
+    {
+      "name": "bfirj",
+      "file": "effects/sheets/bfirj.png",
+      "frames": 4,
+      "source": "sequence"
+    },
+    {
+      "name": "bigex",
+      "file": "effects/sheets/bigex.png",
+      "frames": 16,
+      "source": "sequence"
+    },
+    {
+      "name": "billow",
+      "file": "effects/sheets/billow.png",
+      "frames": 16,
+      "source": "sequence"
+    },
+    {
+      "name": "blast",
+      "file": "effects/sheets/blast.png",
+      "frames": 16,
+      "source": "sequence"
+    },
+    {
+      "name": "electri",
+      "file": "effects/sheets/electri.png",
+      "frames": 4,
+      "source": "sequence"
+    },
+    {
+      "name": "enca",
+      "file": "effects/sheets/enca.png",
+      "frames": 4,
+      "source": "sequence"
+    },
+    {
+      "name": "firbal",
+      "file": "effects/sheets/firbal.png",
+      "frames": 4,
+      "source": "sequence"
+    },
+    {
+      "name": "fireb",
+      "file": "effects/sheets/fireb.png",
+      "frames": 4,
+      "source": "sequence"
+    },
+    {
+      "name": "frag",
+      "file": "effects/sheets/frag.png",
+      "frames": 3,
+      "source": "sequence"
+    },
+    {
+      "name": "gmis",
+      "file": "effects/sheets/gmis.png",
+      "frames": 4,
+      "source": "sequence"
+    },
+    {
+      "name": "invi",
+      "file": "effects/sheets/invi.png",
+      "frames": 4,
+      "source": "sequence"
+    },
+    {
+      "name": "invin",
+      "file": "effects/sheets/invin.png",
+      "frames": 4,
+      "source": "sequence"
+    },
+    {
+      "name": "laser",
+      "file": "effects/sheets/laser.png",
+      "frames": 4,
+      "source": "sequence"
+    },
+    {
+      "name": "m",
+      "file": "effects/sheets/m.png",
+      "frames": 3,
+      "source": "sequence"
+    },
+    {
+      "name": "miss",
+      "file": "effects/sheets/miss.png",
+      "frames": 4,
+      "source": "sequence"
+    },
+    {
+      "name": "msslfir",
+      "file": "effects/sheets/msslfir.png",
+      "frames": 4,
+      "source": "sequence"
+    },
+    {
+      "name": "pball",
+      "file": "effects/sheets/pball.png",
+      "frames": 4,
+      "source": "sequence"
+    },
+    {
+      "name": "plasma",
+      "file": "effects/sheets/plasma.png",
+      "frames": 4,
+      "source": "sequence"
+    },
+    {
+      "name": "puff",
+      "file": "effects/sheets/puff.png",
+      "frames": 4,
+      "source": "sequence"
+    },
+    {
+      "name": "pulse",
+      "file": "effects/sheets/pulse.png",
+      "frames": 4,
+      "source": "sequence"
+    },
+    {
+      "name": "purfrin",
+      "file": "effects/sheets/purfrin.png",
+      "frames": 4,
+      "source": "sequence"
+    },
+    {
+      "name": "shei",
+      "file": "effects/sheets/shei.png",
+      "frames": 4,
+      "source": "sequence"
+    },
+    {
+      "name": "sheild",
+      "file": "effects/sheets/sheild.png",
+      "frames": 4,
+      "source": "sequence"
+    },
+    {
+      "name": "sprmis",
+      "file": "effects/sheets/sprmis.png",
+      "frames": 4,
+      "source": "sequence"
+    },
+    {
+      "name": "zap",
+      "file": "effects/sheets/zap.png",
+      "frames": 4,
+      "source": "sequence"
+    },
+    {
+      "name": "hittop",
+      "file": "effects/sheets/hittop.png",
+      "frames": 4,
+      "source": "hitzo1"
+    }
+  ],
+  "terrain": [
+    {
+      "name": "alien-t1",
+      "textures": 4,
+      "palette": "alien-t1",
+      "textureFiles": [
+        "textures/hangt.png",
+        "textures/hangf5.png",
+        "textures/hangfl.png",
+        "textures/hang4.png"
+      ],
+      "atlas": "terrain/alien-t1/atlas.png"
+    },
+    {
+      "name": "alien-t2",
+      "textures": 4,
+      "palette": "alien-t2",
+      "textureFiles": [
+        "textures/hangt.png",
+        "textures/hangf5.png",
+        "textures/hangfl.png",
+        "textures/hang4.png"
+      ],
+      "atlas": "terrain/alien-t2/atlas.png"
+    },
+    {
+      "name": "alien",
+      "textures": 27,
+      "palette": "alien",
+      "textureFiles": [
+        "textures/apanel1.png",
+        "textures/apanel2.png",
+        "textures/apanel3.png",
+        "textures/apanel4.png",
+        "textures/apanel5.png",
+        "textures/apanel6.png",
+        "textures/apanel7.png",
+        "textures/apanel8.png",
+        "textures/apanel9.png",
+        "textures/apanent2.png",
+        "textures/ampad.png",
+        "textures/tri0.png",
+        "textures/tri1.png",
+        "textures/tri2.png",
+        "textures/tri3.png",
+        "textures/tri4.png",
+        "textures/tri5.png",
+        "textures/tri6.png",
+        "textures/tri7.png",
+        "textures/tri8.png",
+        "textures/tri9.png",
+        "textures/tri10.png",
+        "textures/tri11.png",
+        "textures/tri12.png",
+        "textures/tri13.png",
+        "textures/tri14.png",
+        "textures/tri15.png"
+      ],
+      "atlas": "terrain/alien/atlas.png",
+      "height": "terrain/alien/height.png",
+      "index": "terrain/alien/index.png",
+      "color": "terrain/alien/color.png"
+    },
+    {
+      "name": "alien1",
+      "textures": 4,
+      "palette": "alien1",
+      "textureFiles": [
+        "textures/hangt.png",
+        "textures/hangf5.png",
+        "textures/hangfl.png",
+        "textures/hang4.png"
+      ],
+      "atlas": "terrain/alien1/atlas.png"
+    },
+    {
+      "name": "alien2",
+      "textures": 4,
+      "palette": "alien2",
+      "textureFiles": [
+        "textures/hangt.png",
+        "textures/hangf5.png",
+        "textures/hangfl.png",
+        "textures/hang4.png"
+      ],
+      "atlas": "terrain/alien2/atlas.png"
+    },
+    {
+      "name": "alien3",
+      "textures": 14,
+      "palette": "alien3",
+      "textureFiles": [
+        "textures/apanel1.png",
+        "textures/apanel2.png",
+        "textures/apanel3.png",
+        "textures/apanel4.png",
+        "textures/apanel5.png",
+        "textures/apanel6.png",
+        "textures/apanel7.png",
+        "textures/apanel8.png",
+        "textures/apanel9.png",
+        "textures/apanent2.png",
+        "textures/ampad.png",
+        "textures/apanent.png",
+        "textures/hang14.png",
+        "textures/hangt.png"
+      ],
+      "atlas": "terrain/alien3/atlas.png",
+      "height": "terrain/alien3/height.png",
+      "index": "terrain/alien3/index.png",
+      "color": "terrain/alien3/color.png"
+    },
+    {
+      "name": "alien4",
+      "textures": 4,
+      "palette": "alien4",
+      "textureFiles": [
+        "textures/hangt.png",
+        "textures/hangf5.png",
+        "textures/hangfl.png",
+        "textures/hang4.png"
+      ],
+      "atlas": "terrain/alien4/atlas.png"
+    },
+    {
+      "name": "alien5",
+      "textures": 4,
+      "palette": "alien5",
+      "textureFiles": [
+        "textures/hangt.png",
+        "textures/hangf5.png",
+        "textures/hangfl.png",
+        "textures/hang4.png"
+      ],
+      "atlas": "terrain/alien5/atlas.png"
+    },
+    {
+      "name": "alien6",
+      "textures": 26,
+      "palette": "alien6",
+      "textureFiles": [
+        "textures/apanel1.png",
+        "textures/apanel2.png",
+        "textures/apanel3.png",
+        "textures/apanel4.png",
+        "textures/apanel5.png",
+        "textures/apanel6.png",
+        "textures/apanel7.png",
+        "textures/apanel8.png",
+        "textures/apanel9.png",
+        "textures/hangfl.png",
+        "textures/markmtlx.png",
+        "textures/hangt.png",
+        "textures/hangf5r.png",
+        "textures/hangflr.png",
+        "textures/blak.png",
+        "textures/hcirc6.png",
+        "textures/hang4.png",
+        "textures/hkyle1.png",
+        "textures/hangs.png",
+        "textures/hsign.png",
+        "textures/window1.png",
+        "textures/floor.png",
+        "textures/floor1.png",
+        "textures/apanent2.png",
+        "textures/ampad.png",
+        "textures/hang14.png"
+      ],
+      "atlas": "terrain/alien6/atlas.png",
+      "height": "terrain/alien6/height.png",
+      "index": "terrain/alien6/index.png",
+      "color": "terrain/alien6/color.png"
+    },
+    {
+      "name": "artic-t1",
+      "textures": 8,
+      "palette": "artic-t1",
+      "textureFiles": [
+        "textures/icelit3.png",
+        "textures/icelitw1.png",
+        "textures/icestckl.png",
+        "textures/icejoe.png",
+        "textures/icebaby.png",
+        "textures/icebaby2.png",
+        "textures/rustplat.png",
+        "textures/iris.png"
+      ],
+      "atlas": "terrain/artic-t1/atlas.png"
+    },
+    {
+      "name": "artic-t2",
+      "textures": 10,
+      "palette": "artic-t2",
+      "textureFiles": [
+        "textures/icejoe.png",
+        "textures/icelitw1.png",
+        "textures/icestckl.png",
+        "textures/plate.png",
+        "textures/refine.png",
+        "textures/rustplat.png",
+        "textures/iris.png",
+        "textures/icelit3.png",
+        "textures/icestckr.png",
+        "textures/rtop1.png"
+      ],
+      "atlas": "terrain/artic-t2/atlas.png"
+    },
+    {
+      "name": "artic-t3",
+      "textures": 8,
+      "palette": "artic-t3",
+      "textureFiles": [
+        "textures/icelit3.png",
+        "textures/icelitw1.png",
+        "textures/icestckl.png",
+        "textures/icejoe.png",
+        "textures/icebaby.png",
+        "textures/icebaby2.png",
+        "textures/rustplat.png",
+        "textures/iris.png"
+      ],
+      "atlas": "terrain/artic-t3/atlas.png"
+    },
+    {
+      "name": "artic-t4",
+      "textures": 2,
+      "palette": "artic-t4",
+      "textureFiles": [
+        "textures/icelitw1.png",
+        "textures/icejoe.png"
+      ],
+      "atlas": "terrain/artic-t4/atlas.png"
+    },
+    {
+      "name": "artic",
+      "textures": 61,
+      "palette": "artic",
+      "textureFiles": [
+        "textures/mark0.png",
+        "textures/mark1.png",
+        "textures/mark2.png",
+        "textures/mark3.png",
+        "textures/mark4.png",
+        "textures/mark5.png",
+        "textures/mark6.png",
+        "textures/mark7.png",
+        "textures/mark8.png",
+        "textures/mark9.png",
+        "textures/mark10.png",
+        "textures/mark11.png",
+        "textures/mark12.png",
+        "textures/mark13.png",
+        "textures/mark14.png",
+        "textures/mark15.png",
+        "textures/mark16.png",
+        "textures/mark17.png",
+        "textures/mark18.png",
+        "textures/mark19.png",
+        "textures/mark20.png",
+        "textures/mark21.png",
+        "textures/mark22.png",
+        "textures/mark23.png",
+        "textures/mark24.png",
+        "textures/mark25.png",
+        "textures/mark26.png",
+        "textures/mark27.png",
+        "textures/mark28.png",
+        "textures/mark29.png",
+        "textures/mark30.png",
+        "textures/mark31.png",
+        "textures/mark32.png",
+        "textures/icebase1.png",
+        "textures/icebase2.png",
+        "textures/icebase3.png",
+        "textures/icebase4.png",
+        "textures/icebase5.png",
+        "textures/icebase6.png",
+        "textures/icebase7.png",
+        "textures/icebase8.png",
+        "textures/icebase9.png",
+        "textures/compan1.png",
+        "textures/compan2.png",
+        "textures/compan3.png",
+        "textures/compan4.png",
+        "textures/compan5.png",
+        "textures/icedo1.png",
+        "textures/icejoe.png",
+        "textures/icelitw1.png",
+        "textures/iceg0.png",
+        "textures/iceg1.png",
+        "textures/iceg2.png",
+        "textures/iceg3.png",
+        "textures/iceg4.png",
+        "textures/iceg5.png",
+        "textures/iceg6.png",
+        "textures/iceg7.png",
+        "textures/iceg8.png",
+        "textures/snoring.png",
+        "textures/icehole.png"
+      ],
+      "sky": "textures/newsky.png",
+      "atlas": "terrain/artic/atlas.png",
+      "height": "terrain/artic/height.png",
+      "index": "terrain/artic/index.png",
+      "color": "terrain/artic/color.png"
+    },
+    {
+      "name": "artic1",
+      "textures": 5,
+      "palette": "artic1",
+      "textureFiles": [
+        "textures/icelitw1.png",
+        "textures/icejoe.png",
+        "textures/rustplat.png",
+        "textures/iris.png",
+        "textures/icestckr.png"
+      ],
+      "atlas": "terrain/artic1/atlas.png"
+    },
+    {
+      "name": "artic2",
+      "textures": 7,
+      "palette": "artic2",
+      "textureFiles": [
+        "textures/icelit3.png",
+        "textures/icelitw1.png",
+        "textures/icestckl.png",
+        "textures/icejoe.png",
+        "textures/icebaby.png",
+        "textures/rustplat.png",
+        "textures/iris.png"
+      ],
+      "atlas": "terrain/artic2/atlas.png"
+    },
+    {
+      "name": "artic3",
+      "textures": 61,
+      "palette": "artic",
+      "textureFiles": [
+        "textures/mark0.png",
+        "textures/mark1.png",
+        "textures/mark2.png",
+        "textures/mark3.png",
+        "textures/mark4.png",
+        "textures/mark5.png",
+        "textures/mark6.png",
+        "textures/mark7.png",
+        "textures/mark8.png",
+        "textures/mark9.png",
+        "textures/mark10.png",
+        "textures/mark11.png",
+        "textures/mark12.png",
+        "textures/mark13.png",
+        "textures/mark14.png",
+        "textures/mark15.png",
+        "textures/mark16.png",
+        "textures/mark17.png",
+        "textures/mark18.png",
+        "textures/mark19.png",
+        "textures/mark20.png",
+        "textures/mark21.png",
+        "textures/mark22.png",
+        "textures/mark23.png",
+        "textures/mark24.png",
+        "textures/mark25.png",
+        "textures/mark26.png",
+        "textures/mark27.png",
+        "textures/mark28.png",
+        "textures/mark29.png",
+        "textures/mark30.png",
+        "textures/mark31.png",
+        "textures/mark32.png",
+        "textures/icebase1.png",
+        "textures/icebase2.png",
+        "textures/icebase3.png",
+        "textures/icebase4.png",
+        "textures/icebase5.png",
+        "textures/icebase6.png",
+        "textures/icebase7.png",
+        "textures/icebase8.png",
+        "textures/icebase9.png",
+        "textures/compan1.png",
+        "textures/compan2.png",
+        "textures/compan3.png",
+        "textures/compan4.png",
+        "textures/compan5.png",
+        "textures/icedo1.png",
+        "textures/icejoe.png",
+        "textures/icelitw1.png",
+        "textures/iceg0.png",
+        "textures/iceg1.png",
+        "textures/iceg2.png",
+        "textures/iceg3.png",
+        "textures/iceg4.png",
+        "textures/iceg5.png",
+        "textures/iceg6.png",
+        "textures/iceg7.png",
+        "textures/iceg8.png",
+        "textures/snoring.png",
+        "textures/icehole.png"
+      ],
+      "sky": "textures/newsky.png",
+      "atlas": "terrain/artic3/atlas.png",
+      "height": "terrain/artic3/height.png",
+      "index": "terrain/artic3/index.png",
+      "color": "terrain/artic3/color.png"
+    },
+    {
+      "name": "artic6",
+      "textures": 61,
+      "palette": "artic",
+      "textureFiles": [
+        "textures/mark0.png",
+        "textures/mark1.png",
+        "textures/mark2.png",
+        "textures/mark3.png",
+        "textures/mark4.png",
+        "textures/mark5.png",
+        "textures/mark6.png",
+        "textures/mark7.png",
+        "textures/mark8.png",
+        "textures/mark9.png",
+        "textures/mark10.png",
+        "textures/mark11.png",
+        "textures/mark12.png",
+        "textures/mark13.png",
+        "textures/mark14.png",
+        "textures/mark15.png",
+        "textures/mark16.png",
+        "textures/mark17.png",
+        "textures/mark18.png",
+        "textures/mark19.png",
+        "textures/mark20.png",
+        "textures/mark21.png",
+        "textures/mark22.png",
+        "textures/mark23.png",
+        "textures/mark24.png",
+        "textures/mark25.png",
+        "textures/mark26.png",
+        "textures/mark27.png",
+        "textures/mark28.png",
+        "textures/mark29.png",
+        "textures/mark30.png",
+        "textures/mark31.png",
+        "textures/mark32.png",
+        "textures/icebase1.png",
+        "textures/icebase2.png",
+        "textures/icebase3.png",
+        "textures/icebase4.png",
+        "textures/icebase5.png",
+        "textures/icebase6.png",
+        "textures/icebase7.png",
+        "textures/icebase8.png",
+        "textures/icebase9.png",
+        "textures/compan1.png",
+        "textures/compan2.png",
+        "textures/compan3.png",
+        "textures/compan4.png",
+        "textures/compan5.png",
+        "textures/icedo1.png",
+        "textures/icejoe.png",
+        "textures/icelitw1.png",
+        "textures/iceg0.png",
+        "textures/iceg1.png",
+        "textures/iceg2.png",
+        "textures/iceg3.png",
+        "textures/iceg4.png",
+        "textures/iceg5.png",
+        "textures/iceg6.png",
+        "textures/iceg7.png",
+        "textures/iceg8.png",
+        "textures/snoring.png",
+        "textures/icehole.png"
+      ],
+      "sky": "textures/newsky.png",
+      "atlas": "terrain/artic6/atlas.png",
+      "height": "terrain/artic6/height.png",
+      "index": "terrain/artic6/index.png",
+      "color": "terrain/artic6/color.png"
+    },
+    {
+      "name": "canyn-t1",
+      "textures": 8,
+      "palette": "canyn-t1",
+      "textureFiles": [
+        "textures/bigdirt1.png",
+        "textures/bigdirt.png",
+        "textures/dirtylit.png",
+        "textures/ptunn.png",
+        "textures/pdoor.png",
+        "textures/zdoor1.png",
+        "textures/iris.png",
+        "textures/rustplat.png"
+      ],
+      "atlas": "terrain/canyn-t1/atlas.png"
+    },
+    {
+      "name": "canyn-t2",
+      "textures": 8,
+      "palette": "canyn-t2",
+      "textureFiles": [
+        "textures/bigdirt1.png",
+        "textures/bigdirt.png",
+        "textures/dirtylit.png",
+        "textures/ptunn.png",
+        "textures/pdoor.png",
+        "textures/zdoor1.png",
+        "textures/iris.png",
+        "textures/rustplat.png"
+      ],
+      "atlas": "terrain/canyn-t2/atlas.png"
+    },
+    {
+      "name": "canyon",
+      "textures": 31,
+      "palette": "canyon",
+      "textureFiles": [
+        "textures/canyon0.png",
+        "textures/canyon1.png",
+        "textures/canyon2.png",
+        "textures/canyon4.png",
+        "textures/canyon5.png",
+        "textures/canyon6.png",
+        "textures/canyon7.png",
+        "textures/canyon8.png",
+        "textures/canyon9.png",
+        "textures/canyon10.png",
+        "textures/canyon11.png",
+        "textures/canyon13.png",
+        "textures/canyon14.png",
+        "textures/canyon15.png",
+        "textures/canyon16.png",
+        "textures/canbase4.png",
+        "textures/canbase0.png",
+        "textures/canbase1.png",
+        "textures/canbase2.png",
+        "textures/canbase3.png",
+        "textures/canbase5.png",
+        "textures/canbase6.png",
+        "textures/canbase7.png",
+        "textures/canbase8.png",
+        "textures/grave1.png",
+        "textures/grave2.png",
+        "textures/canpad.png",
+        "textures/canhole.png",
+        "textures/canyon3.png",
+        "textures/canyn-t1.png",
+        "textures/canyn-t2.png"
+      ],
+      "sky": "textures/cloudx.png",
+      "atlas": "terrain/canyon/atlas.png",
+      "height": "terrain/canyon/height.png",
+      "index": "terrain/canyon/index.png",
+      "color": "terrain/canyon/color.png"
+    },
+    {
+      "name": "canyon1",
+      "textures": 8,
+      "palette": "canyon1",
+      "textureFiles": [
+        "textures/bigdirt1.png",
+        "textures/bigdirt.png",
+        "textures/dirtylit.png",
+        "textures/ptunn.png",
+        "textures/pdoor.png",
+        "textures/zdoor1.png",
+        "textures/iris.png",
+        "textures/rustplat.png"
+      ],
+      "atlas": "terrain/canyon1/atlas.png"
+    },
+    {
+      "name": "canyon2",
+      "textures": 7,
+      "palette": "canyon2",
+      "textureFiles": [
+        "textures/bigdirt1.png",
+        "textures/bigdirt.png",
+        "textures/dirtylit.png",
+        "textures/ptunn.png",
+        "textures/pdoor.png",
+        "textures/zdoor1.png",
+        "textures/iris.png"
+      ],
+      "atlas": "terrain/canyon2/atlas.png"
+    },
+    {
+      "name": "canyon3",
+      "textures": 31,
+      "palette": "canyon3",
+      "textureFiles": [
+        "textures/canyon0.png",
+        "textures/canyon1.png",
+        "textures/canyon2.png",
+        "textures/canyon4.png",
+        "textures/canyon5.png",
+        "textures/canyon6.png",
+        "textures/canyon7.png",
+        "textures/canyon8.png",
+        "textures/canyon9.png",
+        "textures/canyon10.png",
+        "textures/canyon11.png",
+        "textures/canyon13.png",
+        "textures/canyon14.png",
+        "textures/canyon15.png",
+        "textures/canyon16.png",
+        "textures/canbase4.png",
+        "textures/canbase0.png",
+        "textures/canbase1.png",
+        "textures/canbase2.png",
+        "textures/canbase3.png",
+        "textures/canbase5.png",
+        "textures/canbase6.png",
+        "textures/canbase7.png",
+        "textures/canbase8.png",
+        "textures/grave1.png",
+        "textures/grave2.png",
+        "textures/canpad.png",
+        "textures/canhole.png",
+        "textures/canyon3.png",
+        "textures/canyn-t1.png",
+        "textures/canyn-t2.png"
+      ],
+      "sky": "textures/cloudx.png",
+      "atlas": "terrain/canyon3/atlas.png",
+      "height": "terrain/canyon3/height.png",
+      "index": "terrain/canyon3/index.png",
+      "color": "terrain/canyon3/color.png"
+    },
+    {
+      "name": "canyon4",
+      "textures": 6,
+      "palette": "canyon4",
+      "textureFiles": [
+        "textures/bigdirt1.png",
+        "textures/bigdirt.png",
+        "textures/dirtylit.png",
+        "textures/ptunn.png",
+        "textures/pdoor.png",
+        "textures/zdoor1.png"
+      ],
+      "atlas": "terrain/canyon4/atlas.png"
+    },
+    {
+      "name": "canyon5",
+      "textures": 8,
+      "palette": "canyon5",
+      "textureFiles": [
+        "textures/bigdirt1.png",
+        "textures/bigdirt.png",
+        "textures/dirtylit.png",
+        "textures/ptunn.png",
+        "textures/pdoor.png",
+        "textures/zdoor1.png",
+        "textures/iris.png",
+        "textures/rustplat.png"
+      ],
+      "atlas": "terrain/canyon5/atlas.png"
+    },
+    {
+      "name": "canyon6",
+      "textures": 31,
+      "palette": "canyon6",
+      "textureFiles": [
+        "textures/canyon0.png",
+        "textures/canyon1.png",
+        "textures/canyon2.png",
+        "textures/canyon4.png",
+        "textures/canyon5.png",
+        "textures/canyon6.png",
+        "textures/canyon7.png",
+        "textures/canyon8.png",
+        "textures/canyon9.png",
+        "textures/canyon10.png",
+        "textures/canyon11.png",
+        "textures/canyon13.png",
+        "textures/canyon14.png",
+        "textures/canyon15.png",
+        "textures/canyon16.png",
+        "textures/canbase4.png",
+        "textures/canbase0.png",
+        "textures/canbase1.png",
+        "textures/canbase2.png",
+        "textures/canbase3.png",
+        "textures/canbase5.png",
+        "textures/canbase6.png",
+        "textures/canbase7.png",
+        "textures/canbase8.png",
+        "textures/grave1.png",
+        "textures/grave2.png",
+        "textures/canpad.png",
+        "textures/canhole.png",
+        "textures/canyon3.png",
+        "textures/canyn-t1.png",
+        "textures/canyn-t2.png"
+      ],
+      "sky": "textures/cloudx.png",
+      "atlas": "terrain/canyon6/atlas.png",
+      "height": "terrain/canyon6/height.png",
+      "index": "terrain/canyon6/index.png",
+      "color": "terrain/canyon6/color.png"
+    },
+    {
+      "name": "multi1",
+      "textures": 33,
+      "palette": "multi1",
+      "textureFiles": [
+        "textures/mark0.png",
+        "textures/mark1.png",
+        "textures/mark2.png",
+        "textures/mark3.png",
+        "textures/mark4.png",
+        "textures/mark5.png",
+        "textures/mark6.png",
+        "textures/mark7.png",
+        "textures/mark8.png",
+        "textures/mark9.png",
+        "textures/mark10.png",
+        "textures/mark11.png",
+        "textures/mark12.png",
+        "textures/mark13.png",
+        "textures/mark14.png",
+        "textures/mark15.png",
+        "textures/mark16.png",
+        "textures/mark17.png",
+        "textures/mark18.png",
+        "textures/mark19.png",
+        "textures/mark20.png",
+        "textures/mark21.png",
+        "textures/mark22.png",
+        "textures/mark23.png",
+        "textures/mark24.png",
+        "textures/mark25.png",
+        "textures/mark26.png",
+        "textures/mark27.png",
+        "textures/mark28.png",
+        "textures/mark29.png",
+        "textures/mark30.png",
+        "textures/mark31.png",
+        "textures/mark32.png"
+      ],
+      "sky": "textures/sky.png",
+      "atlas": "terrain/multi1/atlas.png",
+      "height": "terrain/multi1/height.png",
+      "index": "terrain/multi1/index.png",
+      "color": "terrain/multi1/color.png"
+    },
+    {
+      "name": "multi2",
+      "textures": 26,
+      "palette": "multi2",
+      "textureFiles": [
+        "textures/canyon0.png",
+        "textures/canyon1.png",
+        "textures/canyon2.png",
+        "textures/canyon3.png",
+        "textures/canyon4.png",
+        "textures/canyon5.png",
+        "textures/canyon6.png",
+        "textures/canyon7.png",
+        "textures/canyon8.png",
+        "textures/canyon9.png",
+        "textures/canyon10.png",
+        "textures/canyon11.png",
+        "textures/canyon12.png",
+        "textures/canyon13.png",
+        "textures/canyon14.png",
+        "textures/canyon15.png",
+        "textures/canyon16.png",
+        "textures/canbase0.png",
+        "textures/canbase1.png",
+        "textures/canbase2.png",
+        "textures/canbase3.png",
+        "textures/canbase4.png",
+        "textures/canbase5.png",
+        "textures/canbase6.png",
+        "textures/canbase7.png",
+        "textures/canbase8.png"
+      ],
+      "sky": "textures/sky.png",
+      "atlas": "terrain/multi2/atlas.png",
+      "height": "terrain/multi2/height.png",
+      "index": "terrain/multi2/index.png",
+      "color": "terrain/multi2/color.png"
+    }
+  ],
+  "effects": [
+    {
+      "name": "alien-t1 fog",
+      "file": "effects/fog/alien-t1.png",
+      "palette": "alien-t1"
+    },
+    {
+      "name": "alien-t2 fog",
+      "file": "effects/fog/alien-t2.png",
+      "palette": "alien-t2"
+    },
+    {
+      "name": "alien fog",
+      "file": "effects/fog/alien.png",
+      "palette": "alien"
+    },
+    {
+      "name": "alien1 fog",
+      "file": "effects/fog/alien1.png",
+      "palette": "alien1"
+    },
+    {
+      "name": "alien2 fog",
+      "file": "effects/fog/alien2.png",
+      "palette": "alien2"
+    },
+    {
+      "name": "alien3 fog",
+      "file": "effects/fog/alien3.png",
+      "palette": "alien3"
+    },
+    {
+      "name": "alien4 fog",
+      "file": "effects/fog/alien4.png",
+      "palette": "alien4"
+    },
+    {
+      "name": "alien5 fog",
+      "file": "effects/fog/alien5.png",
+      "palette": "alien5"
+    },
+    {
+      "name": "alien6 fog",
+      "file": "effects/fog/alien6.png",
+      "palette": "alien6"
+    },
+    {
+      "name": "artic-t1 fog",
+      "file": "effects/fog/artic-t1.png",
+      "palette": "artic-t1"
+    },
+    {
+      "name": "artic-t2 fog",
+      "file": "effects/fog/artic-t2.png",
+      "palette": "artic-t2"
+    },
+    {
+      "name": "artic-t3 fog",
+      "file": "effects/fog/artic-t3.png",
+      "palette": "artic-t3"
+    },
+    {
+      "name": "artic-t4 fog",
+      "file": "effects/fog/artic-t4.png",
+      "palette": "artic-t4"
+    },
+    {
+      "name": "artic fog",
+      "file": "effects/fog/artic.png",
+      "palette": "artic"
+    },
+    {
+      "name": "artic1 fog",
+      "file": "effects/fog/artic1.png",
+      "palette": "artic1"
+    },
+    {
+      "name": "artic2 fog",
+      "file": "effects/fog/artic2.png",
+      "palette": "artic2"
+    },
+    {
+      "name": "canyn-t1 fog",
+      "file": "effects/fog/canyn-t1.png",
+      "palette": "canyn-t1"
+    },
+    {
+      "name": "canyn-t2 fog",
+      "file": "effects/fog/canyn-t2.png",
+      "palette": "canyn-t2"
+    },
+    {
+      "name": "canyon fog",
+      "file": "effects/fog/canyon.png",
+      "palette": "canyon"
+    },
+    {
+      "name": "canyon1 fog",
+      "file": "effects/fog/canyon1.png",
+      "palette": "canyon1"
+    },
+    {
+      "name": "canyon2 fog",
+      "file": "effects/fog/canyon2.png",
+      "palette": "canyon2"
+    },
+    {
+      "name": "canyon3 fog",
+      "file": "effects/fog/canyon3.png",
+      "palette": "canyon3"
+    },
+    {
+      "name": "canyon4 fog",
+      "file": "effects/fog/canyon4.png",
+      "palette": "canyon4"
+    },
+    {
+      "name": "canyon5 fog",
+      "file": "effects/fog/canyon5.png",
+      "palette": "canyon5"
+    },
+    {
+      "name": "canyon6 fog",
+      "file": "effects/fog/canyon6.png",
+      "palette": "canyon6"
+    },
+    {
+      "name": "multi1 fog",
+      "file": "effects/fog/multi1.png",
+      "palette": "multi1"
+    },
+    {
+      "name": "multi2 fog",
+      "file": "effects/fog/multi2.png",
+      "palette": "multi2"
+    },
+    {
+      "name": "alien-t1 lte",
+      "file": "effects/light/alien-t1.png",
+      "palette": "alien-t1"
+    },
+    {
+      "name": "alien-t2 lte",
+      "file": "effects/light/alien-t2.png",
+      "palette": "alien-t2"
+    },
+    {
+      "name": "alien lte",
+      "file": "effects/light/alien.png",
+      "palette": "alien"
+    },
+    {
+      "name": "alien1 lte",
+      "file": "effects/light/alien1.png",
+      "palette": "alien1"
+    },
+    {
+      "name": "alien2 lte",
+      "file": "effects/light/alien2.png",
+      "palette": "alien2"
+    },
+    {
+      "name": "alien3 lte",
+      "file": "effects/light/alien3.png",
+      "palette": "alien3"
+    },
+    {
+      "name": "alien4 lte",
+      "file": "effects/light/alien4.png",
+      "palette": "alien4"
+    },
+    {
+      "name": "alien5 lte",
+      "file": "effects/light/alien5.png",
+      "palette": "alien5"
+    },
+    {
+      "name": "alien6 lte",
+      "file": "effects/light/alien6.png",
+      "palette": "alien6"
+    },
+    {
+      "name": "artic-t1 lte",
+      "file": "effects/light/artic-t1.png",
+      "palette": "artic-t1"
+    },
+    {
+      "name": "artic-t2 lte",
+      "file": "effects/light/artic-t2.png",
+      "palette": "artic-t2"
+    },
+    {
+      "name": "artic-t3 lte",
+      "file": "effects/light/artic-t3.png",
+      "palette": "artic-t3"
+    },
+    {
+      "name": "artic-t4 lte",
+      "file": "effects/light/artic-t4.png",
+      "palette": "artic-t4"
+    },
+    {
+      "name": "artic lte",
+      "file": "effects/light/artic.png",
+      "palette": "artic"
+    },
+    {
+      "name": "artic1 lte",
+      "file": "effects/light/artic1.png",
+      "palette": "artic1"
+    },
+    {
+      "name": "artic2 lte",
+      "file": "effects/light/artic2.png",
+      "palette": "artic2"
+    },
+    {
+      "name": "canyn-t1 lte",
+      "file": "effects/light/canyn-t1.png",
+      "palette": "canyn-t1"
+    },
+    {
+      "name": "canyn-t2 lte",
+      "file": "effects/light/canyn-t2.png",
+      "palette": "canyn-t2"
+    },
+    {
+      "name": "canyon lte",
+      "file": "effects/light/canyon.png",
+      "palette": "canyon"
+    },
+    {
+      "name": "canyon1 lte",
+      "file": "effects/light/canyon1.png",
+      "palette": "canyon1"
+    },
+    {
+      "name": "canyon2 lte",
+      "file": "effects/light/canyon2.png",
+      "palette": "canyon2"
+    },
+    {
+      "name": "canyon3 lte",
+      "file": "effects/light/canyon3.png",
+      "palette": "canyon3"
+    },
+    {
+      "name": "canyon4 lte",
+      "file": "effects/light/canyon4.png",
+      "palette": "canyon4"
+    },
+    {
+      "name": "canyon5 lte",
+      "file": "effects/light/canyon5.png",
+      "palette": "canyon5"
+    },
+    {
+      "name": "canyon6 lte",
+      "file": "effects/light/canyon6.png",
+      "palette": "canyon6"
+    },
+    {
+      "name": "multi1 lte",
+      "file": "effects/light/multi1.png",
+      "palette": "multi1"
+    },
+    {
+      "name": "multi2 lte",
+      "file": "effects/light/multi2.png",
+      "palette": "multi2"
+    },
+    {
+      "name": "vga lte",
+      "file": "effects/light/vga.png",
+      "palette": "vga"
+    }
+  ],
+  "sounds": [
+    {
+      "name": "blast4",
+      "file": "audio/sfx/blast4.wav",
+      "rate": 11025,
+      "channels": 1,
+      "bits": 8,
+      "seconds": 3.942
+    },
+    {
+      "name": "blast7",
+      "file": "audio/sfx/blast7.wav",
+      "rate": 11025,
+      "channels": 1,
+      "bits": 8,
+      "seconds": 2.951
+    },
+    {
+      "name": "electric",
+      "file": "audio/sfx/electric.wav",
+      "rate": 11025,
+      "channels": 1,
+      "bits": 8,
+      "seconds": 0.523
+    },
+    {
+      "name": "engine4",
+      "file": "audio/sfx/engine4.wav",
+      "rate": 11025,
+      "channels": 1,
+      "bits": 8,
+      "seconds": 2.455
+    },
+    {
+      "name": "exp1",
+      "file": "audio/sfx/exp1.wav",
+      "rate": 11025,
+      "channels": 1,
+      "bits": 8,
+      "seconds": 1.62
+    },
+    {
+      "name": "exp2",
+      "file": "audio/sfx/exp2.wav",
+      "rate": 11025,
+      "channels": 1,
+      "bits": 8,
+      "seconds": 1.922
+    },
+    {
+      "name": "exp3",
+      "file": "audio/sfx/exp3.wav",
+      "rate": 11025,
+      "channels": 1,
+      "bits": 8,
+      "seconds": 1.766
+    },
+    {
+      "name": "exp4",
+      "file": "audio/sfx/exp4.wav",
+      "rate": 11025,
+      "channels": 1,
+      "bits": 8,
+      "seconds": 1.922
+    },
+    {
+      "name": "exp5",
+      "file": "audio/sfx/exp5.wav",
+      "rate": 11025,
+      "channels": 1,
+      "bits": 8,
+      "seconds": 1.922
+    },
+    {
+      "name": "fire-83",
+      "file": "audio/sfx/fire-83.wav",
+      "rate": 11025,
+      "channels": 1,
+      "bits": 8,
+      "seconds": 0.899
+    },
+    {
+      "name": "flyby56",
+      "file": "audio/sfx/flyby56.wav",
+      "rate": 22050,
+      "channels": 1,
+      "bits": 8,
+      "seconds": 1.855
+    },
+    {
+      "name": "flyby60",
+      "file": "audio/sfx/flyby60.wav",
+      "rate": 22050,
+      "channels": 1,
+      "bits": 8,
+      "seconds": 1.958
+    },
+    {
+      "name": "flyby80",
+      "file": "audio/sfx/flyby80.wav",
+      "rate": 11025,
+      "channels": 1,
+      "bits": 8,
+      "seconds": 2.558
+    },
+    {
+      "name": "flyby81",
+      "file": "audio/sfx/flyby81.wav",
+      "rate": 11025,
+      "channels": 1,
+      "bits": 8,
+      "seconds": 1.958
+    },
+    {
+      "name": "ground",
+      "file": "audio/sfx/ground.wav",
+      "rate": 11025,
+      "channels": 1,
+      "bits": 8,
+      "seconds": 1.048
+    },
+    {
+      "name": "intro",
+      "file": "audio/sfx/intro.wav",
+      "rate": 8287,
+      "channels": 1,
+      "bits": 8,
+      "seconds": 10.735
+    },
+    {
+      "name": "knock",
+      "file": "audio/sfx/knock.wav",
+      "rate": 11025,
+      "channels": 1,
+      "bits": 8,
+      "seconds": 0.295
+    },
+    {
+      "name": "laser-21",
+      "file": "audio/sfx/laser-21.wav",
+      "rate": 11025,
+      "channels": 1,
+      "bits": 8,
+      "seconds": 0.452
+    },
+    {
+      "name": "laser-47",
+      "file": "audio/sfx/laser-47.wav",
+      "rate": 11025,
+      "channels": 1,
+      "bits": 8,
+      "seconds": 0.702
+    },
+    {
+      "name": "laser",
+      "file": "audio/sfx/laser.wav",
+      "rate": 11025,
+      "channels": 1,
+      "bits": 8,
+      "seconds": 0.224
+    },
+    {
+      "name": "laser2",
+      "file": "audio/sfx/laser2.wav",
+      "rate": 11025,
+      "channels": 1,
+      "bits": 8,
+      "seconds": 0.452
+    },
+    {
+      "name": "laser3",
+      "file": "audio/sfx/laser3.wav",
+      "rate": 11025,
+      "channels": 1,
+      "bits": 8,
+      "seconds": 1.008
+    },
+    {
+      "name": "laser4",
+      "file": "audio/sfx/laser4.wav",
+      "rate": 11025,
+      "channels": 1,
+      "bits": 8,
+      "seconds": 0.641
+    },
+    {
+      "name": "laser5",
+      "file": "audio/sfx/laser5.wav",
+      "rate": 11025,
+      "channels": 1,
+      "bits": 8,
+      "seconds": 0.224
+    },
+    {
+      "name": "laser6",
+      "file": "audio/sfx/laser6.wav",
+      "rate": 11025,
+      "channels": 1,
+      "bits": 8,
+      "seconds": 0.224
+    },
+    {
+      "name": "laser7",
+      "file": "audio/sfx/laser7.wav",
+      "rate": 11025,
+      "channels": 1,
+      "bits": 8,
+      "seconds": 0.224
+    },
+    {
+      "name": "laser8",
+      "file": "audio/sfx/laser8.wav",
+      "rate": 11025,
+      "channels": 1,
+      "bits": 8,
+      "seconds": 0.224
+    },
+    {
+      "name": "missile",
+      "file": "audio/sfx/missile.wav",
+      "rate": 11025,
+      "channels": 1,
+      "bits": 8,
+      "seconds": 0.98
+    },
+    {
+      "name": "power-1",
+      "file": "audio/sfx/power-1.wav",
+      "rate": 11025,
+      "channels": 1,
+      "bits": 8,
+      "seconds": 0.694
+    },
+    {
+      "name": "scrape",
+      "file": "audio/sfx/scrape.wav",
+      "rate": 11025,
+      "channels": 1,
+      "bits": 8,
+      "seconds": 1.131
+    },
+    {
+      "name": "scream1",
+      "file": "audio/sfx/scream1.wav",
+      "rate": 11025,
+      "channels": 1,
+      "bits": 8,
+      "seconds": 3.195
+    },
+    {
+      "name": "scream2",
+      "file": "audio/sfx/scream2.wav",
+      "rate": 11025,
+      "channels": 1,
+      "bits": 8,
+      "seconds": 1.742
+    },
+    {
+      "name": "scream3",
+      "file": "audio/sfx/scream3.wav",
+      "rate": 11025,
+      "channels": 1,
+      "bits": 8,
+      "seconds": 1.953
+    },
+    {
+      "name": "shut-dn7",
+      "file": "audio/sfx/shut-dn7.wav",
+      "rate": 11025,
+      "channels": 1,
+      "bits": 8,
+      "seconds": 1.852
+    },
+    {
+      "name": "warning",
+      "file": "audio/sfx/warning.wav",
+      "rate": 11025,
+      "channels": 1,
+      "bits": 8,
+      "seconds": 3.267
+    },
+    {
+      "name": "whiz3",
+      "file": "audio/sfx/whiz3.wav",
+      "rate": 22050,
+      "channels": 1,
+      "bits": 8,
+      "seconds": 0.29
+    }
+  ],
+  "music": [
+    {
+      "name": "alien",
+      "file": "audio/music/alien.mod",
+      "title": "(C) Terminal Reality",
+      "channels": 6,
+      "format": "6CHN"
+    },
+    {
+      "name": "back",
+      "file": "audio/music/back.mod",
+      "title": "(C) Terminal Reality",
+      "channels": 6,
+      "format": "6CHN"
+    },
+    {
+      "name": "creep",
+      "file": "audio/music/creep.mod",
+      "title": "(C) Terminal Reality",
+      "channels": 6,
+      "format": "6CHN"
+    },
+    {
+      "name": "hit",
+      "file": "audio/music/hit.mod",
+      "title": "(C) Terminal Reality",
+      "channels": 6,
+      "format": "6CHN"
+    },
+    {
+      "name": "sex",
+      "file": "audio/music/sex.mod",
+      "title": "(C) Terminal Reality",
+      "channels": 6,
+      "format": "6CHN"
+    },
+    {
+      "name": "tame",
+      "file": "audio/music/tame.mod",
+      "title": "(C) Terminal Reality",
+      "channels": 6,
+      "format": "6CHN"
+    },
+    {
+      "name": "weave",
+      "file": "audio/music/weave.mod",
+      "title": "(C) Terminal Reality",
+      "channels": 6,
+      "format": "6CHN"
+    }
+  ],
+  "models": [
+    {
+      "file": "models/afight2.obj",
+      "vertices": 74,
+      "faces": 117,
+      "dropped": 0,
+      "textures": [
+        "AFIGHT2A.RAW",
+        "AFIGHT2B.RAW",
+        "CONNECTA.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/afighter.obj",
+      "vertices": 97,
+      "faces": 117,
+      "dropped": 0,
+      "textures": [
+        "afpanel2.RAW",
+        "afpanel1.RAW",
+        "AFBODY.RAW",
+        "AFTXT.RAW",
+        "FIRE.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/alienb.json",
+      "vertices": 0,
+      "faces": 0,
+      "dropped": 0,
+      "textures": [],
+      "kind": "anim",
+      "frames": [
+        "alienbo1.bin",
+        "alienbo2.bin",
+        "alienbo3.bin"
+      ],
+      "delay": 32768
+    },
+    {
+      "file": "models/alienbo1.obj",
+      "vertices": 132,
+      "faces": 224,
+      "dropped": 0,
+      "textures": [
+        "BASE.RAW",
+        "GRAYMARB.RAW",
+        "BSIDEA.RAW",
+        "BSIDEB.RAW",
+        "BLAK.RAW",
+        "SBODYA.RAW",
+        "HFRO.RAW",
+        "HSIDEA.RAW",
+        "HBAK.RAW",
+        "STANDSI1.RAW",
+        "ARM.RAW",
+        "GUNN.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/alienbo2.obj",
+      "vertices": 132,
+      "faces": 224,
+      "dropped": 0,
+      "textures": [
+        "BASE.RAW",
+        "GRAYMARB.RAW",
+        "BSIDEA.RAW",
+        "BSIDEB.RAW",
+        "BLAK.RAW",
+        "SBODYA.RAW",
+        "HFRO.RAW",
+        "HSIDEA.RAW",
+        "HBAK.RAW",
+        "STANDSI1.RAW",
+        "ARM.RAW",
+        "GUNN.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/alienbo3.obj",
+      "vertices": 132,
+      "faces": 224,
+      "dropped": 0,
+      "textures": [
+        "BASE.RAW",
+        "GRAYMARB.RAW",
+        "BSIDEA.RAW",
+        "BSIDEB.RAW",
+        "BLAK.RAW",
+        "SBODYA.RAW",
+        "HFRO.RAW",
+        "HSIDEA.RAW",
+        "HBAK.RAW",
+        "STANDSI1.RAW",
+        "ARM.RAW",
+        "GUNN.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/aliensh.json",
+      "vertices": 0,
+      "faces": 0,
+      "dropped": 0,
+      "textures": [],
+      "kind": "anim",
+      "frames": [
+        "aliensh1.bin",
+        "aliensh2.bin",
+        "aliensh3.bin",
+        "aliensh4.bin",
+        "aliensh5.bin",
+        "aliensh6.bin",
+        "aliensh7.bin",
+        "aliensh8.bin"
+      ],
+      "delay": 32768
+    },
+    {
+      "file": "models/aliensh1.obj",
+      "vertices": 232,
+      "faces": 264,
+      "dropped": 0,
+      "textures": [
+        "ALSHPTXT.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/aliensh2.obj",
+      "vertices": 232,
+      "faces": 264,
+      "dropped": 0,
+      "textures": [
+        "ALSHPTXT.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/aliensh3.obj",
+      "vertices": 232,
+      "faces": 264,
+      "dropped": 0,
+      "textures": [
+        "ALSHPTXT.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/aliensh4.obj",
+      "vertices": 232,
+      "faces": 264,
+      "dropped": 0,
+      "textures": [
+        "ALSHPTXT.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/aliensh5.obj",
+      "vertices": 232,
+      "faces": 264,
+      "dropped": 0,
+      "textures": [
+        "ALSHPTXT.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/aliensh6.obj",
+      "vertices": 232,
+      "faces": 264,
+      "dropped": 0,
+      "textures": [
+        "ALSHPTXT.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/aliensh7.obj",
+      "vertices": 232,
+      "faces": 264,
+      "dropped": 0,
+      "textures": [
+        "ALSHPTXT.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/aliensh8.obj",
+      "vertices": 232,
+      "faces": 264,
+      "dropped": 0,
+      "textures": [
+        "ALSHPTXT.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/amissile.obj",
+      "vertices": 86,
+      "faces": 80,
+      "dropped": 0,
+      "textures": [
+        "MISSLE.RAW",
+        "MBOT.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/arcani.json",
+      "vertices": 0,
+      "faces": 0,
+      "dropped": 0,
+      "textures": [],
+      "kind": "anim",
+      "frames": [
+        "arcani0.bin",
+        "arcani1.bin",
+        "arcani2.bin",
+        "arcani3.bin"
+      ],
+      "delay": 65536
+    },
+    {
+      "file": "models/arcani0.obj",
+      "vertices": 172,
+      "faces": 204,
+      "dropped": 0,
+      "textures": [
+        "ARBSYL2.RAW",
+        "ARCBOS3.RAW",
+        "ARCTARG.RAW",
+        "ARCBOS4.RAW",
+        "ARCBOS8.RAW",
+        "ARBSYL1.RAW",
+        "ARCBOS5.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/arcani1.obj",
+      "vertices": 172,
+      "faces": 204,
+      "dropped": 0,
+      "textures": [
+        "ARBSYL2.RAW",
+        "ARCBOS3.RAW",
+        "ARCTARG.RAW",
+        "ARCBOS4.RAW",
+        "ARCBOS8.RAW",
+        "ARBSYL1.RAW",
+        "ARCBOS5.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/arcani2.obj",
+      "vertices": 172,
+      "faces": 204,
+      "dropped": 0,
+      "textures": [
+        "ARBSYL2.RAW",
+        "ARCBOS3.RAW",
+        "ARCTARG.RAW",
+        "ARCBOS4.RAW",
+        "ARCBOS8.RAW",
+        "ARBSYL1.RAW",
+        "ARCBOS5.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/arcani3.obj",
+      "vertices": 172,
+      "faces": 204,
+      "dropped": 0,
+      "textures": [
+        "ARBSYL2.RAW",
+        "ARCBOS3.RAW",
+        "ARCTARG.RAW",
+        "ARCBOS4.RAW",
+        "ARCBOS8.RAW",
+        "ARBSYL1.RAW",
+        "ARCBOS5.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/beam.obj",
+      "vertices": 105,
+      "faces": 196,
+      "dropped": 0,
+      "textures": [
+        "BEMM2.RAW",
+        "TP1.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/blade.obj",
+      "vertices": 56,
+      "faces": 38,
+      "dropped": 0,
+      "textures": [
+        "BLADES.RAW",
+        "MARKMTL4.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/bradmis.json",
+      "vertices": 0,
+      "faces": 0,
+      "dropped": 0,
+      "textures": [],
+      "kind": "anim",
+      "frames": [
+        "bradmis1.bin",
+        "bradmis2.bin"
+      ],
+      "delay": 3276
+    },
+    {
+      "file": "models/bradmis1.obj",
+      "vertices": 51,
+      "faces": 51,
+      "dropped": 0,
+      "textures": [
+        "M3.RAW",
+        "M2.RAW",
+        "M1.RAW",
+        "WARHED.RAW",
+        "msslfir0.raw",
+        "MISFIN.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/bradmis2.obj",
+      "vertices": 51,
+      "faces": 55,
+      "dropped": 0,
+      "textures": [
+        "M3.RAW",
+        "M2.RAW",
+        "M1.RAW",
+        "WARHED.RAW",
+        "msslfir0.raw",
+        "MISFIN.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/bridg1.obj",
+      "vertices": 58,
+      "faces": 57,
+      "dropped": 0,
+      "textures": [
+        "YELLOW12.RAW",
+        "ALIEN13.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/bridg2.obj",
+      "vertices": 14,
+      "faces": 19,
+      "dropped": 0,
+      "textures": [
+        "ALIEN13.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/bridg3.obj",
+      "vertices": 14,
+      "faces": 19,
+      "dropped": 0,
+      "textures": [
+        "ALIEN13.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/bullet.obj",
+      "vertices": 21,
+      "faces": 38,
+      "dropped": 0,
+      "textures": [
+        "BULLET.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/bunk.obj",
+      "vertices": 112,
+      "faces": 152,
+      "dropped": 0,
+      "textures": [
+        "POR.RAW",
+        "HANG5.RAW",
+        "BUNKL.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/bunker.obj",
+      "vertices": 64,
+      "faces": 58,
+      "dropped": 0,
+      "textures": [
+        "POR.RAW",
+        "BUNKL.RAW",
+        "HANG5.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/cann.obj",
+      "vertices": 140,
+      "faces": 102,
+      "dropped": 0,
+      "textures": [
+        "GUNNY.RAW",
+        "BLUE.RAW",
+        "RAYCANON.RAW",
+        "BLUETRT.RAW",
+        "RAYCAN7.RAW",
+        "CANMET.RAW",
+        "RAYCAN2.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/chunk.obj",
+      "vertices": 14,
+      "faces": 23,
+      "dropped": 0,
+      "textures": [
+        "BURN.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/cockmdl.obj",
+      "vertices": 118,
+      "faces": 64,
+      "dropped": 0,
+      "textures": [
+        "BASE.RAW",
+        "BIGSIDE.RAW",
+        "BACK2.RAW",
+        "DASH.RAW",
+        "SIDE01.RAW",
+        "CONTROLS.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/cocksimp.obj",
+      "vertices": 40,
+      "faces": 17,
+      "dropped": 0,
+      "textures": [
+        "BASE.RAW",
+        "DASH.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/com.obj",
+      "vertices": 126,
+      "faces": 98,
+      "dropped": 0,
+      "textures": [
+        "BORG1.RAW",
+        "BORD2.RAW",
+        "SHIPPLAT.RAW",
+        "METAL2.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/comlow1.obj",
+      "vertices": 84,
+      "faces": 42,
+      "dropped": 0,
+      "textures": [
+        "FRONTSID.RAW",
+        "RIGHTSID.RAW",
+        "BACKSIDE.RAW",
+        "LEFTSIDE.RAW",
+        "TOPVIEW.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/commlow0.obj",
+      "vertices": 91,
+      "faces": 147,
+      "dropped": 0,
+      "textures": [
+        "DISH.RAW",
+        "POLE.RAW",
+        "FRONTSID.RAW",
+        "RIGHTSID.RAW",
+        "BACKSIDE.RAW",
+        "LEFTSIDE.RAW",
+        "TOPVIEW.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/commlow1.obj",
+      "vertices": 91,
+      "faces": 147,
+      "dropped": 0,
+      "textures": [
+        "DISH.RAW",
+        "POLE.RAW",
+        "FRONTSID.RAW",
+        "RIGHTSID.RAW",
+        "BACKSIDE.RAW",
+        "LEFTSIDE.RAW",
+        "TOPVIEW.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/commlow2.obj",
+      "vertices": 91,
+      "faces": 147,
+      "dropped": 0,
+      "textures": [
+        "DISH.RAW",
+        "POLE.RAW",
+        "FRONTSID.RAW",
+        "RIGHTSID.RAW",
+        "BACKSIDE.RAW",
+        "LEFTSIDE.RAW",
+        "TOPVIEW.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/commlowa.json",
+      "vertices": 0,
+      "faces": 0,
+      "dropped": 0,
+      "textures": [],
+      "kind": "anim",
+      "frames": [
+        "commlow0.bin",
+        "commlow1.bin",
+        "commlow0.bin",
+        "commlow2.bin"
+      ],
+      "delay": 131072
+    },
+    {
+      "file": "models/cube.obj",
+      "vertices": 8,
+      "faces": 6,
+      "dropped": 0,
+      "textures": [
+        "rustplat.raw"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/ddcshp.obj",
+      "vertices": 140,
+      "faces": 104,
+      "dropped": 0,
+      "textures": [
+        "TPART.RAW",
+        "SF.RAW",
+        "BORG1.RAW",
+        "LINEBARS.RAW",
+        "SHIPPLAT.RAW",
+        "BILDY.RAW",
+        "CRUISER.RAW",
+        "METAL2.RAW",
+        "TRANSTXT.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/ddcshp2.obj",
+      "vertices": 140,
+      "faces": 200,
+      "dropped": 0,
+      "textures": [
+        "TPART.RAW",
+        "SF.RAW",
+        "BORG1.RAW",
+        "LINEBARS.RAW",
+        "SHIPPLAT.RAW",
+        "BILDY.RAW",
+        "CRUISER.RAW",
+        "METAL2.RAW",
+        "TRANSTXT.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/dis2.obj",
+      "vertices": 122,
+      "faces": 102,
+      "dropped": 0,
+      "textures": [
+        "SPTXT.RAW",
+        "RUSTPLAT.RAW",
+        "TRANSTXT.RAW",
+        "SHIPPLAT.RAW",
+        "TPDISH.RAW",
+        "REFLCT.RAW",
+        "REFLBX.RAW",
+        "SHIPTXT.RAW",
+        "PANL.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/dishgun.obj",
+      "vertices": 120,
+      "faces": 116,
+      "dropped": 0,
+      "textures": [
+        "SHIPPLAT.RAW",
+        "DISHPO01.RAW",
+        "DISHG.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/dishgun2.obj",
+      "vertices": 120,
+      "faces": 194,
+      "dropped": 0,
+      "textures": [
+        "SHIPPLAT.RAW",
+        "DISHPO01.RAW",
+        "DISHG.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/fanbody.obj",
+      "vertices": 24,
+      "faces": 28,
+      "dropped": 0,
+      "textures": [],
+      "anims": []
+    },
+    {
+      "file": "models/fild.obj",
+      "vertices": 144,
+      "faces": 156,
+      "dropped": 0,
+      "textures": [
+        "FOGSHT.RAW",
+        "CITYGRID.RAW",
+        "RAYCAN7.RAW",
+        "TOWRMID.RAW",
+        "TOPVEW.RAW",
+        "DRONETXT.RAW",
+        "REF.RAW",
+        "BILDY2.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/fireball.obj",
+      "vertices": 4,
+      "faces": 2,
+      "dropped": 0,
+      "textures": [
+        "msslfir0.raw",
+        "msslfir1.raw",
+        "msslfir2.raw",
+        "msslfir3.raw"
+      ],
+      "anims": [
+        {
+          "frames": [
+            {
+              "texture": "msslfir0.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "msslfir1.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "msslfir2.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "msslfir3.raw",
+              "sfx": ""
+            }
+          ],
+          "delay": 4096
+        }
+      ]
+    },
+    {
+      "file": "models/firlarge.obj",
+      "vertices": 45,
+      "faces": 35,
+      "dropped": 0,
+      "textures": [
+        "PINE.RAW",
+        "TREE.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/firsmall.obj",
+      "vertices": 45,
+      "faces": 35,
+      "dropped": 0,
+      "textures": [
+        "PINE.RAW",
+        "TREE.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/frag1.obj",
+      "vertices": 14,
+      "faces": 13,
+      "dropped": 0,
+      "textures": [
+        "FRAG1.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/frag2.obj",
+      "vertices": 14,
+      "faces": 13,
+      "dropped": 0,
+      "textures": [
+        "FRAG2.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/frag3.obj",
+      "vertices": 14,
+      "faces": 13,
+      "dropped": 0,
+      "textures": [
+        "FRAG3.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/globe.obj",
+      "vertices": 482,
+      "faces": 576,
+      "dropped": 0,
+      "textures": [],
+      "anims": []
+    },
+    {
+      "file": "models/gnturet.obj",
+      "vertices": 137,
+      "faces": 220,
+      "dropped": 0,
+      "textures": [
+        "METAL2.RAW",
+        "CRUISER.RAW",
+        "BILDY2.RAW",
+        "REF.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/gull1.obj",
+      "vertices": 104,
+      "faces": 142,
+      "dropped": 0,
+      "textures": [
+        "GSIDE1.RAW",
+        "RGWING.RAW",
+        "LGWING.RAW",
+        "GBUTT.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/hawk.obj",
+      "vertices": 49,
+      "faces": 79,
+      "dropped": 0,
+      "textures": [
+        "HAWKTOP4.RAW",
+        "HAWKBOT2.RAW",
+        "HAWKW5.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/hitzo1.obj",
+      "vertices": 8,
+      "faces": 5,
+      "dropped": 0,
+      "textures": [
+        "hittop.RAW",
+        "hittopd.RAW",
+        "hittopd.raw",
+        "HITZ.RAW"
+      ],
+      "anims": [
+        {
+          "frames": [
+            {
+              "texture": "hittop.RAW",
+              "sfx": ""
+            },
+            {
+              "texture": "hittopd.RAW",
+              "sfx": ""
+            },
+            {
+              "texture": "hittop.RAW",
+              "sfx": ""
+            },
+            {
+              "texture": "hittopd.raw",
+              "sfx": ""
+            }
+          ],
+          "delay": 32768
+        }
+      ]
+    },
+    {
+      "file": "models/icebasee.obj",
+      "vertices": 134,
+      "faces": 200,
+      "dropped": 0,
+      "textures": [
+        "GRATE2.RAW",
+        "ICE3.RAW",
+        "ICESTCKR.RAW",
+        "ICESTCKL.RAW",
+        "MIDSID.RAW",
+        "MIDDSID.RAW",
+        "MIDDSIDB.RAW",
+        "MAINTP.RAW",
+        "BTR.RAW",
+        "DRTOP.RAW",
+        "BTL.RAW",
+        "NDOR1.RAW",
+        "SF.RAW",
+        "BTLL.RAW",
+        "BTSL.RAW",
+        "MIDO.RAW",
+        "BTST.RAW",
+        "BTTT.RAW",
+        "NL.RAW",
+        "NNL.RAW",
+        "LTOPL.RAW",
+        "LTOP.RAW",
+        "ICETEST.RAW",
+        "NDOR.RAW",
+        "LBLL.RAW",
+        "LTOPR.RAW",
+        "NR.RAW",
+        "MIDTL.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/icebrd.obj",
+      "vertices": 88,
+      "faces": 142,
+      "dropped": 0,
+      "textures": [
+        "ICETOP5.RAW",
+        "ICEBOT.RAW",
+        "ICETOP3.RAW",
+        "ICEWING.RAW",
+        "ICEBAK02.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/iris.json",
+      "vertices": 0,
+      "faces": 0,
+      "dropped": 0,
+      "textures": [],
+      "kind": "anim",
+      "frames": [
+        "iris1.bin",
+        "iris4.bin"
+      ],
+      "delay": 131072
+    },
+    {
+      "file": "models/iris1.obj",
+      "vertices": 120,
+      "faces": 168,
+      "dropped": 0,
+      "textures": [],
+      "anims": []
+    },
+    {
+      "file": "models/iris4.obj",
+      "vertices": 120,
+      "faces": 168,
+      "dropped": 0,
+      "textures": [],
+      "anims": []
+    },
+    {
+      "file": "models/jaw1.obj",
+      "vertices": 28,
+      "faces": 30,
+      "dropped": 0,
+      "textures": [],
+      "anims": []
+    },
+    {
+      "file": "models/jaw2.obj",
+      "vertices": 28,
+      "faces": 28,
+      "dropped": 0,
+      "textures": [],
+      "anims": []
+    },
+    {
+      "file": "models/jump-pnt.obj",
+      "vertices": 181,
+      "faces": 108,
+      "dropped": 0,
+      "textures": [
+        "RING3.RAW",
+        "SAT5.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/laser.obj",
+      "vertices": 8,
+      "faces": 6,
+      "dropped": 0,
+      "textures": [],
+      "anims": []
+    },
+    {
+      "file": "models/laser3.obj",
+      "vertices": 4,
+      "faces": 2,
+      "dropped": 0,
+      "textures": [
+        "sqglsr.raw"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/laser4.obj",
+      "vertices": 4,
+      "faces": 1,
+      "dropped": 0,
+      "textures": [
+        "pulse0.raw",
+        "pulse1.raw",
+        "pulse2.raw",
+        "pulse3.raw"
+      ],
+      "anims": [
+        {
+          "frames": [
+            {
+              "texture": "pulse0.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "pulse1.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "pulse2.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "pulse3.raw",
+              "sfx": ""
+            }
+          ],
+          "delay": 4096
+        }
+      ]
+    },
+    {
+      "file": "models/laser5.obj",
+      "vertices": 8,
+      "faces": 6,
+      "dropped": 0,
+      "textures": [],
+      "anims": []
+    },
+    {
+      "file": "models/laser6.obj",
+      "vertices": 4,
+      "faces": 2,
+      "dropped": 0,
+      "textures": [
+        "msslfir0.raw",
+        "msslfir1.raw",
+        "msslfir2.raw",
+        "msslfir3.raw"
+      ],
+      "anims": [
+        {
+          "frames": [
+            {
+              "texture": "msslfir0.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "msslfir1.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "msslfir2.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "msslfir3.raw",
+              "sfx": ""
+            }
+          ],
+          "delay": 4096
+        }
+      ]
+    },
+    {
+      "file": "models/laser7.obj",
+      "vertices": 8,
+      "faces": 6,
+      "dropped": 0,
+      "textures": [],
+      "anims": []
+    },
+    {
+      "file": "models/laser8.obj",
+      "vertices": 8,
+      "faces": 6,
+      "dropped": 0,
+      "textures": [],
+      "anims": []
+    },
+    {
+      "file": "models/laser9.obj",
+      "vertices": 8,
+      "faces": 6,
+      "dropped": 0,
+      "textures": [],
+      "anims": []
+    },
+    {
+      "file": "models/missile.obj",
+      "vertices": 30,
+      "faces": 23,
+      "dropped": 0,
+      "textures": [
+        "MAINMIS.RAW",
+        "msslfir0.raw",
+        "msslfir1.raw",
+        "msslfir2.raw",
+        "msslfir3.raw",
+        "MISWING.RAW"
+      ],
+      "anims": [
+        {
+          "frames": [
+            {
+              "texture": "msslfir0.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "msslfir1.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "msslfir2.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "msslfir3.raw",
+              "sfx": ""
+            }
+          ],
+          "delay": 4096
+        }
+      ]
+    },
+    {
+      "file": "models/mother.obj",
+      "vertices": 83,
+      "faces": 119,
+      "dropped": 0,
+      "textures": [
+        "MOTHER1.RAW",
+        "MOTHER2.RAW",
+        "MOMWING1.RAW",
+        "MBACK1.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/navgun.obj",
+      "vertices": 130,
+      "faces": 104,
+      "dropped": 0,
+      "textures": [
+        "SHIPPLAT.RAW",
+        "NAVPAN2.RAW",
+        "VGRADBUM.RAW",
+        "NAVPANLS.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/navtarg.obj",
+      "vertices": 8,
+      "faces": 10,
+      "dropped": 0,
+      "textures": [
+        "NAVTAR01.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/pbase1.obj",
+      "vertices": 16,
+      "faces": 10,
+      "dropped": 0,
+      "textures": [
+        "PB03.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/pbase2.obj",
+      "vertices": 16,
+      "faces": 10,
+      "dropped": 0,
+      "textures": [
+        "PB03.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/pbase3.obj",
+      "vertices": 16,
+      "faces": 10,
+      "dropped": 0,
+      "textures": [
+        "PB03.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/pbase4.obj",
+      "vertices": 16,
+      "faces": 10,
+      "dropped": 0,
+      "textures": [
+        "PB03.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/pbase5.obj",
+      "vertices": 16,
+      "faces": 10,
+      "dropped": 0,
+      "textures": [
+        "PB03.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/pipe.obj",
+      "vertices": 9,
+      "faces": 13,
+      "dropped": 0,
+      "textures": [
+        "PIPE.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/power1.obj",
+      "vertices": 24,
+      "faces": 18,
+      "dropped": 0,
+      "textures": [],
+      "anims": []
+    },
+    {
+      "file": "models/powerant.obj",
+      "vertices": 4,
+      "faces": 1,
+      "dropped": 0,
+      "textures": [
+        "ant0000.raw",
+        "ant0004.raw",
+        "ant0008.raw",
+        "ant0012.raw"
+      ],
+      "anims": [
+        {
+          "frames": [
+            {
+              "texture": "ant0000.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "ant0004.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "ant0008.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "ant0012.raw",
+              "sfx": ""
+            }
+          ],
+          "delay": 4096
+        }
+      ]
+    },
+    {
+      "file": "models/powercan.obj",
+      "vertices": 4,
+      "faces": 1,
+      "dropped": 0,
+      "textures": [
+        "enca0000.raw",
+        "enca0001.raw",
+        "enca0002.raw",
+        "enca0003.raw"
+      ],
+      "anims": [
+        {
+          "frames": [
+            {
+              "texture": "enca0000.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "enca0001.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "enca0002.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "enca0003.raw",
+              "sfx": ""
+            }
+          ],
+          "delay": 16000
+        }
+      ]
+    },
+    {
+      "file": "models/powerfir.obj",
+      "vertices": 4,
+      "faces": 1,
+      "dropped": 0,
+      "textures": [
+        "fireb00.raw",
+        "fireb04.raw",
+        "fireb08.raw",
+        "fireb12.raw"
+      ],
+      "anims": [
+        {
+          "frames": [
+            {
+              "texture": "fireb00.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "fireb04.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "fireb08.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "fireb12.raw",
+              "sfx": ""
+            }
+          ],
+          "delay": 4096
+        }
+      ]
+    },
+    {
+      "file": "models/powergmi.obj",
+      "vertices": 4,
+      "faces": 1,
+      "dropped": 0,
+      "textures": [
+        "gmis00.raw",
+        "gmis04.raw",
+        "gmis08.raw",
+        "gmis12.raw"
+      ],
+      "anims": [
+        {
+          "frames": [
+            {
+              "texture": "gmis00.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "gmis04.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "gmis08.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "gmis12.raw",
+              "sfx": ""
+            }
+          ],
+          "delay": 16384
+        }
+      ]
+    },
+    {
+      "file": "models/powerinv.obj",
+      "vertices": 4,
+      "faces": 1,
+      "dropped": 0,
+      "textures": [
+        "invin00.raw",
+        "invin04.raw",
+        "invin08.raw",
+        "invin12.raw"
+      ],
+      "anims": [
+        {
+          "frames": [
+            {
+              "texture": "invin00.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "invin04.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "invin08.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "invin12.raw",
+              "sfx": ""
+            }
+          ],
+          "delay": 16384
+        }
+      ]
+    },
+    {
+      "file": "models/powerlas.obj",
+      "vertices": 4,
+      "faces": 1,
+      "dropped": 0,
+      "textures": [
+        "laser00.raw",
+        "laser04.raw",
+        "laser08.raw",
+        "laser12.raw"
+      ],
+      "anims": [
+        {
+          "frames": [
+            {
+              "texture": "laser00.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "laser04.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "laser08.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "laser12.raw",
+              "sfx": ""
+            }
+          ],
+          "delay": 16384
+        }
+      ]
+    },
+    {
+      "file": "models/powermis.obj",
+      "vertices": 4,
+      "faces": 1,
+      "dropped": 0,
+      "textures": [
+        "miss0000.raw",
+        "miss0002.raw",
+        "miss0004.raw",
+        "miss0006.raw"
+      ],
+      "anims": [
+        {
+          "frames": [
+            {
+              "texture": "miss0000.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "miss0002.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "miss0004.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "miss0006.raw",
+              "sfx": ""
+            }
+          ],
+          "delay": 16000
+        }
+      ]
+    },
+    {
+      "file": "models/powerpla.obj",
+      "vertices": 4,
+      "faces": 1,
+      "dropped": 0,
+      "textures": [
+        "plasma00.raw",
+        "plasma04.raw",
+        "plasma08.raw",
+        "plasma12.raw"
+      ],
+      "anims": [
+        {
+          "frames": [
+            {
+              "texture": "plasma00.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "plasma04.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "plasma08.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "plasma12.raw",
+              "sfx": ""
+            }
+          ],
+          "delay": 4096
+        }
+      ]
+    },
+    {
+      "file": "models/powershe.obj",
+      "vertices": 4,
+      "faces": 1,
+      "dropped": 0,
+      "textures": [
+        "shei0000.raw",
+        "shei0004.raw",
+        "shei0008.raw",
+        "shei0012.raw"
+      ],
+      "anims": [
+        {
+          "frames": [
+            {
+              "texture": "shei0000.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "shei0004.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "shei0008.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "shei0012.raw",
+              "sfx": ""
+            }
+          ],
+          "delay": 4096
+        }
+      ]
+    },
+    {
+      "file": "models/powersup.obj",
+      "vertices": 4,
+      "faces": 1,
+      "dropped": 0,
+      "textures": [
+        "sprmis00.raw",
+        "sprmis04.raw",
+        "sprmis08.raw",
+        "sprmis12.raw"
+      ],
+      "anims": [
+        {
+          "frames": [
+            {
+              "texture": "sprmis00.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "sprmis04.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "sprmis08.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "sprmis12.raw",
+              "sfx": ""
+            }
+          ],
+          "delay": 16384
+        }
+      ]
+    },
+    {
+      "file": "models/powervis.obj",
+      "vertices": 4,
+      "faces": 1,
+      "dropped": 0,
+      "textures": [
+        "invi0000.raw",
+        "invi0004.raw",
+        "invi0008.raw",
+        "invi0012.raw"
+      ],
+      "anims": [
+        {
+          "frames": [
+            {
+              "texture": "invi0000.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "invi0004.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "invi0008.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "invi0012.raw",
+              "sfx": ""
+            }
+          ],
+          "delay": 4096
+        }
+      ]
+    },
+    {
+      "file": "models/powerzap.obj",
+      "vertices": 4,
+      "faces": 1,
+      "dropped": 0,
+      "textures": [
+        "zap00.raw",
+        "zap04.raw",
+        "zap08.raw",
+        "zap12.raw"
+      ],
+      "anims": [
+        {
+          "frames": [
+            {
+              "texture": "zap00.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "zap04.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "zap08.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "zap12.raw",
+              "sfx": ""
+            }
+          ],
+          "delay": 16384
+        }
+      ]
+    },
+    {
+      "file": "models/radar.obj",
+      "vertices": 73,
+      "faces": 78,
+      "dropped": 0,
+      "textures": [
+        "rustplat.raw"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/rectangl.obj",
+      "vertices": 8,
+      "faces": 6,
+      "dropped": 0,
+      "textures": [
+        "rustplat.raw"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/sat2.obj",
+      "vertices": 181,
+      "faces": 166,
+      "dropped": 0,
+      "textures": [
+        "DISCY1.RAW",
+        "DRONETXT.RAW",
+        "RUSTPLAT.RAW",
+        "SPTXT.RAW",
+        "REF.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/shell.obj",
+      "vertices": 156,
+      "faces": 156,
+      "dropped": 0,
+      "textures": [],
+      "anims": []
+    },
+    {
+      "file": "models/ship.obj",
+      "vertices": 84,
+      "faces": 89,
+      "dropped": 0,
+      "textures": [
+        "SHIPTOP.raw",
+        "SHIPBAK.raw",
+        "BKCORNER.raw",
+        "VSIDE.raw",
+        "RUSTPLAT.raw",
+        "FINTAIL.raw"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/smoke.obj",
+      "vertices": 4,
+      "faces": 1,
+      "dropped": 0,
+      "textures": [
+        "exp2.raw"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/snowftr.obj",
+      "vertices": 96,
+      "faces": 149,
+      "dropped": 0,
+      "textures": [
+        "SNOWTOP5.RAW",
+        "SNOWBOT2.RAW",
+        "SNWING.RAW",
+        "SNBACK.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/sphere.obj",
+      "vertices": 114,
+      "faces": 128,
+      "dropped": 0,
+      "textures": [
+        "shipbak.raw"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/sup1.obj",
+      "vertices": 111,
+      "faces": 94,
+      "dropped": 0,
+      "textures": [
+        "BORG1.RAW",
+        "TIPT.RAW",
+        "AFTXT.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/tank2.obj",
+      "vertices": 120,
+      "faces": 88,
+      "dropped": 0,
+      "textures": [
+        "TANKPLT.RAW",
+        "TREAD.RAW",
+        "WHEEL01.RAW",
+        "TURRET.RAW",
+        "TANKTOP.RAW",
+        "HULL.RAW",
+        "BGUARD.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/target.obj",
+      "vertices": 9,
+      "faces": 4,
+      "dropped": 0,
+      "textures": [],
+      "anims": []
+    },
+    {
+      "file": "models/to.obj",
+      "vertices": 154,
+      "faces": 99,
+      "dropped": 0,
+      "textures": [
+        "BORG1.RAW",
+        "BTM1.RAW",
+        "BILDY2.RAW"
+      ],
+      "anims": []
+    },
+    {
+      "file": "models/wboss1.obj",
+      "vertices": 4,
+      "faces": 1,
+      "dropped": 0,
+      "textures": [
+        "pball1.raw",
+        "pball2.raw",
+        "pball3.raw",
+        "pball4.raw"
+      ],
+      "anims": [
+        {
+          "frames": [
+            {
+              "texture": "pball1.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "pball2.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "pball3.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "pball4.raw",
+              "sfx": ""
+            }
+          ],
+          "delay": 4096
+        }
+      ]
+    },
+    {
+      "file": "models/wboss2.obj",
+      "vertices": 4,
+      "faces": 1,
+      "dropped": 0,
+      "textures": [
+        "bfirj0.raw",
+        "bfirj1.raw",
+        "bfirj2.raw",
+        "bfirj3.raw"
+      ],
+      "anims": [
+        {
+          "frames": [
+            {
+              "texture": "bfirj0.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "bfirj1.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "bfirj2.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "bfirj3.raw",
+              "sfx": ""
+            }
+          ],
+          "delay": 4096
+        }
+      ]
+    },
+    {
+      "file": "models/wboss3.obj",
+      "vertices": 4,
+      "faces": 1,
+      "dropped": 0,
+      "textures": [
+        "firbal0.raw",
+        "firbal1.raw",
+        "firbal2.raw",
+        "firbal3.raw"
+      ],
+      "anims": [
+        {
+          "frames": [
+            {
+              "texture": "firbal0.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "firbal1.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "firbal2.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "firbal3.raw",
+              "sfx": ""
+            }
+          ],
+          "delay": 4096
+        }
+      ]
+    },
+    {
+      "file": "models/wboss4.obj",
+      "vertices": 4,
+      "faces": 1,
+      "dropped": 0,
+      "textures": [
+        "atm0.raw",
+        "atm1.raw",
+        "atm2.raw",
+        "atm3.raw"
+      ],
+      "anims": [
+        {
+          "frames": [
+            {
+              "texture": "atm0.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "atm1.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "atm2.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "atm3.raw",
+              "sfx": ""
+            }
+          ],
+          "delay": 4096
+        }
+      ]
+    },
+    {
+      "file": "models/wboss5.obj",
+      "vertices": 4,
+      "faces": 1,
+      "dropped": 0,
+      "textures": [
+        "purfrin0.raw",
+        "purfrin1.raw",
+        "purfrin2.raw",
+        "purfrin3.raw"
+      ],
+      "anims": [
+        {
+          "frames": [
+            {
+              "texture": "purfrin0.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "purfrin1.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "purfrin2.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "purfrin3.raw",
+              "sfx": ""
+            }
+          ],
+          "delay": 4096
+        }
+      ]
+    },
+    {
+      "file": "models/wboss6.obj",
+      "vertices": 4,
+      "faces": 1,
+      "dropped": 0,
+      "textures": [
+        "pulse0.raw",
+        "pulse1.raw",
+        "pulse2.raw",
+        "pulse3.raw"
+      ],
+      "anims": [
+        {
+          "frames": [
+            {
+              "texture": "pulse0.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "pulse1.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "pulse2.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "pulse3.raw",
+              "sfx": ""
+            }
+          ],
+          "delay": 4096
+        }
+      ]
+    },
+    {
+      "file": "models/wboss7.obj",
+      "vertices": 4,
+      "faces": 1,
+      "dropped": 0,
+      "textures": [
+        "pulse0.raw",
+        "pulse1.raw",
+        "pulse2.raw",
+        "pulse3.raw"
+      ],
+      "anims": [
+        {
+          "frames": [
+            {
+              "texture": "pulse0.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "pulse1.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "pulse2.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "pulse3.raw",
+              "sfx": ""
+            }
+          ],
+          "delay": 4096
+        }
+      ]
+    },
+    {
+      "file": "models/wboss8.obj",
+      "vertices": 4,
+      "faces": 1,
+      "dropped": 0,
+      "textures": [
+        "pulse0.raw",
+        "pulse1.raw",
+        "pulse2.raw",
+        "pulse3.raw"
+      ],
+      "anims": [
+        {
+          "frames": [
+            {
+              "texture": "pulse0.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "pulse1.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "pulse2.raw",
+              "sfx": ""
+            },
+            {
+              "texture": "pulse3.raw",
+              "sfx": ""
+            }
+          ],
+          "delay": 4096
+        }
+      ]
+    },
+    {
+      "file": "models/wrckice.obj",
+      "vertices": 152,
+      "faces": 128,
+      "dropped": 0,
+      "textures": [
+        "MIDSID.RAW",
+        "ICESTCKR.RAW",
+        "MIDDSID.RAW",
+        "MIDDSIDB.RAW",
+        "BTR.RAW",
+        "BTL.RAW",
+        "NDOR1.RAW",
+        "SF.RAW",
+        "BTLL.RAW",
+        "BTSL.RAW",
+        "NL.RAW",
+        "NNL.RAW",
+        "LTOPL.RAW",
+        "ICETEST.RAW",
+        "NDOR.RAW",
+        "LBLL.RAW",
+        "LTOPR.RAW",
+        "NR.RAW",
+        "LTOP.RAW"
+      ],
+      "anims": []
+    }
+  ],
+  "errors": [],
+  "counts": {
+    "screens": 29,
+    "textures": 485,
+    "sprites": 332,
+    "sheets": 28,
+    "terrain": 29,
+    "effects": 55,
+    "models": 121,
+    "sounds": 36,
+    "music": 7,
+    "errors": 0
+  }
+}

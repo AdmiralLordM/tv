@@ -1,0 +1,5 @@
+newmtl shei0000_alpha
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0 0 0
+map_Kd textures/shei0000.png

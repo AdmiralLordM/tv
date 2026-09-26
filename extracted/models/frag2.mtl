@@ -1,0 +1,5 @@
+newmtl frag2
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0 0 0
+map_Kd textures/frag2.png

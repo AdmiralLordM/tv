@@ -1,0 +1,41 @@
+globe.bin
+mark32.raw
+OBJECTIVE: Ymir
+LOCATION: Barnard's Star
+DISTANCE: 5.97 L.Y. from Earth
+
+Named for the world-starting
+ice giant of Norse mythology,
+Ymir is a harsh, forbidding
+planet. Barnard scientists
+were working on a super-cooled
+laser system called the
+Gunnar, named after the
+Norse king.  It is a full
+order of magnitude more
+powerful than anything in
+existence.
+
+Target the Ymir power plants
+and sensor arrays, then find
+the ice tunnel to the Gunnar
+underground test site.  With
+the power plants destroyed,
+you should be able to
+survive long enough to
+destroy it.
+
+The Barnard PDCs seem to be
+controlling all Ymir ships.
+Not to worry you, but it seems
+as if the Defense computers
+are turning on us.
+
+If you're religious, start
+praying.  Now.
+
+|
+| PREPARING TACTICAL REPORT
+|
+.
+

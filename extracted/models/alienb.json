@@ -1,0 +1,10 @@
+{
+  "type": "morph",
+  "frames": [
+    "alienbo1.bin",
+    "alienbo2.bin",
+    "alienbo3.bin"
+  ],
+  "delay": 32768,
+  "note": "delay is 65536/frames_per_second; each frame is a sibling BIN"
+}

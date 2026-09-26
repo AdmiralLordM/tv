@@ -1,0 +1,11 @@
+newmtl missle
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0 0 0
+map_Kd textures/missle.png
+
+newmtl mbot
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0 0 0
+map_Kd textures/mbot.png
