@@ -507,35 +507,43 @@ function buildTube(segments, faceLists, wallTextures) {
   return group;
 }
 
-function mouthFrame(texture, radiusX, radiusY) {
-  const shape = new THREE.Shape();
-  shape.moveTo(-0.5, -0.5);
-  shape.lineTo(0.5, -0.5);
-  shape.lineTo(0.5, 0.5);
-  shape.lineTo(-0.5, 0.5);
-  shape.closePath();
-  const hole = new THREE.Path();
-  const rx = Math.min(0.48, radiusX);
-  const ry = Math.min(0.48, radiusY);
-  for (let i = 0; i <= TUNNEL_SIDES; i++) {
-    const angle = (i / TUNNEL_SIDES) * Math.PI * 2 - Math.PI / TUNNEL_SIDES;
-    const x = Math.cos(angle) * rx;
-    const y = Math.sin(angle) * ry;
-    if (i === 0) hole.moveTo(x, y);
-    else hole.lineTo(x, y);
+function mouthCover(texture) {
+  // The 61st arctic atlas cell is the whole ground tile: snow, the octagonal
+  // hatch, and a small black opening. Only that opening is see-through.
+  let map = texture || null;
+  const image = texture?.image;
+  if (image && image.width) {
+    const canvas = document.createElement("canvas");
+    canvas.width = image.width;
+    canvas.height = image.height;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    ctx.drawImage(image, 0, 0);
+    const frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const px = frame.data;
+    for (let i = 0; i < px.length; i += 4) {
+      if ((px[i] + px[i + 1] + px[i + 2]) / 3 <= 12) px[i + 3] = 0;
+    }
+    ctx.putImageData(frame, 0, 0);
+    map = new THREE.CanvasTexture(canvas);
+    map.colorSpace = THREE.SRGBColorSpace;
+    map.magFilter = THREE.NearestFilter;
+    map.minFilter = THREE.LinearMipmapLinearFilter;
+    map.flipY = true;
+    map.needsUpdate = true;
+    liveTextures.add(map);
   }
-  shape.holes.push(hole);
-  const geometry = new THREE.ShapeGeometry(shape);
-  geometry.rotateX(-Math.PI / 2);
-  const uv = geometry.attributes.uv;
-  for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) + 0.5, uv.getY(i) + 0.5);
   const material = new THREE.MeshLambertMaterial({
-    map: texture || null,
-    color: texture ? 0xffffff : 0x9aa7b2,
+    map,
+    color: map ? 0xffffff : 0x9aa7b2,
+    transparent: true,
+    alphaTest: 0.5,
     side: THREE.DoubleSide,
   });
   drainFog(material);
-  return new THREE.Mesh(geometry, material);
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), material);
+  mesh.rotation.x = -Math.PI / 2;
+  mesh.position.y = 0.03;
+  return mesh;
 }
 
 function tileFace(tx, tz, relief) {
@@ -587,18 +595,19 @@ async function placeTunnels(level, gen) {
       wallTextures.push(tex);
     }
     if (gen !== loadGen) throw new Cancelled();
-    const mouthTex = tunnel.mouth ? await makeTexture(tunnel.mouth) : null;
-    const exitTex = tunnel.exitMouth ? await makeTexture(tunnel.exitMouth) : mouthTex;
+    const coverUrl = level.textures?.length ? level.textures[level.textures.length - 1] : tunnel.mouth;
+    const coverTex = coverUrl ? await makeTexture(coverUrl) : null;
     const names = new Set();
     for (const spot of tunnel.contents || []) if (spot.model) names.add(spot.model);
+    if ((tunnel.walls || []).some((url) => /iris/i.test(url))) names.add("iris1");
     const templates = new Map();
     await mapLimit([...names], 3, async (name) => {
       if (gen !== loadGen) throw new Cancelled();
       templates.set(name, await loadModelTemplate(name));
     });
     if (gen !== loadGen) throw new Cancelled();
-    const entrance = addTunnelMouth(tunnel, mouthTex, wallTextures, templates, false);
-    const exit = addTunnelMouth(tunnel, exitTex, wallTextures, templates, true);
+    const entrance = addTunnelMouth(tunnel, coverTex, wallTextures, templates, false);
+    const exit = addTunnelMouth(tunnel, coverTex, wallTextures, templates, true);
     entrance.partner = exit;
     exit.partner = entrance;
   }
@@ -606,7 +615,7 @@ async function placeTunnels(level, gen) {
   layoutPortals();
 }
 
-function placeTunnelProps(tube, segments, tunnel, templates, fromEnd) {
+function placeTunnelProps(tube, segments, faces, tunnel, templates, fromEnd) {
   const originX = segments[0][0] * TUNNEL_UNIT;
   const originY = segments[0][1] * TUNNEL_UNIT;
   const length = segments.length;
@@ -614,12 +623,39 @@ function placeTunnelProps(tube, segments, tunnel, templates, fromEnd) {
     const template = templates.get(spot.model);
     if (!template) continue;
     const clone = template.clone(true);
-    clone.rotation.set(spot.pitch || 0, spot.yaw || 0, spot.roll || 0);
-    if (fromEnd) clone.rotation.y += Math.PI;
+    // Nose (+Z) points down the shaft. The file yaw banks around that axis.
+    // Applying it as a heading turned the nose up into the entrance.
+    clone.rotation.set(spot.pitch || 0, 0, spot.yaw || 0);
     const travel = fromEnd ? length - spot.z : spot.z;
-    clone.position.set(spot.x - originX, spot.y - originY, travel);
+    const index = Math.min(segments.length - 1, Math.max(0, Math.floor(travel)));
+    const span = Math.min(1, Math.max(0, travel - index));
+    const seg = segments[index];
+    const cx = (seg[0] + (seg[2] - seg[0]) * span) * TUNNEL_UNIT - originX;
+    const cy = (seg[1] + (seg[3] - seg[1]) * span) * TUNNEL_UNIT - originY;
+    clone.position.set(cx, cy, travel);
     tube.add(clone);
   }
+  const doorSlots = new Set();
+  (tunnel.walls || []).forEach((url, index) => {
+    if (/iris/i.test(url)) doorSlots.add(index);
+  });
+  const door = templates.get("iris1");
+  if (!door || !doorSlots.size) return;
+  faces.forEach((face, index) => {
+    if (!(face || []).some((slot) => doorSlots.has(slot))) return;
+    const seg = segments[index];
+    if (!seg) return;
+    const clone = door.clone(true);
+    const box = new THREE.Box3().setFromObject(clone);
+    const size = box.getSize(new THREE.Vector3());
+    const span = Math.max(size.x, size.y, 1e-4);
+    const [rx, ry] = radiiAt(segments, index + 0.5);
+    clone.scale.multiplyScalar((Math.max(rx, ry) * 2) / span);
+    const cx = ((seg[0] + seg[2]) * 0.5) * TUNNEL_UNIT - originX;
+    const cy = ((seg[1] + seg[3]) * 0.5) * TUNNEL_UNIT - originY;
+    clone.position.set(cx, cy, index + 0.5);
+    tube.add(clone);
+  });
 }
 
 function addTunnelMouth(tunnel, mouthTex, wallTextures, templates, fromEnd) {
@@ -630,11 +666,9 @@ function addTunnelMouth(tunnel, mouthTex, wallTextures, templates, fromEnd) {
   const faces = fromEnd ? [...(tunnel.faces || [])].reverse() : (tunnel.faces || []);
   const [radiusX, radiusY] = radiiAt(oriented, 0);
   const group = new THREE.Group();
-  const frame = mouthFrame(mouthTex, radiusX, radiusY);
-  frame.position.y = 0.02;
-  group.add(frame);
+  group.add(mouthCover(mouthTex));
   const tube = buildTube(oriented, faces, wallTextures);
-  placeTunnelProps(tube, oriented, tunnel, templates, fromEnd);
+  placeTunnelProps(tube, oriented, faces, tunnel, templates, fromEnd);
   group.add(tube);
   portalRoot.add(group);
   const mouth = {
@@ -1257,7 +1291,6 @@ window.addEventListener("mousemove", (event) => {
   if (!flying || document.pointerLockElement !== renderer.domElement) return;
   yaw -= event.movementX * 0.002;
   pitch -= event.movementY * 0.002;
-  pitch = Math.max(-1.2, Math.min(1.2, pitch));
 });
 
 function fly(dt) {
@@ -1268,9 +1301,8 @@ function fly(dt) {
     const cruise = SPEED_MIN + (SPEED_MAX - SPEED_MIN) * throttle;
     const tilesPerSecond = (keys.has("shift") ? SPEED_MAX * 2 : cruise) / 65536;
     const speed = tilesPerSecond * dt;
-    const cp = Math.cos(pitch);
-    const forward = new THREE.Vector3(-Math.sin(yaw) * cp, Math.sin(pitch), -Math.cos(yaw) * cp);
-    const right = new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
+    const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+    const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
     camera.position.addScaledVector(forward, speed);
     if (keys.has("d")) camera.position.addScaledVector(right, speed);
     if (keys.has("a")) camera.position.addScaledVector(right, -speed);
