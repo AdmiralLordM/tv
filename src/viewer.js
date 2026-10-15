@@ -262,7 +262,8 @@ function crowdSound(crowdOf) {
   };
 }
 
-const renderer = new THREE.WebGLRenderer({ antialias: false });
+// [port] Kept so F3 can read the last frame back at any time.
+const renderer = new THREE.WebGLRenderer({ antialias: false, preserveDrawingBuffer: true });
 renderer.setPixelRatio(1);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 frameEl.insertBefore(renderer.domElement, frameEl.firstChild);
@@ -2514,9 +2515,50 @@ function syncCrowds() {
   if (ship.space === "tunnel") ship.portal.crowd.sync(null, view);
 }
 
+// ---------------------------------------------------------------- screenshot
+
+// [port] F3: the frame as shown (3D view plus the visible HUD, crosshair and
+// menu canvases, unsmoothed) at FRAME_W x FRAME_H, onto the clipboard as a
+// PNG; Shift+F3, or a browser without image clipboard, downloads it instead.
+async function screenshot(download) {
+  const shot = document.createElement("canvas");
+  shot.width = FRAME_W;
+  shot.height = FRAME_H;
+  const g = shot.getContext("2d");
+  g.imageSmoothingEnabled = false;
+  const box = frameEl.getBoundingClientRect();
+  const sx = FRAME_W / box.width;
+  const sy = FRAME_H / box.height;
+  for (const c of frameEl.querySelectorAll("canvas")) {
+    const r = c.getBoundingClientRect();
+    if (!r.width || !r.height || c.closest("[hidden]")) continue;
+    g.drawImage(c, (r.left - box.left) * sx, (r.top - box.top) * sy, r.width * sx, r.height * sy);
+  }
+  const blob = await new Promise((done) => shot.toBlob(done, "image/png"));
+  if (!blob) return;
+  if (!download && navigator.clipboard?.write && window.ClipboardItem) {
+    try {
+      await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+      if (flying) notify("Screenshot Copied");
+      return;
+    } catch {}
+  }
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `tv-${new Date().toISOString().replace(/[:.]/g, "-")}.png`;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+  if (flying) notify("Screenshot Saved");
+}
+
 // ---------------------------------------------------------------- input
 
 window.addEventListener("keydown", (event) => {
+  if (event.key === "F3") {
+    event.preventDefault();
+    if (!event.repeat) screenshot(event.shiftKey);
+    return;
+  }
   if (menu?.active) {
     if (event.key !== "F5" && event.key !== "F12") event.preventDefault();
     if (!event.repeat || event.key.length === 1 || event.key.startsWith("Arrow")) menu.key(event);
@@ -2578,7 +2620,7 @@ function flightStatus() {
   const tiles = (burner ? AFTERBURNER : ship.speed * GAME_SECOND).toFixed(2);
   const where = ship.space === "tunnel" ? "tunnel · " : ship.space === "cave" ? "cave · " : "";
   if (ship.noticeTime > 0) return `${where}${ship.notice}`;
-  return `${where}${tiles} tiles/s · arrows/mouse steer · Q/E roll · A/Z throttle · Space/click fire · 1-7 weapon · +/- gun power · Shift burner · M music · P pause`;
+  return `${where}${tiles} tiles/s · arrows/mouse steer · Q/E roll · A/Z throttle · Space/click fire · 1-7 weapon · +/- gun power · Shift burner · M music · P pause · F3 screenshot`;
 }
 
 // ---------------------------------------------------------------- HUD
