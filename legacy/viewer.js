@@ -109,7 +109,7 @@ window.addEventListener("resize", resize);
 resize();
 
 function setStatus(text) {
-  console.log(text);
+  //console.log(text);
 }
 function setError(text) {
   errorEl.textContent = text || "";

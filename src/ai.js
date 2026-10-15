@@ -208,6 +208,7 @@ export class Crowd {
     this.difficulty = difficulty;
     this.resetSpawner();
     this.actors = [];
+    this.slots = new Map(); // placement row -> actor, for nav targets
     this.tracers = [];
     this.missiles = [];
     this.impacts = [];
@@ -222,7 +223,8 @@ export class Crowd {
     // hitPlayer(damage) -> true if the shot landed (FUN_000133b0 is skipped
     // during the grace after a hit), set by the viewer.
     this.hitPlayer = null;
-    // inWall(pos) -> true if a point is outside the tunnel (FUN_00039820),
+    // inWall(pos, damage) -> true if a point is outside the tunnel or in an
+    // obstacle, which takes the damage (FUN_00039820),
     // set by the viewer for tunnel crowds.
     this.inWall = null;
     this.tracerGeometry = new THREE.BoxGeometry(0.004, 0.004, 0.08);
@@ -255,6 +257,7 @@ export class Crowd {
     }
     this.reset(actor);
     this.actors.push(actor);
+    if (!this.slots.has(spot.slot)) this.slots.set(spot.slot, actor);
     return actor;
   }
 
@@ -891,7 +894,7 @@ export class Crowd {
     const end = (at) => (t.type === ENEMY_MISSILE
       ? this.impact(at, IMPACT_MISSILE, IMPACT_DEBRIS)
       : this.impact(at, IMPACT_SHOT, IMPACT_QUICK));
-    if (this.inWall?.(t.pos)) {
+    if (this.inWall?.(t.pos, t.damage)) {
       end(t.pos);
       return false;
     }
@@ -1102,7 +1105,7 @@ export class Crowd {
     this.missiles = this.missiles.filter((m) => {
       for (let i = 0; i < MISSILE_STEPS; i++) {
         if (this.hit(m.pos, m.damage)) return this.drop(m);
-        if (this.inWall?.(m.pos)) {
+        if (this.inWall?.(m.pos, m.damage)) {
           this.impact(m.pos, IMPACT_MISSILE, IMPACT_DEBRIS);
           return this.drop(m);
         }

@@ -136,10 +136,12 @@ function navLabel(descr, kind) {
 }
 
 // Waypoints in file order. A run of integers between points is a strike
-// list plus the next point's type. Tunnel entrances are type 1, exits 4,
-// the departure unit 3.
+// list plus the next point's type. Tunnel entrances are type 1 (the line
+// after the description names the tunnel .lvl), exits 4, the departure
+// unit 3. A boss (5) has its slot, a music file and, after `!`, a count of
+// parts that must die first (FUN_0003f350 reads them at +0x184, +0x198).
 export function parseNav(text) {
-  const raw = lines(text).filter((line) => line && !line.startsWith(";") && !line.startsWith("!"));
+  const raw = lines(text).filter((line) => line && !line.startsWith(";"));
   if (!raw.length || !/^\d+$/.test(raw[0]) || parseInt(raw[0], 10) === 0) return [];
   const count = parseInt(raw[0], 10);
   let index = 1;
@@ -156,6 +158,20 @@ export function parseNav(text) {
     index += 1;
     const descr = raw[index] ?? "";
     index += 1;
+    let tunnel = null;
+    let boss = null;
+    if (kind === 1 && /\.lvl$/i.test(raw[index] || "")) tunnel = stem(raw[index]);
+    if (kind === 5 && isInt(raw[index] || "")) {
+      boss = { slot: parseInt(raw[index], 10), parts: [] };
+      index += 1;
+      if (index < raw.length && !isInt(raw[index]) && !raw[index].startsWith("!") && !raw[index].includes(",")) index += 1; // music
+      if (index < raw.length && raw[index].startsWith("!")) {
+        index += 1;
+        const n = isInt(raw[index] || "") ? parseInt(raw[index], 10) : 0;
+        index += 1;
+        for (let i = 0; i < n && isInt(raw[index] || ""); i++, index++) boss.parts.push(parseInt(raw[index], 10));
+      }
+    }
     if (index < raw.length && raw[index].split(",").length >= 3
       && raw[index].split(",").slice(0, 3).every((part) => isInt(part))) {
       const ori = ints(raw[index]).slice(0, 3);
@@ -180,14 +196,17 @@ export function parseNav(text) {
       index += 1;
     }
     if (pos.length < 3) continue;
-    points.push({
+    const point = {
       x: wrapTile(pos[0]),
       y: round(pos[1] / TILE),
       z: wrapTile(pos[2]),
       type: kind,
       label: navLabel(descr, kind),
       links,
-    });
+    };
+    if (tunnel) point.tunnel = tunnel;
+    if (boss) point.boss = boss;
+    points.push(point);
   }
   return points;
 }

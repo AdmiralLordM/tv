@@ -78,11 +78,12 @@ const DEFAULT_SCORES = {
     .map(([name, callsign], i) => ({ name, callsign, air: 5 - i, ground: 5 - i, green: 5 - i, score: 5 - i })),
 };
 
-// vox.ini as shipped (the game's saved settings).
+// vox.ini as shipped (the game's saved settings), except Shadows: shipped
+// Off (airShadowFlag 0), here Pentium [port].
 export const DEFAULT_SETTINGS = {
   sound: 1, music: 1, soundVolume: 0x10000, musicVolume: 0x10000,
   briefings: 1, cinemas: 1, demos: 1,
-  sky: 1, shadows: 0, debris: 1,
+  sky: 1, shadows: 2, debris: 1,
   control: 0, mouseControl: 0, autoLevel: 1,
   mouseFlip: 1, mouseX: 8, mouseY: 16, mouseMotion: 1, mouseLeft: 0, mouseRight: 1,
   difficulty: 1,

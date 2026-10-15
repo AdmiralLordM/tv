@@ -33,8 +33,10 @@ const same = (a, b) => {
     return Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((v, i) => same(v, b[i]));
   }
   if (a && b && typeof a === "object" && typeof b === "object") {
-    // def, slot and strength feed src/ai.js; the Python extractor has no AI data.
-    const keys = new Set([...Object.keys(a), ...Object.keys(b)].filter((k) => k !== "def" && k !== "slot" && k !== "strength"));
+    // def, slot, strength, tunnel and boss feed src/ai.js and the nav; the
+    // Python extractor has no such data.
+    const skip = new Set(["def", "slot", "strength", "tunnel", "boss"]);
+    const keys = new Set([...Object.keys(a), ...Object.keys(b)].filter((k) => !skip.has(k)));
     return [...keys].every((k) => same(a[k], b[k]));
   }
   return a === b;
@@ -51,7 +53,10 @@ for (const lvl of surface) {
   const p = py.get(lvl.name);
   if (!p) { report(lvl.name, "missing in view.json", true, false); continue; }
   if (!same(js.start, p.start)) report(lvl.name, "start", js.start, p.start);
-  if (!same(js.nav, p.nav)) report(lvl.name, "nav", js.nav, p.nav);
+  // The extractor misreads a boss point's slot, music and `!` part list as
+  // the next point's type, so the routes are compared up to the boss.
+  const upToBoss = (nav) => nav.slice(0, nav.findIndex((point) => point.type === 5) + 1 || nav.length);
+  if (!same(upToBoss(js.nav), upToBoss(p.nav))) report(lvl.name, "nav", js.nav, p.nav);
   if (!same(js.objects, p.objects)) report(lvl.name, "objects", js.objects, p.objects);
   const pups = (p.powerups || []).map(({ model, type, x, z }) => ({ model, type, x, z }));
   if (!same(js.powerups, pups)) report(lvl.name, "powerups", js.powerups, pups);

@@ -80,6 +80,8 @@ let cut = null;
 // FUN_0004aef0 leaves the model light at (0, -0xb4fd, 0xb4fd) for the rest
 // of the level, until a tunnel exit restores the level's (FUN_00042b20).
 let briefSun = null;
+// The light vector as set (game axes, 0x10000 long), for the shadows.
+let shadowSun = [0, -0x10000, 0];
 let smallFont = null; // GAME.EXE status-bar font bytes (src/exe.js)
 const settings = loadSettings();
 
@@ -541,7 +543,7 @@ class Cancelled extends Error {
 }
 
 function setStatus(text) {
-  console.log(text);
+  //console.log(text);
 }
 function setError(text) {
   errorEl.textContent = text || "";
@@ -1215,8 +1217,10 @@ async function buildPortal(data, gen) {
   portal.crowd.hitPlayer = shotHit;
   portal.crowd.pickUp = pickUp;
   portal.crowd.fx = await loadEffects(look);
-  // FUN_00039820, approximated by the ship's wall test with no margin.
-  portal.crowd.inWall = (p) => containInTube(portal, tmpWall.copy(p), elapsed, 0);
+  // FUN_00039820: the ship's wall test with no margin, then the obstacles
+  // (FUN_00038820), which a shot or missile damages as it hits.
+  portal.crowd.inWall = (p, damage = 0) => containInTube(portal, tmpWall.copy(p), elapsed, 0)
+    || collideObstacle(portal, tmpWall.copy(p), elapsed, damage, true);
   const names = [...new Set((data.contents || []).map((spot) => spot.model))];
   const templates = new Map();
   await mapLimit(names, 3, async (name) => templates.set(name, await loadModel(name, look)));
@@ -1388,12 +1392,18 @@ async function buildObstacles(portal, walls) {
       for (const part of [ob.parts.body, ob.parts.blade]) if (part) group.add(part);
     } else if (type === 0x13 || type === 0x14) { // jaws opening apart (FUN_00036ea0/FUN_00036fe0)
       const r = type === 0x13 ? ry : rx;
+      const axis = type === 0x13 ? "y" : "x";
       ob.parts.jaws = [await obstacleModel("jaw1", look, texPath, r, "y"), await obstacleModel("jaw2", look, texPath, r, "y")];
-      for (const jaw of ob.parts.jaws) {
-        if (!jaw) continue;
+      ob.parts.jaws.forEach((jaw, i) => {
+        if (!jaw) return;
         if (type === 0x13) jaw.rotation.z = Math.PI / 2;
+        // [I] Each jaw's teeth edge (jaw1's near side, jaw2's far side along
+        // the axis) is kept at the opening the collision uses, +-0x230.
+        jaw.updateMatrixWorld(true);
+        const box = new THREE.Box3().setFromObject(jaw);
+        jaw.userData.teeth = i === 0 ? box.min[axis] : box.max[axis];
         group.add(jaw);
-      }
+      });
     } else if (type >= 0x15 && type <= 0x18) { // beam across one side, turned 0/180/90/270
       const beam = await obstacleModel("beam", look, texPath, type <= 0x16 ? rx : ry, "x");
       if (beam) {
@@ -1461,13 +1471,14 @@ function updateObstacles(portal, time) {
     } else if (type === 0x13 || type === 0x14) {
       const off = ((type === 0x13 ? ry : rx) * 2 * triangleWave(phase)) / 65536 * TUNNEL_UNIT;
       const [jaw1, jaw2] = parts.jaws;
-      if (type === 0x13) {
-        jaw1?.position.set(0, off, 0);
-        jaw2?.position.set(0, -off, 0);
-      } else {
-        jaw1?.position.set(off, 0, 0);
-        jaw2?.position.set(-off, 0, 0);
-      }
+      const at = (jaw, edge) => {
+        if (!jaw) return;
+        const d = edge - jaw.userData.teeth;
+        if (type === 0x13) jaw.position.set(0, d, 0);
+        else jaw.position.set(d, 0, 0);
+      };
+      at(jaw1, off);
+      at(jaw2, -off);
     } else if (type === 0x19) {
       // On for the first half of each game second, cycling four frames.
       const p = obstaclePhase(ob, time, 0x10000) & 0xffff;
@@ -1500,7 +1511,11 @@ function electricSound(portal, before, now) {
 
 // Collision (FUN_00038820): inside the first 1/8 tile of a segment, the
 // obstacle clamps the ship's position across the shaft. Returns whether it did.
-function collideObstacle(portal, p, time) {
+// damage: what a destructible barrier (2) loses, times 4 (the ship's push
+// passes 0x10000, a shot its damage). Each push there counts as a hit until
+// the barrier breaks; then it blows up across the tunnel (impact of the
+// segment's x radius, debris) and stops blocking.
+function collideObstacle(portal, p, time, damage = 0x10000, plates = false) {
   const k = Math.floor(p.z);
   const ob = (portal.obstacles || []).find((o) => o.k === k);
   if (!ob) return false;
@@ -1514,7 +1529,15 @@ function collideObstacle(portal, p, time) {
   const doorOff = (r) => (r * 4 * triangleWave(phase)) / 65536;
   const jawOff = (r) => (r * 2 * triangleWave(phase)) / 65536;
   switch (type) {
-    case 2: ob.hp -= 4 * 65536; break; // flying through a barrier wrecks it
+    case 2: {
+      if (ob.broken) return false;
+      ob.hp -= 4 * damage;
+      if (ob.hp <= 0) {
+        ob.broken = true;
+        portal.crowd?.impact(p.clone(), rx / 4096, 1);
+      }
+      return true;
+    }
     case 4: case 0x15: case 0x1a: if (Y > ry / 8) Y = 0; break;
     case 5: case 0x16: case 0x1b: if (Y < -ry / 8) Y = 0; break;
     case 6: case 0x17: case 0x1c: if (X < -rx / 8) X = 0; break;
@@ -1538,6 +1561,13 @@ function collideObstacle(portal, p, time) {
     case 0x13: Y = THREE.MathUtils.clamp(Y, -jawOff(ry), jawOff(ry)); break;
     case 0x14: X = THREE.MathUtils.clamp(X, -jawOff(rx), jawOff(rx)); break;
     case 0x19: if ((obstaclePhase(ob, time, 0x10000) & 0xffff) < 0x8000) { X = 0; Y = 0; } break;
+    case 0x10: case 0x11: { // [port] turning plates stop shots (plates); the ship flies through, as in the original
+      if (!plates) return false;
+      const a = ((seg.a[0] + seg.spin * (time / GAME_SECOND)) / 65536) * TAU;
+      const u = X * Math.cos(a) + Y * Math.sin(a);
+      const v = -X * Math.sin(a) + Y * Math.cos(a);
+      return type === 0x10 ? v < 0 : !(u > 0 && v > 0);
+    }
     case 0x1e: { // the iris opening, up to half the radius
       const open = (triangleWave(phase) * rx) / 65536;
       const dist = Math.hypot(X, Y);
@@ -1592,6 +1622,7 @@ function setLighting(sun, ambient) {
   const s = sun || [-46333, -46333, 0];
   // The .lvl vector is the direction light travels, in game axes.
   shade.uSun.value.set(s[0], s[1], -s[2]).normalize();
+  shadowSun = s;
   shade.uAmbient.value = (ambient ?? 32768) / 65536;
 }
 
@@ -2008,11 +2039,9 @@ const WEAPONS = {
 };
 // FUN_0001bab0: keys 1-3 pick weapons 1-3 and 4-7 pick 0x12-0x15, if they have ammo.
 const WEAPON_KEYS = { 1: 1, 2: 2, 3: 3, 4: 0x12, 5: 0x13, 6: 0x14, 7: 0x15 };
-// [port] There are no pickups yet, so every flight starts with one pickup of
-// each (FUN_0003fe70): Plasma and Laser Beam unlimited, Antimatter 100,
-// Missiles 40, Guided and Super Missiles 20, one Smart Bomb. -1 is
-// unlimited. The original starts with Plasma alone (FUN_000401a0).
-const START_AMMO = { 1: -1, 2: 100, 3: -1, 0x12: 40, 0x13: 20, 0x14: 20, 0x15: 1 };
+// FUN_000401a0(1): every flight starts with Plasma alone, unlimited (-1);
+// the rest come from power-ups (pickUp).
+const START_AMMO = { 1: -1, 2: 0, 3: 0, 0x12: 0, 0x13: 0, 0x14: 0, 0x15: 0 };
 // The ship's matrix columns are 16.16 units, a sixteenth of a tile long.
 const AXIS = 1 / 16;
 // FUN_0001b050: Antimatter cycles [pitch, yaw] offsets (tables 0x67b14, 0x67b00):
@@ -2352,6 +2381,7 @@ function tryEnterTunnel() {
     ship.q.identity();
     ship.rates.set(0, 0, 0);
     setSpace("tunnel", portal);
+    navEnterTunnel(portal);
     return true;
   }
   return false;
@@ -2379,6 +2409,7 @@ function stepTunnel(now) {
     ship.rates.set(0, 0, 0);
     const cave = portal.data.cave;
     setSpace(cave ? "cave" : "surface");
+    navExitTunnel();
     if (!cave) ship.pos.y = Math.max(ship.pos.y, groundAt(ship.pos.x, ship.pos.z) + CLEARANCE);
     return;
   }
@@ -2571,21 +2602,93 @@ function updateHud() {
   // "%3d,%3d"; inside a tunnel the original prints "??,??".
   const pad = (v) => String(Math.floor(wrapMap(v))).padStart(3);
   const sect = ship.space === "tunnel" ? "??,??" : `${pad(x)},${pad(z)}`;
-  const nav = level?.nav || [];
-  let target = nav[navCursor];
-  if (!target || ship.space === "tunnel") {
+  const point = ship.space === "tunnel" ? null : navTarget();
+  if (!point) {
     paintHud(sect, "----", ship.space === "tunnel" ? "TUN" : "---", null);
     return;
   }
   // One tile is 16 of the units the original distance counter shows.
-  const dist = () => Math.hypot(wrapDelta(x, target.x), wrapDelta(z, target.z)) * 16;
-  if (dist() < 32 && navCursor + 1 < nav.length) {
-    target = nav[++navCursor];
-    // FUN_0003f230: reaching the boss point sounds warning.wav (channel 3) as
-    // "Mission Goal Ahead!" comes up.
-    if (target.type === 5) playSfx("warning.wav", 3, 0);
+  paintHud(sect, String(Math.round(navDistance(point) * 16)), navName(point), point.at);
+}
+
+// FUN_0003f350: the distance to the nav point is level (x, z) except for a
+// tunnel entrance (type 1), which counts height too.
+function navDistance(point) {
+  const { x, y, z } = surfacePosition(surfaceCam);
+  const dy = point.type === 1 ? y - point.at.y : 0;
+  return Math.hypot(wrapDelta(x, point.at.x), dy, wrapDelta(z, point.at.z));
+}
+
+// FUN_0003f230: on to the next nav point. Reaching the boss sounds
+// warning.wav (channel 3) as "Mission Goal Ahead!" comes up; the caller's
+// own message, if any, replaces it.
+function advanceNav(message = null) {
+  navCursor += 1;
+  if (level?.nav[navCursor]?.type === 5) {
+    playSfx("warning.wav", 3, 0);
+    notify("Mission Goal Ahead!");
   }
-  paintHud(sect, String(Math.round(dist())), navName(target), target);
+  if (message) notify(message);
+}
+
+// FUN_0003f350, every frame on the surface: the current nav point and where
+// it is (`at`). A target (type 0) is the first of its slots still alive and
+// not wrecked; when none is left the route moves on ("Target Destroyed", or
+// "Mission Complete" when the departure point is next). A checkpoint (2)
+// passes within 2.5 tiles. A boss (5) can't be hurt (its strength is kept
+// full) while any of its parts lives, and the marker follows the last live
+// part; when the boss dies or is wrecked, "Boss Destroyed". Tunnel points
+// move on as you go through (navEnterTunnel, navExitTunnel). [port] The
+// departure point (3) doesn't end the level yet, nor does running out of
+// points; the boss's big explosion (FUN_0001cb00) isn't ported.
+const CHECKPOINT_REACH = 2621440 / 1048576; // _DAT_00063b24
+function navTarget() {
+  const nav = level?.nav || [];
+  for (let guard = 0; guard <= nav.length; guard++) {
+    const point = nav[navCursor];
+    if (!point) return null;
+    const slot = (n) => crowd?.slots.get(n);
+    const standing = (a) => a && a.alive && a.state !== 301;
+    if (point.type === 0) {
+      const live = point.links.map(slot).find(standing);
+      if (live) return { ...point, at: live.pos };
+      advanceNav(nav[navCursor + 1]?.type === 3 ? "Mission Complete" : "Target Destroyed");
+      continue;
+    }
+    if (point.type === 5 && point.boss) {
+      const boss = slot(point.boss.slot);
+      const parts = point.boss.parts.map(slot).filter((a) => a?.alive);
+      if (boss && parts.length) {
+        boss.strength = boss.full;
+        return { ...point, at: parts[parts.length - 1].pos };
+      }
+      if (standing(boss)) return { ...point, at: boss.pos };
+      advanceNav("Boss Destroyed");
+      continue;
+    }
+    const at = { x: point.x, y: point.y, z: point.z };
+    if (point.type === 2 && navDistance({ ...point, at }) < CHECKPOINT_REACH) {
+      advanceNav("Checkpoint");
+      continue;
+    }
+    return { ...point, at };
+  }
+  return null;
+}
+
+// FUN_0003f9f0: entering a tunnel puts the route just past the entrance
+// point naming it, wherever the cursor was.
+function navEnterTunnel(portal) {
+  const name = String(portal.data.level || "").toLowerCase().replace(/^.*[\\/]/, "").replace(/\.[^.]*$/, "");
+  const index = (level?.nav || []).findIndex((point) => point.type === 1 && point.tunnel === name);
+  if (index < 0) return;
+  navCursor = index;
+  advanceNav();
+}
+
+// FUN_0003f9c0: leaving a tunnel passes its exit point (type 4).
+function navExitTunnel() {
+  if (level?.nav[navCursor]?.type === 4) advanceNav();
 }
 
 // Compass-up is the target; the sprite turns with our heading against it.
@@ -3107,11 +3210,202 @@ function frame() {
   updateWindow();
   updateSky();
   syncCrowds();
+  updateShadows(flying);
   world.updateMatrixWorld(true);
   shade.uGameFrame.value.copy(surface.matrixWorld).invert();
   renderFrame();
   requestAnimationFrame(frame);
 }
+
+// ---------------------------------------------------------------- shadows
+
+// FUN_0001edd0, with Shadows not Off, outside tunnels, at most 0x40 a
+// frame: a ray leaves the object along the light vector (DAT_0007d020,
+// 0x10000 long, so 1/16 tile a step) for at most 256 steps until it is under
+// the ground, steps back along the vector by that depth, and there
+// FUN_0001ea80 lays a square of side `size` on the ground: corners at ground
+// height, triangles 0-1-2 and 0-3-2, texture 4..251 of 256 across. Texel 0
+// is left alone, texel 1 is shadow:
+//   486: shadow.raw (a disc), the texel written as is (palette 1);
+//   Pentium: FUN_0001e920 first draws the model's silhouette over it, seen
+//     from straight above (pitch 0x3fff, yaw 0) with the eye `size` over the
+//     model, 64x64 at focal 32, so the texture covers twice the square; the
+//     texel goes through the mix table (0x82974), palette 1 and the screen
+//     half and half.
+// Shadowed: slots that ran this frame whose def has logic 2, 4, 7, 8, 0x11,
+// 0x12, 0x26 or 0x27, size the def radius (FUN_000241c0); the player, size
+// 1/16 tile with ship.bin, in the main loop only (FUN_00013500), so not in
+// the fly-in or the report.
+// [I] The mix table keeps black pixels black and lands on a palette color;
+// here it is a plain half blend. Not in caves.
+const SHADOW_LOGICS = new Set([2, 4, 7, 8, 0x11, 0x12, 0x26, 0x27]);
+const SHADOW_MAX = 0x40;
+const SHADOW_GRID = 8; // atlas cells across, 64 pixels each
+const SHADOW_CORNERS = [[1, 1, 251, 4], [-1, 1, 4, 4], [-1, -1, 4, 251], [1, -1, 251, 251]];
+const SHADOW_ORDER = [0, 1, 2, 0, 3, 2];
+const shadows = {
+  atlas: new THREE.WebGLRenderTarget(64 * SHADOW_GRID, 64 * SHADOW_GRID, {
+    magFilter: THREE.NearestFilter, minFilter: THREE.NearestFilter, generateMipmaps: false,
+  }),
+  stage: new THREE.Scene(),
+  root: new THREE.Group(),
+  eye: new THREE.PerspectiveCamera(90, 1, 0.0005, 4),
+  down: new THREE.Quaternion().setFromEuler(new THREE.Euler((0x3fff / 0x10000) * TAU, 0, 0, "YXZ")),
+  standIns: new WeakMap(), // placed model -> its copy on the stage
+  disc: null, // shadow.raw
+  player: null, // { look, object }
+  mesh: null,
+};
+shadows.root.scale.z = -1;
+shadows.stage.add(shadows.root);
+shadows.stage.overrideMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide });
+
+function shadowMesh() {
+  if (shadows.mesh) return shadows.mesh;
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.BufferAttribute(new Float32Array(SHADOW_MAX * 18), 3));
+  geometry.setAttribute("uv", new THREE.BufferAttribute(new Float32Array(SHADOW_MAX * 12), 2));
+  const material = new THREE.ShaderMaterial({
+    uniforms: { uMap: { value: null }, uColor: { value: new THREE.Vector3() }, uAlpha: { value: 1 } },
+    vertexShader: `
+varying vec2 vUv;
+void main() {
+  vUv = uv;
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+}`,
+    fragmentShader: `
+uniform sampler2D uMap;
+uniform vec3 uColor;
+uniform float uAlpha;
+varying vec2 vUv;
+void main() {
+  if (texture2D(uMap, vUv).r < 0.5 / 255.0) discard;
+  gl_FragColor = vec4(uColor, uAlpha);
+}`,
+    transparent: true,
+    depthWrite: false,
+    side: THREE.DoubleSide,
+    polygonOffset: true,
+    polygonOffsetFactor: -2,
+    polygonOffsetUnits: -8,
+  });
+  shadows.mesh = new THREE.Mesh(geometry, material);
+  shadows.mesh.frustumCulled = false;
+  shadows.mesh.renderOrder = 1;
+  return shadows.mesh;
+}
+
+// Where the light from (x, y, z) meets the ground, or null.
+function shadowSpot(x, y, z) {
+  const [dx, dy, dz] = shadowSun.map((v) => v / 0x10000 / 16);
+  for (let i = 0; i < 256; i++) {
+    x += dx;
+    y += dy;
+    z += dz;
+    const g = groundAt(x, z);
+    if (y < g) {
+      const back = (g - y) * 16;
+      return [x - back * dx, y - back * dy, z - back * dz];
+    }
+  }
+  return null;
+}
+
+function updateShadows(active) {
+  const mesh = shadowMesh();
+  const mode = settings.shadows;
+  mesh.visible = false;
+  if (!active || !mode || !level || ship.space !== "surface" || !terrainMeshes[0]?.visible) return;
+  if (mesh.parent !== surface) surface.add(mesh);
+  if (mode === 1 && !shadows.disc) {
+    shadows.disc = indexTexture("art/shadow.raw");
+    shadows.disc.then((t) => (shadows.disc = t || shadows.disc));
+  }
+  if (shadows.player?.look !== level.look) {
+    const look = level.look;
+    shadows.player = { look, object: null };
+    loadModel("ship", look).then((t) => {
+      if (t && shadows.player.look === look) shadows.player.object = placeModel(t, 0, 0, 0, {});
+    });
+  }
+  const casters = [];
+  for (const a of crowd?.actors || []) {
+    if (casters.length >= SHADOW_MAX) break;
+    if (a.alive && a.mesh?.visible && SHADOW_LOGICS.has(a.def.logic)) casters.push({ object: a.mesh, pos: a.mesh.position, q: a.mesh.quaternion, size: a.radius });
+  }
+  if (!cut && shadows.player.object && casters.length < SHADOW_MAX) {
+    casters.push({ object: shadows.player.object, pos: ship.pos, q: ship.q, size: 1 / 16 });
+  }
+  const pentium = mode === 2;
+  const pos = mesh.geometry.attributes.position.array;
+  const uv = mesh.geometry.attributes.uv.array;
+  let count = 0;
+  if (pentium) {
+    renderer.getClearColor(shadowClear);
+    const clearAlpha = renderer.getClearAlpha();
+    renderer.setClearColor(0x000000, 0);
+    renderer.setRenderTarget(shadows.atlas);
+    renderer.clear();
+    shadows.atlas.scissorTest = true;
+    for (const c of casters) placeShadow(c);
+    shadows.atlas.scissorTest = false;
+    renderer.setRenderTarget(null);
+    renderer.setClearColor(shadowClear, clearAlpha);
+  } else {
+    for (const c of casters) placeShadow(c);
+  }
+
+  function placeShadow(c) {
+    const spot = shadowSpot(c.pos.x, c.pos.y, c.pos.z);
+    if (!spot) return;
+    const cell = count;
+    const cx = (cell % SHADOW_GRID) * 64;
+    const cy = Math.floor(cell / SHADOW_GRID) * 64;
+    if (pentium) {
+      let standIn = shadows.standIns.get(c.object);
+      if (!standIn) shadows.standIns.set(c.object, (standIn = c.object.clone(true)));
+      standIn.position.set(0, 0, 0);
+      standIn.quaternion.copy(c.q);
+      standIn.visible = true;
+      shadows.root.add(standIn);
+      gameView(shadows.eye, shadowEyeAt.set(0, c.size, 0), shadows.down);
+      shadows.eye.near = c.size / 64;
+      shadows.eye.far = c.size * 4;
+      shadows.eye.updateProjectionMatrix();
+      shadows.atlas.viewport.set(cx, cy, 64, 64);
+      shadows.atlas.scissor.set(cx, cy, 64, 64);
+      renderer.setRenderTarget(shadows.atlas);
+      renderer.render(shadows.stage, shadows.eye);
+      shadows.root.remove(standIn);
+    }
+    const half = c.size / 2;
+    SHADOW_ORDER.forEach((k, i) => {
+      const [sx, sz, u, v] = SHADOW_CORNERS[k];
+      const x = spot[0] + sx * half;
+      const z = spot[2] + sz * half;
+      pos.set([x, groundAt(x, z), z], (count * 6 + i) * 3);
+      // Texture rows run down the screen, -z; the atlas has row 0 at the top
+      // of its cell.
+      if (pentium) uv.set([(cx + u / 4) / shadows.atlas.width, (cy + 64 - v / 4) / shadows.atlas.height], (count * 6 + i) * 2);
+      else uv.set([u / 256, v / 256], (count * 6 + i) * 2);
+    });
+    count += 1;
+  }
+
+  const map = pentium ? shadows.atlas.texture : shadows.disc;
+  if (!count || !map || map instanceof Promise) return;
+  const material = mesh.material;
+  material.uniforms.uMap.value = map;
+  material.uniforms.uAlpha.value = pentium ? 0.5 : 1;
+  const p = level.look.palette;
+  material.uniforms.uColor.value.set(p[3] / 255, p[4] / 255, p[5] / 255);
+  mesh.geometry.setDrawRange(0, count * 6);
+  mesh.geometry.attributes.position.needsUpdate = true;
+  mesh.geometry.attributes.uv.needsUpdate = true;
+  mesh.visible = true;
+}
+const shadowClear = new THREE.Color();
+const shadowEyeAt = new THREE.Vector3();
 
 // ---------------------------------------------------------------- game mode
 
@@ -3332,6 +3626,7 @@ function renderReport(dt, view) {
   updateSky();
   syncCamera();
   syncCrowds();
+  updateShadows(true);
   world.updateMatrixWorld(true);
   shade.uGameFrame.value.copy(surface.matrixWorld).invert();
   const { fov, aspect } = camera;
@@ -3347,7 +3642,17 @@ function renderReport(dt, view) {
 // (pitch 0x3fff), and turns a quarter circle per game second while it
 // sinks a tile per game second, until it is within 1/16 tile of the ship.
 // The level runs meanwhile. Esc, Space or F1 cut it short.
-function flyIn() {
+// It runs in outside view (DAT_00064ce8 = 2), so FUN_00012fe0 draws the
+// player's model (DAT_0007cf50, ship.bin) at the ship, turned by its
+// angles; the ship doesn't move until the flight starts.
+async function flyIn() {
+  const template = await loadModel("ship", level.look);
+  const parked = template ? placeModel(template, 0, 0, 0, {}) : null;
+  if (parked) {
+    parked.position.copy(ship.pos);
+    parked.quaternion.copy(ship.q);
+    surface.add(parked);
+  }
   return new Promise((resolve) => {
     const pos = new THREE.Vector3(ship.pos.x, groundAt(ship.pos.x, ship.pos.z) + TOP / 2, ship.pos.z);
     let yaw = 0;
@@ -3360,6 +3665,7 @@ function flyIn() {
         this.q.setFromEuler(winEuler.set((0x3fff / 0x10000) * TAU, yaw * TAU, 0));
       },
       skip() {
+        parked?.removeFromParent();
         cut = null;
         resolve();
       },
@@ -3535,7 +3841,7 @@ async function startMenu() {
 
 // ?debug exposes the flight state for poking at from the console.
 if (params.has("debug")) {
-  window.tv = { ship, keys, portals: () => portals, setSpace, startFly, groundAt, THREE, archive: () => archive, crowd: () => crowd, menu: () => menu };
+  window.tv = { ship, keys, portals: () => portals, nav: () => navCursor, navTarget, navEnterTunnel, setSpace, startFly, groundAt, THREE, archive: () => archive, crowd: () => crowd, menu: () => menu };
 }
 
 modeEl.addEventListener("change", () => {
