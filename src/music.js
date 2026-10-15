@@ -8,6 +8,7 @@ let player = null;
 let ready = null;
 let playing = null;
 let muted = false;
+let level = 1; // Music Volume (0.25..1) and Music On/Off from the options
 
 // Browsers start audio only after a user gesture, so the player is created
 // on the first call that comes from a click or key press.
@@ -16,7 +17,7 @@ function ensurePlayer() {
   ready = import(CHIPTUNE).then(({ ChiptuneJsPlayer }) => new Promise((resolve, reject) => {
     player = new ChiptuneJsPlayer({ repeatCount: -1 });
     player.onInitialized(() => {
-      player.setVol(muted ? 0 : VOLUME);
+      player.setVol(volume());
       resolve(player);
     });
     player.onError((err) => console.warn("music:", err));
@@ -52,8 +53,19 @@ export function stopMusic() {
   player.pause();
 }
 
+function volume() {
+  return muted ? 0 : VOLUME * level;
+}
+
 export function toggleMusic() {
   muted = !muted;
-  player?.setVol(muted ? 0 : VOLUME);
+  player?.setVol(volume());
   return !muted;
+}
+
+// on: Music On/Off; scale: Music Volume as 0..1.
+export function setMusicLevel(on, scale) {
+  muted = !on;
+  level = scale;
+  player?.setVol(volume());
 }

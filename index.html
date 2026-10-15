@@ -15,7 +15,7 @@
   html, body { margin: 0; height: 100%; background: #12110f; color: #e6e0d4; font: 13px/1.4 ui-monospace, monospace; }
   body { display: flex; flex-direction: column; }
   header {
-    display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center;
+    display: none; flex-wrap: wrap; gap: 10px 14px; align-items: center;
     padding: 8px 12px; background: #1c1915; border-bottom: 1px solid #3a3328;
   }
   a { color: #f0d7a2; }
@@ -31,7 +31,8 @@
   #frame {
     position: relative;
     aspect-ratio: 800 / 600;
-    width: min(100cqw, calc(100cqh * 800 / 600));
+    /* 800x600 at most, shrunk to fit; #stage centres it. */
+    width: min(800px, 100cqw, calc(100cqh * 800 / 600));
   }
   #frame > canvas {
     position: absolute; inset: 0; width: 100%; height: 100%;
@@ -44,18 +45,21 @@
   #hud[hidden], #crosshair[hidden] { display: none; }
   #hud canvas {
     position: absolute; inset: 0; width: 100%; height: 100%;
+    image-rendering: pixelated;
   }
-  #crosshair {
-    position: absolute; left: 50%; top: 50%; width: 14px; height: 14px;
+  /* The sight is 12x7 pixels of the 320x200 screen, so it scales with the view. */
+  #frame > #crosshair {
+    inset: auto; left: 50%; top: 50%;
+    width: calc(100% * 12 / 320); height: calc(100% * 7 / 200);
     transform: translate(-50%, -50%); pointer-events: none; z-index: 2;
+    image-rendering: pixelated;
   }
-  #crosshair::before, #crosshair::after {
-    content: ""; position: absolute; background: rgba(210, 230, 200, 0.9);
-  }
-  #crosshair::before { left: 6px; top: 0; width: 2px; height: 14px; }
-  #crosshair::after { top: 6px; left: 0; height: 2px; width: 14px; }
+  /* The game's front end: 320x200 palette screen (src/menu.js). */
+  #frame > #menu { z-index: 3; touch-action: none; }
+  #menu[hidden] { display: none; }
+  body.game #mode, body.game #pick, body.game #fly { display: none; }
   #setup {
-    position: absolute; inset: 0; z-index: 3;
+    position: absolute; inset: 0; z-index: 4;
     display: flex; align-items: center; justify-content: center;
     background: rgba(7, 6, 5, 0.92);
   }
@@ -87,7 +91,6 @@
   <select id="pick" aria-label="Level or model"></select>
   <button id="fly" type="button">Fly</button>
   <button id="forget" type="button" hidden>Forget game files</button>
-  <span id="status"></span>
   <span id="error"></span>
 </header>
 <div id="stage">
@@ -96,14 +99,15 @@
       <canvas id="hudBar" width="320" height="64"></canvas>
       <canvas id="hudText" width="320" height="64"></canvas>
     </div>
-    <div id="crosshair" hidden></div>
+    <canvas id="crosshair" width="12" height="7" hidden></canvas>
+    <canvas id="menu" width="320" height="200" hidden></canvas>
     <div id="setup" hidden>
       <div class="card">
         <h1>Game files needed</h1>
         <p>This plays the original Terminal Velocity data. Choose or drop the two archives from the
-          game folder: <code>STARTUP.POD</code> and <code>CDROM.POD</code>. They stay in this browser;
-          nothing is uploaded anywhere.</p>
-        <p><input id="setupFiles" type="file" accept=".pod,.POD" multiple></p>
+          game folder: <code>STARTUP.POD</code> and <code>CDROM.POD</code>. Add <code>GAME.EXE</code> too
+          for the status-bar and menu font, and the <code>*.VOX</code> mission lists (both optional). They stay in this browser; nothing is uploaded anywhere.</p>
+        <p><input id="setupFiles" type="file" accept=".pod,.POD,.exe,.EXE,.vox,.VOX" multiple></p>
         <div id="setupNote"></div>
       </div>
     </div>

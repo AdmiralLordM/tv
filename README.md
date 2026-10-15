@@ -13,8 +13,20 @@ On first start the page asks for the game's two archives, `STARTUP.POD` and
 then on; **Forget game files** removes them. For development,
 `?pods=_oracle/` downloads them from that folder instead of asking.
 
-Other URL options: `?level=artic&fly=1` drops straight into the cockpit,
-`?mode=model&model=afighter` opens a model, `?debug` exposes `window.tv`.
+The page opens like the game: title, then the main menu (`src/menu.js`).
+Add the loose `*.VOX` mission lists from the game folder at setup to use your
+own copies; without them the shipped lists are built in.
+
+Shortcuts past the menus:
+- `?play=artic` flies a level in game mode (Esc asks to return to the menu);
+  add `&difficulty=easy|normal|hard|terminal`, and `&intro=1` to run the
+  level's start (story, briefing, tactical report, fly-in) as New Game does.
+- `?menu=<screen>` opens one screen: `title`, `main`, `play`, `options`,
+  `sound`, `graphics`, `control`, `mouse`, `quit`, `help`, `order`, `scores`,
+  `credits`, `mission`, `restore`.
+- Bare viewer (no menus): `?level=artic` shows the map, `&fly=1` drops into
+  the cockpit, `?mode=model&model=afighter` opens a model.
+- `?debug` exposes `window.tv`.
 
 | Path | What it is |
 |---|---|

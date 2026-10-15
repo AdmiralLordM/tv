@@ -3,7 +3,7 @@
 //   node tools/check/formats.mjs [_orig]
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
-import { readLevels, isSurface, readLevel } from "../../src/formats.js";
+import { readLevels, isSurface, readLevel, resolveModel } from "../../src/formats.js";
 
 const root = process.argv[2] || "_orig";
 const files = new Map();
@@ -33,8 +33,8 @@ const same = (a, b) => {
     return Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((v, i) => same(v, b[i]));
   }
   if (a && b && typeof a === "object" && typeof b === "object") {
-    // def and slot feed src/ai.js; the Python extractor has no AI data.
-    const keys = new Set([...Object.keys(a), ...Object.keys(b)].filter((k) => k !== "def" && k !== "slot"));
+    // def, slot and strength feed src/ai.js; the Python extractor has no AI data.
+    const keys = new Set([...Object.keys(a), ...Object.keys(b)].filter((k) => k !== "def" && k !== "slot" && k !== "strength"));
     return [...keys].every((k) => same(a[k], b[k]));
   }
   return a === b;
@@ -45,6 +45,9 @@ const report = (name, what, a, b) => {
 };
 for (const lvl of surface) {
   const js = await readLevel(archive, levels, lvl.name);
+  // The extractor names a morph list's first frame (cnome -> cnome1).
+  const things = [...js.objects, ...js.tunnels.flatMap((t) => t.contents || [])];
+  for (const thing of things) thing.model = await resolveModel(archive, thing.model);
   const p = py.get(lvl.name);
   if (!p) { report(lvl.name, "missing in view.json", true, false); continue; }
   if (!same(js.start, p.start)) report(lvl.name, "start", js.start, p.start);

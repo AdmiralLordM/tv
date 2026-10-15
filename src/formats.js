@@ -60,6 +60,10 @@ export function parseLvl(text, name) {
     lvl.caveAmbient = extra[3][0];
     lvl.fogIndex = extra[4][0] & 255;
   }
+  // After the ";" comment line, five story names (+0x2a8..+0x348): enter
+  // .tvi, leave .tvi, a .tvi before the enter one, a .mic typed over
+  // vel2.raw before the briefing, a .mic over planet.raw after the level.
+  lvl.stories = Array.from({ length: 5 }, (_, i) => (rows[22 + i] || "null").toLowerCase());
   return lvl;
 }
 
@@ -201,8 +205,10 @@ export function parseNav(text) {
 //   `!NewAtakRet` `far,near,bossOnly,?` (+0x1f8..+0x200): fighters break off
 //     inside near/16 tiles and come back past far/16; bossOnly units wait for
 //     the boss nav point. Defaults 32, 16, 0;
-//   `#New2ndweapon` `spread,gun2,gun2Range,shotRange` (+0x20c..+0x218);
-//     shotRange defaults to twice the speed.
+//   `#New2ndweapon` `spread,gun2,gun2Range,shotSpeed` (+0x20c..+0x218);
+//     spread 1/2 cycles shots through 3/5 directions 0x800 apart;
+//     shotSpeed (units per game second) defaults to twice the speed.
+//   `shot` (+0xdc) picks the projectile model (SHOT_MODELS).
 export function parseDef(text) {
   const rows = lines(text).filter(Boolean);
   if (!rows.length || !/^\d+$/.test(rows[0])) return { defs: [], rows: [] };
@@ -220,27 +226,59 @@ export function parseDef(text) {
     index += 1;
     const nums = parts.slice(0, 6).map((part) => (isInt(part) ? parseInt(part, 10) : 0));
     while (nums.length < 6) nums.push(0);
-    const bin = parts.find((part) => part.toLowerCase().endsWith(".bin"));
+    // The main model, then the second one (a wreck for logic 9, FUN_00028610).
+    const [bin, second] = parts.filter((part) => part.toLowerCase().endsWith(".bin"));
     const [speed, turn, fireEvery, weapon, shot] = numbers(rows[index], 5);
-    const ai = { speed, turn, fireEvery, weapon, shot, far: 32, near: 16, bossOnly: 0, gun2: 0, gun2Range: 0, shotRange: speed * 2 };
-    defs.push({ model: bin ? stem(bin) : "", logic: nums[0], offset: nums.slice(3, 6).map((v) => round(v / TILE, 5)), ai });
+    const ai = { speed, turn, fireEvery, weapon, shot, far: 32, near: 16, bossOnly: 0, spread: 0, gun2: 0, gun2Range: 0, shotSpeed: speed * 2, sfx: null };
+    // Third line (+0xe0..0xec): ?, spawner may copy it, drop %, drop type
+    // (-1 any; FUN_00028d90).
+    // The first value (+0xe0) puts the def in the tactical report
+    // (FUN_0004a130), which types its description (+0xf0).
+    let brief;
+    [brief, ai.spawn, ai.drop, ai.dropType] = numbers(rows[index + 1], 4);
+    // Firing vertices (+0x190 count, +0x194 list): each shot leaves from one
+    // of these model vertices, picked at random.
+    const [muzzleCount, ...muzzleList] = numbers(rows[index + 2], 9);
+    ai.muzzles = muzzleList.slice(0, Math.max(0, Math.min(muzzleCount, 8)));
+    const def = { index: n, model: bin ? stem(bin) : "", wreck: second ? stem(second) : "", logic: nums[0], offset: nums.slice(3, 6).map((v) => round(v / TILE, 5)), ai, brief, description: "" };
+    defs.push(def);
     index += 3; // thrust, flags, firing vertices
-    if (starts(";newhit")) index += 2;
+    // `;NewHit` `count, vertex, size, ...` (+0x1b4, +0x1b8, +0x1d8): shots
+    // test cubes of half-size `size` around these model vertices instead of
+    // the model's box (FUN_000290d0). The loader's sscanf writes the fourth
+    // to eighth vertices all to the fourth slot, so it keeps the eighth and
+    // slots five on are never filled ([I] taken as vertex 0).
+    if (starts(";newhit")) {
+      const [hitCount, ...hitList] = numbers(rows[index + 1], 17);
+      const vertexAt = (i) => (i < 3 ? hitList[i * 2] : i === 3 ? hitList[14] : 0);
+      ai.hitPoints = [];
+      for (let i = 0; i < Math.min(hitCount, 8); i++) ai.hitPoints.push([vertexAt(i), hitList[i * 2 + 1] / TILE]);
+      index += 2;
+    }
     if (starts("!newatakret")) {
       [ai.far, ai.near, ai.bossOnly] = numbers(rows[index + 1], 3);
       index += 2;
     }
-    index += 1; // description
+    def.description = rows[index] || "";
+    index += 1;
     if (starts("#new2ndweapon")) {
-      [, ai.gun2, ai.gun2Range, ai.shotRange] = numbers(rows[index + 1], 4);
+      [ai.spread, ai.gun2, ai.gun2Range, ai.shotSpeed] = numbers(rows[index + 1], 4);
       index += 2;
     }
-    if (starts("%sfx")) index += 3;
+    if (starts("%sfx")) {
+      // +0x21c: played at the shooter on every shot ("null" for none).
+      const sfx = (rows[index + 1] || "").trim().toLowerCase();
+      if (sfx && sfx !== "null") ai.sfx = sfx;
+      index += 3;
+    }
     if (starts(": path")) index += 2;
     if (starts("= cannon")) index += 4;
     if (starts("@ friendly")) index += 2;
     if (index < rows.length && rows[index].startsWith("{")) index += 3;
   }
+  // FUN_00028e50: a killed C-Nome (0x13) becomes the first def with logic 0x14.
+  const remains = defs.find((def) => def.logic === 0x14);
+  for (const def of defs) if (def.logic === 0x13 && remains) def.remains = remains;
   if (index >= rows.length || !/^\d+$/.test(rows[index])) return { defs, rows: [] };
   const placed = parseInt(rows[index], 10);
   index += 1;
@@ -254,7 +292,9 @@ export function parseDef(text) {
   return { defs, rows: out };
 }
 
-// Animation-control bins (id 0x20) name their frames; use the first frame's mesh.
+// Animation-control bins (id 0x20) name their frames; this gives the first
+// frame's mesh. Level object lists keep the list name, so the viewer can play
+// the morph; tools/check uses this to compare with the Python extractor.
 export async function resolveModel(archive, model) {
   const path = `models/${model}.bin`;
   if (!model || !archive.has(path)) return model;
@@ -266,10 +306,6 @@ export async function resolveModel(archive, model) {
   return stem(name) || model;
 }
 
-async function resolveDefs(archive, defs) {
-  for (const def of defs) def.model = await resolveModel(archive, def.model);
-  return defs;
-}
 
 // Surface objects: the game seats them on the ground itself (FUN_00022f20),
 // so only x, z, the def's offsets and logic are kept.
@@ -277,15 +313,29 @@ export async function readObjects(archive, path) {
   const text = await maybeText(archive, path);
   if (!text) return [];
   const { defs, rows } = parseDef(text);
-  await resolveDefs(archive, defs);
   const out = [];
   for (const [defIndex, strength, x, , z, pitch, roll, yaw, slot] of rows) {
     const def = defs[defIndex];
     if (!strength || !def?.model) continue;
     out.push({
-      model: def.model, logic: def.logic, offset: def.offset, def, slot,
+      model: def.model, logic: def.logic, offset: def.offset, def, slot, strength,
       x: wrapTile(x), z: wrapTile(z), ...angles(pitch, roll, yaw),
     });
+  }
+  return out;
+}
+
+// FUN_0004a130: each def with the briefing flag, in def order, at the first
+// placement row that uses it (strength not checked).
+export async function readBriefTargets(archive, path) {
+  const text = await maybeText(archive, path);
+  if (!text) return [];
+  const { defs, rows } = parseDef(text);
+  const out = [];
+  for (const def of defs) {
+    if (!def.brief || !def.model) continue;
+    const row = rows.find((r) => r[0] === def.index);
+    if (row) out.push({ model: def.model, description: def.description, x: wrapTile(row[2]), z: wrapTile(row[4]) });
   }
   return out;
 }
@@ -295,13 +345,12 @@ export async function readTunnelContents(archive, path) {
   const text = await maybeText(archive, path);
   if (!text) return [];
   const { defs, rows } = parseDef(text);
-  await resolveDefs(archive, defs);
   const out = [];
   for (const [defIndex, strength, x, y, z, pitch, roll, yaw, slot] of rows) {
     const def = defs[defIndex];
     if (!strength || !def?.model || def.model === "cube") continue;
     out.push({
-      model: def.model, logic: def.logic, def, slot,
+      model: def.model, logic: def.logic, def, slot, strength,
       x: round(x / TILE), y: round(y / TILE), z: round(z / TILE),
       ...angles(pitch, roll, yaw),
     });
@@ -440,6 +489,10 @@ export async function readLevel(archive, levels, name) {
     start: navText ? parseNavStart(navText) : null,
     nav: navText ? parseNav(navText) : [],
     objects: lvl.objects.endsWith(".def") ? await readObjects(archive, `data/${lvl.objects}`) : [],
+    briefTargets: lvl.objects.endsWith(".def") ? await readBriefTargets(archive, `data/${lvl.objects}`) : [],
+    briefing: lvl.story, // data/<planet>.txt, or null.txt
+    stories: lvl.stories,
+    isTunnel: lvl.isTunnel,
     powerups: [],
     tunnels: [],
   };

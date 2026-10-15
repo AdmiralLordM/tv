@@ -2,10 +2,12 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { Archive, podOrder, looksLikePod } from "./pod.js";
 import { saveFile, loadFile, forgetFiles, keepFiles } from "./store.js";
-import { readLevels, isSurface, readLevel, readPalette, resolveModel } from "./formats.js";
+import { readLevels, isSurface, readLevel, readPalette, resolveModel, POWERUP_MODELS } from "./formats.js";
 import { parseBin, binGroups } from "./bin.js";
-import { playMusic, stopMusic, toggleMusic, wakeMusic } from "./music.js";
-import { Crowd, isActor } from "./ai.js";
+import { playMusic, stopMusic, toggleMusic, wakeMusic, setMusicLevel } from "./music.js";
+import { Crowd, isActor, SHOT_MODELS, DEBRIS_MODELS } from "./ai.js";
+import { readHudFont } from "./exe.js";
+import { Menu, DEFAULT_SETTINGS } from "./menu.js";
 
 // Engine values recovered from GAME.EXE. Section numbers point into
 // docs/original-engine.md. Lengths are tiles (one tile = 2^20 game units).
@@ -16,7 +18,7 @@ const GAME_SECOND = 0.98864; // one 16.16 game second in real seconds (2.2)
 const THROTTLE_MIN = 0.25; // throttle is tiles per game second (2.3)
 const THROTTLE_MAX = 1;
 const THROTTLE_START = 0.5;
-const THROTTLE_RATE = 1; // A/Z held, per second
+const THROTTLE_RATE = 1 / GAME_SECOND; // A/Z held: 0x10000 per game second
 const AFTERBURNER = 3;
 const TURN_RATE = THREE.MathUtils.degToRad(103);
 const BANK_COUPLING = 0.732; // yaw input also rolls you into the turn
@@ -55,31 +57,208 @@ const FRAME_W = 800;
 const FRAME_H = 600;
 const TAU = Math.PI * 2;
 const PODS_KEY = "__pods";
+const EXE_KEY = "game.exe";
+const VOX_FILES = ["share.vox", "retail1.vox", "retail2.vox", "geiger.vox"];
+const SETTINGS_KEY = "tv.settings";
 
 const params = new URLSearchParams(location.search);
+// The original's difficulty menu: Easy, Normal (its default), Hard, Terminal.
+// It sets how many hostiles the spawner keeps around (src/ai.js).
+const DIFFICULTIES = ["easy", "normal", "hard", "terminal"];
+const difficultyAsked = DIFFICULTIES.indexOf((params.get("difficulty") || "").toLowerCase());
+let difficulty = difficultyAsked < 0 ? 1 : difficultyAsked;
+// Game mode: the title and menus first, Esc in flight asks to return to them.
+// Any of ?level, ?mode or ?fly opens the bare viewer instead (tools, debugging);
+// ?play=<level> flies a level in game mode with the menus skipped.
+const gameMode = !params.has("level") && !params.has("mode") && !params.has("fly");
+const menuEl = document.getElementById("menu");
+let menu = null;
+let gameStarted = false; // a game is running: Play Game offers Resume Game
+// A scripted camera (tactical report, fly-in) in game axes; the ship stays
+// at the spawn and the flight is not stepped (DAT_00064d40).
+let cut = null;
+// FUN_0004aef0 leaves the model light at (0, -0xb4fd, 0xb4fd) for the rest
+// of the level, until a tunnel exit restores the level's (FUN_00042b20).
+let briefSun = null;
+let smallFont = null; // GAME.EXE status-bar font bytes (src/exe.js)
+const settings = loadSettings();
+
+function loadSettings() {
+  try {
+    return { ...DEFAULT_SETTINGS, ...JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}") };
+  } catch {
+    return { ...DEFAULT_SETTINGS };
+  }
+}
+
+// Sound F/X, Music and their volumes (0x4000..0x10000) from Sound Options.
+function applySettings() {
+  setMusicLevel(!!settings.music, settings.musicVolume / 0x10000);
+}
 const frameEl = document.getElementById("frame");
 const modeEl = document.getElementById("mode");
 const pickEl = document.getElementById("pick");
 const flyBtn = document.getElementById("fly");
 const forgetBtn = document.getElementById("forget");
-const statusEl = document.getElementById("status");
 const errorEl = document.getElementById("error");
 const hudEl = document.getElementById("hud");
 const hudBar = document.getElementById("hudBar");
 const hudText = document.getElementById("hudText");
 const hudCtx = hudText.getContext("2d");
 const crosshairEl = document.getElementById("crosshair");
+const crosshairCtx = crosshairEl.getContext("2d");
+let crosshairShade = 0x20;
+let crosshairStep = 1;
 const setupEl = document.getElementById("setup");
 const setupInput = document.getElementById("setupFiles");
 const setupNote = document.getElementById("setupNote");
 let navtar = null;
+let hudGlyphs = null; // GAME.EXE status-bar font, one canvas per character
 let radarFace = null; // 320x64 mask of the dial interior the radar shows through
 let radarInk = null; // VGA palette, for the blip colours
-let radarPups = []; // power-up positions for the radar
 let radarPulse = 0x61;
 let radarPulseStep = 1;
 let radarClock = 0;
-let scrapeSound = { play: () => Promise.resolve(), currentTime: 0 };
+
+// ---------------------------------------------------------------- sound effects
+
+// FUN_00029830: four channels, one sound each (a new one cuts the old), at
+// full volume, panned by the source's camera-space x: x / (1/64 tile)
+// clamped to +-63, left = 32 - x/2, right = 32 + x/2. No distance falloff.
+const SFX_VOLUME = 0.6;
+let sfxContext = null;
+const sfxBuffers = new Map();
+const sfxChannels = [null, null, null, null];
+
+function sfxAudio() {
+  if (!sfxContext) {
+    try {
+      sfxContext = new AudioContext();
+    } catch {
+      return null;
+    }
+  }
+  return sfxContext;
+}
+
+// Call from a user gesture: browsers start audio only after one.
+function wakeSfx() {
+  sfxAudio()?.resume?.().catch(() => {});
+}
+
+function sfxBuffer(name) {
+  const path = `sound/${name}`;
+  if (!sfxBuffers.has(path)) {
+    sfxBuffers.set(path, (async () => {
+      if (!archive?.has(path)) return null;
+      const bytes = await archive.bytes(path);
+      return sfxAudio()?.decodeAudioData(bytes.slice().buffer) ?? null;
+    })().catch((err) => {
+      console.warn(`sound ${name}:`, err);
+      return null;
+    }));
+  }
+  return sfxBuffers.get(path);
+}
+
+// FUN_00029730 is the same on channel 3, centred. loop: the channel's loop
+// flag (only the afterburner sets it). Resolves to the playing source.
+async function playSfx(name, channel, pan, { loop = false } = {}) {
+  const ctx = sfxContext; // made by wakeSfx, from a gesture
+  if (!ctx || ctx.state !== "running") return null;
+  const buffer = await sfxBuffer(name);
+  if (!buffer) return null;
+  sfxChannels[channel]?.stop();
+  const source = ctx.createBufferSource();
+  source.buffer = buffer;
+  source.loop = loop;
+  const panner = ctx.createStereoPanner();
+  panner.pan.value = pan;
+  const gain = ctx.createGain();
+  gain.gain.value = settings.sound ? SFX_VOLUME * (settings.soundVolume / 0x10000) : 0;
+  source.connect(panner).connect(gain).connect(ctx.destination);
+  source.onended = () => {
+    if (sfxChannels[channel] === source) sfxChannels[channel] = null;
+  };
+  sfxChannels[channel] = source;
+  source.start();
+  return source;
+}
+
+function stopSfx(channel) {
+  sfxChannels[channel]?.stop();
+  sfxChannels[channel] = null;
+}
+
+// Afterburner (FUN_0001bab0, weapon 0x16 in FUN_0001b6d0). While it is held
+// the weapon ticks 6 times per game second, the first tick at once. The first
+// plays blast7.wav (channel 3) and loops engine4.wav on channel 1 at its own
+// rate; every tick raises that rate by 200 Hz, up to 22050. Letting go cuts
+// the loop and plays shut-dn7.wav (channel 3). Leaving the flight
+// (FUN_0001cbc0) cuts it silently. Each tick also spends one unit of burner
+// fuel; fuel is not modelled here, so the burner never runs dry.
+const BURNER_TICKS = 6; // DAT_00067a20[0x16]
+const BURNER_STEP = 200; // Hz per tick
+const BURNER_MAX = 22050; // 0x5622
+const burnerSound = { on: false, clock: 1, rate: 0, source: null };
+
+function stepBurnerSound(held, dt) {
+  const b = burnerSound;
+  if (!held) {
+    b.clock = 1; // DAT_000ad944 = 0x10000: the next press ticks at once
+    if (b.on) {
+      b.on = false;
+      b.source = null;
+      stopSfx(1);
+      playSfx("shut-dn7.wav", 3, 0);
+    }
+    return;
+  }
+  b.clock += (dt / GAME_SECOND) * BURNER_TICKS;
+  while (b.clock > 1) {
+    b.clock -= 1;
+    if (!b.on) {
+      b.on = true;
+      b.rate = 0;
+      playSfx("blast7.wav", 3, 0);
+      sfxBuffer("engine4.wav").then((buffer) => {
+        if (!b.on || !buffer) return;
+        b.rate ||= buffer.sampleRate;
+        playSfx("engine4.wav", 1, 0, { loop: true }).then((source) => {
+          if (!source) return;
+          if (!b.on) return source.stop();
+          b.source = source;
+          source.playbackRate.value = b.rate / buffer.sampleRate;
+        });
+      });
+    } else if (b.rate) {
+      b.rate = Math.min(b.rate + BURNER_STEP, BURNER_MAX);
+      if (b.source) b.source.playbackRate.value = b.rate / b.source.buffer.sampleRate;
+    }
+  }
+}
+
+function cutBurnerSound() {
+  if (burnerSound.on) stopSfx(1);
+  burnerSound.on = false;
+  burnerSound.source = null;
+  burnerSound.clock = 1;
+}
+
+// A Crowd's sound callback: pos is in the crowd's space, where the ship is too.
+function crowdSound(crowdOf) {
+  const at = new THREE.Vector3();
+  return (name, channel, pos) => {
+    const c = crowdOf();
+    at.copy(pos);
+    if (!c.tunnel) {
+      at.x = ship.pos.x + c.delta(ship.pos.x, at.x);
+      at.z = ship.pos.z + c.delta(ship.pos.z, at.z);
+    }
+    c.parent.localToWorld(at).applyMatrix4(camera.matrixWorldInverse);
+    playSfx(name, channel, THREE.MathUtils.clamp(at.x * 64, -63, 63) / 63);
+  };
+}
 
 const renderer = new THREE.WebGLRenderer({ antialias: false });
 renderer.setPixelRatio(1);
@@ -125,6 +304,10 @@ const shade = {
   uGameFrame: { value: new THREE.Matrix4() },
   uSun: { value: new THREE.Vector3(0.7, -0.7, 0).normalize() }, // direction light travels, three.js space
   uAmbient: { value: 0.5 },
+  // Damage flash (FUN_0002f700): every pixel becomes the flash color scaled
+  // by its own brightness, in 16 steps (flashTint).
+  uFlash: { value: 0 },
+  uFlashColor: { value: new THREE.Vector3() },
 };
 
 const VERTEX = `
@@ -175,6 +358,8 @@ uniform float uHasMap;
 uniform float uAlpha0;
 uniform float uUseLight;
 uniform float uFly;
+uniform float uFlash;
+uniform vec3 uFlashColor;
 uniform float uWindow;
 uniform float uWindowed;
 uniform float uFogK;
@@ -185,6 +370,13 @@ varying float vDepth;
 varying float vLight;
 varying vec2 vRamp;
 varying float vLit;
+// FUN_0002f700 per color byte: (tint * min(255, |rgb|) >> 8) >> 4, looked up
+// in the 32-level inverse table (FUN_00015340, level k = 8k): about half the
+// tint at full brightness.
+vec3 flashTint(vec3 rgb) {
+  float len = min(255.0, floor(length(rgb * 255.0)));
+  return floor(floor(uFlashColor * 255.0 + 0.5) * len / 4096.0) * 8.0 / 255.0;
+}
 float remap(sampler2D table, float index, float row) {
   return floor(texture2D(table, vec2((index + 0.5) / 256.0, (row + 0.5) / 16.0)).r * 255.0 + 0.5);
 }
@@ -206,7 +398,9 @@ void main() {
   if (uFly > 0.5) {
     index = remap(uFogTable, index, clamp(floor(32.0 - uFogK / max(vDepth, 1e-4)), 0.0, 15.0));
   }
-  gl_FragColor = vec4(texture2D(uPalette, vec2((index + 0.5) / 256.0, 0.5)).rgb, 1.0);
+  vec3 rgb = texture2D(uPalette, vec2((index + 0.5) / 256.0, 0.5)).rgb;
+  if (uFlash > 0.5) rgb = flashTint(rgb);
+  gl_FragColor = vec4(rgb, 1.0);
 }`;
 
 function dataTexture(bytes, width, height, format = THREE.RedFormat) {
@@ -227,6 +421,11 @@ const IDENTITY_TABLE = (() => {
 
 // A look is one palette with its fog and light tables (from formats.readLevel).
 // Uniforms are built once per look and shared by every material using it.
+function paletteColor(palette, index) {
+  return new THREE.Color().setRGB(palette[index * 3] / 255, palette[index * 3 + 1] / 255,
+    palette[index * 3 + 2] / 255, THREE.SRGBColorSpace);
+}
+
 const lookCache = new WeakMap();
 function lookUniforms(look) {
   let found = lookCache.get(look);
@@ -240,8 +439,13 @@ function lookUniforms(look) {
     uLightTable: { value: dataTexture(look.light || IDENTITY_TABLE, 256, 16) },
     uUseLight: { value: look.light ? 1 : 0 },
     // The palette is shown as stored, so the clear color is set as sRGB bytes.
-    fogColor: new THREE.Color().setRGB(look.palette[fogAt * 3] / 255, look.palette[fogAt * 3 + 1] / 255,
-      look.palette[fogAt * 3 + 2] / 255, THREE.SRGBColorSpace),
+    fogColor: paletteColor(look.palette, fogAt),
+    // Above the cloud deck the game draws a flat ceiling in color ramp 12,
+    // the first sky-band entry (3.5).
+    ceilingColor: paletteColor(look.palette, 240),
+    // The flash table at 0x682e4: hits use entry 0 (palette 144), the smart
+    // bomb entry 2 (palette 31).
+    flashColors: [144, 127, 31].map((i) => new THREE.Vector3(look.palette[i * 3], look.palette[i * 3 + 1], look.palette[i * 3 + 2]).divideScalar(255)),
   };
   lookCache.set(look, found);
   return found;
@@ -311,7 +515,22 @@ const ship = {
   throttle: THROTTLE_START,
   space: "surface", // surface | tunnel | cave
   portal: null,
-  lastScrape: 0,
+  grace: 0, // seconds left of the 1 s after a hit with no ground or shot damage
+  flash: 0, // seconds left of the damage flash
+  jolt: new THREE.Vector3(), // body pitch, yaw, roll still to turn from hits, rad
+  flashColor: 0, // entry of the flash table (0x682e4): 0 hits, 2 the smart bomb
+  // Guns (resetArsenal): weapon DAT_000ad970, ammo and mode by weapon
+  // (a7a10/a7a14), the fire clock DAT_000ad944 in shots, and which
+  // gun, missile rail and Antimatter offset is next.
+  weapon: 1,
+  ammo: {},
+  mode: {},
+  fireClock: 1,
+  gunSide: 0,
+  missileSide: 0,
+  fanStep: 0,
+  notice: "", // the last message (pickups, gun modes) and its seconds left
+  noticeTime: 0,
 };
 
 class Cancelled extends Error {
@@ -322,7 +541,7 @@ class Cancelled extends Error {
 }
 
 function setStatus(text) {
-  if (statusEl.textContent !== text) statusEl.textContent = text;
+  console.log(text);
 }
 function setError(text) {
   errorEl.textContent = text || "";
@@ -522,6 +741,36 @@ function buildSky(texture, look) {
   const mesh = new THREE.Mesh(geometry, material);
   mesh.renderOrder = -1;
   mesh.frustumCulled = false;
+  mesh.add(buildHorizon(look));
+  return mesh;
+}
+
+// Above the deck FUN_00018610 also draws a wall 4096 tiles ahead of the
+// camera, turned with its yaw, from the deck up 512 tiles and +-8192 wide,
+// shaded from palette 255 at the bottom to 240 at the top with no texture and
+// no fog. It closes the gap between the deck's horizon and the ceiling. Drawn
+// here at 1/8 the size and distance, which looks the same, to stay inside the
+// far plane. updateSky places it.
+const HORIZON_SCALE = 1 / 8;
+function buildHorizon(look) {
+  const d = 4096 * HORIZON_SCALE;
+  const w = 8192 * HORIZON_SCALE;
+  const h = 512 * HORIZON_SCALE;
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.Float32BufferAttribute([
+    -w, 0, d, w, 0, d, w, h, d, -w, 0, d, w, h, d, -w, h, d,
+  ], 3));
+  geometry.setAttribute("normal", new THREE.Float32BufferAttribute(new Array(18).fill(0).map((_, i) => (i % 3 === 2 ? -1 : 0)), 3));
+  geometry.setAttribute("ramp", new THREE.Float32BufferAttribute([
+    255, 255, 255, 255, 240, 240, 255, 255, 240, 240, 240, 240,
+  ], 2));
+  geometry.setAttribute("lit", new THREE.Float32BufferAttribute(new Array(6).fill(0), 1));
+  const material = paletteMaterial(look, { model: true, fogK: 1e9, windowed: false, side: THREE.DoubleSide, depthWrite: false });
+  material.depthTest = false;
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.renderOrder = -0.5;
+  mesh.frustumCulled = false;
+  mesh.visible = false;
   return mesh;
 }
 
@@ -549,11 +798,24 @@ async function modelGeometry(name) {
     const path = `models/${name}.bin`;
     if (!archive.has(path)) return null;
     let model = parseBin(await archive.bytes(path), name);
+    let keys = null;
+    let delay = 0;
     if (model.kind === "anim") {
-      const first = (model.frames[0] || "").toLowerCase().replace(/\.bin$/, "");
-      if (!first || !archive.has(`models/${first}.bin`)) return null;
-      model = parseBin(await archive.bytes(`models/${first}.bin`), first);
-      if (model.kind !== "model") return null;
+      // A morph list: faces come from the first frame, vertices from every
+      // keyframe (FUN_00040f70). Frames may repeat (claw1 2 3 4 3 2).
+      const names = model.frames.map((frame) => frame.toLowerCase().replace(/\.bin$/, ""));
+      delay = model.delay || 0x10000;
+      const frames = await Promise.all(names.map(async (frame) => {
+        const framePath = `models/${frame}.bin`;
+        if (!archive.has(framePath)) return null;
+        const parsed = parseBin(await archive.bytes(framePath), frame);
+        return parsed.kind === "model" ? parsed : null;
+      }));
+      if (!frames[0]) return null;
+      model = frames[0];
+      if (frames.length > 1 && frames.every((f) => f && f.vertices.length === model.vertices.length)) {
+        keys = frames.map((f) => Float32Array.from(f.vertices.flat(), (v) => v / f.scale));
+      }
     }
     const { groups } = binGroups(model);
     const parts = groups.map((g) => {
@@ -563,11 +825,24 @@ async function modelGeometry(name) {
       geometry.setAttribute("normal", new THREE.Float32BufferAttribute(g.normal, 3));
       geometry.setAttribute("ramp", new THREE.Float32BufferAttribute(g.ramp, 2));
       geometry.setAttribute("lit", new THREE.Float32BufferAttribute(g.lit, 1));
-      return { geometry, texture: g.texture, alpha: g.alpha, inherit: g.inherit };
+      return {
+        geometry, texture: g.texture, animation: g.animation, alpha: g.alpha, inherit: g.inherit,
+        source: Int32Array.from(g.source), stored: Float32Array.from(g.normal),
+      };
     });
     let radius = 0;
     for (const [x, y, z] of model.vertices) radius = Math.max(radius, Math.hypot(x, y, z) / model.scale);
-    return { parts, radius: radius * MODEL_SCALE };
+    if (keys) {
+      for (const key of keys) {
+        for (let i = 0; i < key.length; i += 3) radius = Math.max(radius, Math.hypot(key[i], key[i + 1], key[i + 2]));
+      }
+      // Bounds cover every keyframe, so blended poses are never culled.
+      for (const part of parts) part.geometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(), radius);
+      morphs.add({ parts, keys, delay });
+    }
+    // Vertices in tiles, first frame: enemy muzzles (FUN_00024540).
+    const vertices = model.vertices.map((v) => v.map((c) => (c / model.scale) * MODEL_SCALE));
+    return { parts, radius: radius * MODEL_SCALE, vertices };
   })().catch((err) => {
     console.warn(`model ${name}:`, err);
     return null;
@@ -587,7 +862,11 @@ async function loadModel(name, look, inherit = null) {
     if (!built) return null;
     const object = new THREE.Group();
     for (const part of built.parts) {
-      const map = part.texture ? await indexTexture(`art/${part.texture}`)
+      const frames = part.animation
+        ? await Promise.all(part.animation.frames.map((frame) => indexTexture(`art/${frame}`)))
+        : null;
+      const map = frames ? frames[0]
+        : part.texture ? await indexTexture(`art/${part.texture}`)
         : part.inherit && inherit ? await indexTexture(inherit) : null;
       // Every .bin face is single-sided; DoubleSide covers faces whose stored
       // normal and winding disagree.
@@ -596,12 +875,163 @@ async function loadModel(name, look, inherit = null) {
         fogK: FOG_OBJECTS ? FOG_K : 1e12, side: THREE.DoubleSide,
       });
       object.add(new THREE.Mesh(part.geometry, material));
+      if (frames) flipbooks.add({ material, frames, delay: part.animation.delay });
     }
     object.scale.setScalar(MODEL_SCALE);
-    return { object, radius: built.radius };
+    return { object, radius: built.radius, vertices: built.vertices };
   })();
   byLook.set(key, pending);
   return pending;
+}
+
+// ---------------------------------------------------------------- animation
+
+// Both run on one global game clock, so every copy of a model moves in step.
+// Morph lists blend four keyframes on a Catmull-Rom spline (FUN_00040f70:
+// t = clock mod (delay * count), key = t / delay). Geometry is shared by
+// every copy and level, so each morph is updated once per frame.
+const morphs = new Set();
+// Animated textures flip frames: (clock / delay) mod count (FUN_00016d50).
+const flipbooks = new Set();
+let animClock = 0;
+
+function catmullRom(f) {
+  const f2 = f * f;
+  const f3 = f2 * f;
+  return [
+    -0.5 * f3 + f2 - 0.5 * f,
+    1.5 * f3 - 2.5 * f2 + 1,
+    -1.5 * f3 + 2 * f2 + 0.5 * f,
+    0.5 * f3 - 0.5 * f2,
+  ];
+}
+
+const morphA = new THREE.Vector3();
+const morphB = new THREE.Vector3();
+function updateMorph(morph, ticks) {
+  const { keys, delay, parts } = morph;
+  const n = keys.length;
+  const t = ticks % (delay * n);
+  const k = Math.floor(t / delay);
+  const w = catmullRom((t - k * delay) / delay);
+  const ks = [keys[(k + n - 1) % n], keys[k], keys[(k + 1) % n], keys[(k + 2) % n]];
+  for (const part of parts) {
+    const pos = part.geometry.attributes.position;
+    const nrm = part.geometry.attributes.normal;
+    const p = pos.array;
+    for (let i = 0; i < part.source.length; i++) {
+      const s = part.source[i] * 3;
+      for (let c = 0; c < 3; c++) {
+        p[i * 3 + c] = w[0] * ks[0][s + c] + w[1] * ks[1][s + c] + w[2] * ks[2][s + c] + w[3] * ks[3][s + c];
+      }
+    }
+    // The game recomputes face planes after blending; keep the stored side.
+    for (let i = 0; i + 8 < p.length; i += 9) {
+      morphA.set(p[i + 3] - p[i], p[i + 4] - p[i + 1], p[i + 5] - p[i + 2]);
+      morphB.set(p[i + 6] - p[i], p[i + 7] - p[i + 1], p[i + 8] - p[i + 2]);
+      morphA.cross(morphB);
+      if (morphA.lengthSq() < 1e-12) continue;
+      morphA.normalize();
+      const st = part.stored;
+      if (morphA.x * st[i] + morphA.y * st[i + 1] + morphA.z * st[i + 2] < 0) morphA.negate();
+      for (let v = 0; v < 9; v += 3) nrm.array.set([morphA.x, morphA.y, morphA.z], i + v);
+    }
+    pos.needsUpdate = true;
+    nrm.needsUpdate = true;
+  }
+}
+
+function updateAnimations(dt) {
+  animClock += dt;
+  const ticks = (animClock / GAME_SECOND) * 65536;
+  for (const morph of morphs) updateMorph(morph, ticks);
+  for (const book of flipbooks) {
+    const map = book.frames[Math.floor(ticks / book.delay) % book.frames.length];
+    if (map) book.material.uniforms.uMap.value = map;
+  }
+}
+
+// The projectile models the level's enemies fire (SHOT_MODELS by def `shot`),
+// as a factory for Crowd.
+async function loadShots(spots, look) {
+  const types = new Set(spots.filter(isActor).map((spot) => spot.def.ai.shot));
+  for (const weapon of [1, 2, 3]) types.add(weapon); // the player's guns
+  const shots = new Map();
+  await Promise.all([...types].map(async (type) => {
+    const template = SHOT_MODELS[type] && await loadModel(SHOT_MODELS[type], look);
+    if (template) shots.set(type, template);
+  }));
+  return (type) => shots.get(type)?.object.clone(true) || null;
+}
+
+// Impacts, smoke, debris, the player's missiles and power-ups for
+// Crowd.fx: blast1-16, bigex1-16, billow1-16 and puff1-4.raw on squares
+// (FUN_00018f30 loads them), bradmis.bin, frag1-3.bin and pipe.bin
+// (FUN_00018dc0), and the twelve power-up models.
+const effectsCache = new WeakMap();
+function loadEffects(look) {
+  if (effectsCache.has(look)) return effectsCache.get(look);
+  const pending = (async () => {
+    const frames = (name, count) => Promise.all(Array.from({ length: count }, (_, i) => indexTexture(`art/${name}${i + 1}.raw`)));
+    const names = ["bradmis", ...DEBRIS_MODELS, ...POWERUP_MODELS];
+    const [blast, bigex, billow, puff, ...models] = await Promise.all([
+      frames("blast", 16), frames("bigex", 16), frames("billow", 16), frames("puff", 4),
+      ...names.map((name) => loadModel(name, look)),
+    ]);
+    const templates = new Map(names.map((name, i) => [name, models[i]]));
+    const sets = { blast, bigex, billow, puff };
+    // Squares in units of the impact's size, by their UV tables
+    // (FUN_00019a30, FUN_00019e00, FUN_00019c40): blast +-1 with the
+    // image's first row at the bottom, bigex +-1/2 across and 0..1 up,
+    // billow +-1 across and -1/2..3/2 up, both with the first row at the
+    // top. [I] Puffs (FUN_0001c610) +-1, first row at the top.
+    const square = (x0, x1, y0, y1, topRow) => {
+      const geometry = new THREE.PlaneGeometry(x1 - x0, y1 - y0);
+      geometry.translate((x0 + x1) / 2, (y0 + y1) / 2, 0);
+      const uv = geometry.getAttribute("uv");
+      if (topRow) for (let i = 0; i < uv.count; i++) uv.setY(i, 1 - uv.getY(i));
+      return geometry;
+    };
+    const shapes = {
+      blast: square(-1, 1, -1, 1, false),
+      puff: square(-1, 1, -1, 1, true),
+      bigex: square(-0.5, 0.5, 0, 1, true),
+      billow: square(-1, 1, -0.5, 1.5, true),
+    };
+    return {
+      sprite(kind) {
+        const list = sets[kind];
+        if (!list?.[0]) return null;
+        const material = paletteMaterial(look, { map: list[0], alpha0: true, windowed: false, side: THREE.DoubleSide, depthWrite: false });
+        const mesh = new THREE.Mesh(shapes[kind], material);
+        mesh.userData.frames = list;
+        return mesh;
+      },
+      frame(mesh, index) {
+        const map = mesh.userData.frames?.[index];
+        if (map) mesh.material.uniforms.uMap.value = map;
+      },
+      model: (name) => templates.get(name)?.object.clone(true) || null,
+      pickup(type) {
+        const template = templates.get(POWERUP_MODELS[type]);
+        return template ? { mesh: template.object.clone(true), radius: template.radius } : null;
+      },
+    };
+  })();
+  effectsCache.set(look, pending);
+  return pending;
+}
+
+// A def's second model, shown once the slot is wrecked (logic 9), or for a
+// C-Nome the model of the def it turns into.
+async function wreckFor(spot, look, position, cache) {
+  const name = spot.def.logic === 0x13 ? spot.def.remains?.model : spot.def.logic === 9 ? spot.def.wreck : null;
+  if (!name) return null;
+  if (!cache.has(name)) cache.set(name, loadModel(name, look));
+  const template = await cache.get(name);
+  if (!template) return null;
+  const mesh = placeModel(template, position.x, position.y, position.z, spot);
+  return { mesh, vertices: template.vertices };
 }
 
 function placeModel(template, x, y, z, spot) {
@@ -780,18 +1210,26 @@ async function buildPortal(data, gen) {
     exitStub: buildTube(segments.slice(-TUBE_STUB), walls, look, Math.max(0, segments.length - TUBE_STUB)),
     props: new THREE.Group(),
   };
-  portal.crowd = new Crowd({ parent: portal.props, tunnel: segments });
+  portal.crowd = new Crowd({ parent: portal.props, tunnel: segments, shotModel: await loadShots(data.contents || [], look) });
+  portal.crowd.sound = crowdSound(() => portal.crowd);
+  portal.crowd.hitPlayer = shotHit;
+  portal.crowd.pickUp = pickUp;
+  portal.crowd.fx = await loadEffects(look);
+  // FUN_00039820, approximated by the ship's wall test with no margin.
+  portal.crowd.inWall = (p) => containInTube(portal, tmpWall.copy(p), elapsed, 0);
   const names = [...new Set((data.contents || []).map((spot) => spot.model))];
   const templates = new Map();
   await mapLimit(names, 3, async (name) => templates.set(name, await loadModel(name, look)));
   if (gen !== loadGen) throw new Cancelled();
   // Tunnel props keep their file x, y, z in tunnel space (6.2).
+  const wrecks = new Map();
   for (const spot of data.contents || []) {
     const template = templates.get(spot.model);
     if (!template) continue;
     const obj = placeModel(template, spot.x, spot.y, spot.z, spot);
     portal.props.add(obj);
-    if (isActor(spot)) portal.crowd.add(obj, spot, template.radius);
+    if (spot.powerup !== undefined) portal.crowd.addPickup(obj, spot.powerup, template.radius);
+    else if (isActor(spot)) portal.crowd.add(obj, spot, template.radius, template.vertices, await wreckFor(spot, look, obj.position, wrecks));
   }
   portal.obstacles = await buildObstacles(portal, walls);
   if (gen !== loadGen) throw new Cancelled();
@@ -800,7 +1238,8 @@ async function buildPortal(data, gen) {
 
 // Wall collision: keep the ship WALL_MARGIN inside every face of the ring
 // polygon at its depth.
-function containInTube(portal, p, time) {
+const tmpWall = new THREE.Vector3();
+function containInTube(portal, p, time, margin = WALL_MARGIN) {
   const k = Math.min(portal.length - 1, Math.max(0, Math.floor(p.z)));
   const seg = portal.segments[k];
   const t = THREE.MathUtils.clamp(p.z - k, 0, 1);
@@ -808,17 +1247,20 @@ function containInTube(portal, p, time) {
   const s = ringPoints(seg, false, spin);
   const e = ringPoints(seg, true, spin);
   const ring = s.map(([x, y], i) => [x + (e[i][0] - x) * t, y + (e[i][1] - y) * t]);
+  let moved = false;
   for (let pass = 0; pass < 2; pass++) {
     for (const edge of inwardNormals(ring)) {
       if (!edge) continue;
       const [nx, ny, ax, ay] = edge;
       const d = (p.x - ax) * nx + (p.y - ay) * ny;
-      if (d < WALL_MARGIN) {
-        p.x += nx * (WALL_MARGIN - d);
-        p.y += ny * (WALL_MARGIN - d);
+      if (d < margin) {
+        moved = true;
+        p.x += nx * (margin - d);
+        p.y += ny * (margin - d);
       }
     }
   }
+  return moved;
 }
 
 // ---------------------------------------------------------------- tunnel obstacles
@@ -1042,14 +1484,28 @@ function updateObstacles(portal, time) {
   }
 }
 
+// FUN_00037260: an electric field (0x19) that is drawn, i.e. in the segment
+// you are in or the 4 ahead (FUN_00039a70), plays electric.wav (channel 3,
+// centred) each time its game-second timer wraps, when it switches on.
+const DRAWN_SEGMENTS = 5;
+function electricSound(portal, before, now) {
+  const k = Math.floor(ship.pos.z);
+  for (const ob of portal.obstacles || []) {
+    if (ob.type !== 0x19 || ob.k < k || ob.k >= k + DRAWN_SEGMENTS) continue;
+    if (obstaclePhase(ob, now, 0x10000) >> 16 !== obstaclePhase(ob, before, 0x10000) >> 16) {
+      playSfx("electric.wav", 3, 0);
+    }
+  }
+}
+
 // Collision (FUN_00038820): inside the first 1/8 tile of a segment, the
-// obstacle clamps the ship's position across the shaft.
+// obstacle clamps the ship's position across the shaft. Returns whether it did.
 function collideObstacle(portal, p, time) {
   const k = Math.floor(p.z);
   const ob = (portal.obstacles || []).find((o) => o.k === k);
-  if (!ob) return;
+  if (!ob) return false;
   const depth = (p.z - k) * 4096;
-  if (!(depth > 0 && depth < OBSTACLE_DEPTH)) return;
+  if (!(depth > 0 && depth < OBSTACLE_DEPTH)) return false;
   const { seg, type } = ob;
   const [rx, ry] = seg.r0;
   let X = p.x * 4096 - seg.start[0];
@@ -1091,10 +1547,14 @@ function collideObstacle(portal, p, time) {
       }
       break;
     }
-    default: return;
+    default: return false;
   }
-  p.x = (seg.start[0] + X) / 4096;
-  p.y = (seg.start[1] + Y) / 4096;
+  const x = (seg.start[0] + X) / 4096;
+  const y = (seg.start[1] + Y) / 4096;
+  const moved = Math.abs(x - p.x) + Math.abs(y - p.y) > 1e-9;
+  p.x = x;
+  p.y = y;
+  return moved;
 }
 
 // ---------------------------------------------------------------- level
@@ -1125,7 +1585,6 @@ function clearLevel() {
   spinning = [];
   surfaceCopies = [];
   crowd = null;
-  radarPups = [];
   heightGrid = null;
 }
 
@@ -1254,9 +1713,20 @@ async function placeObjects(entry, content, gen) {
   const group = new THREE.Group();
   // Things that move live outside `content`, so the wrap copies don't
   // duplicate them; the crowd draws each at the copy nearest the camera.
-  crowd = new Crowd({ parent: new THREE.Group(), groundAt });
+  const shotModel = await loadShots(spots, entry.look);
+  if (gen !== loadGen) throw new Cancelled();
+  const fx = await loadEffects(entry.look);
+  if (gen !== loadGen) throw new Cancelled();
+  crowd = new Crowd({ parent: new THREE.Group(), groundAt, groundNormal, difficulty, shotModel });
+  crowd.fx = fx;
+  const surfaceCrowd = crowd;
+  crowd.sound = crowdSound(() => surfaceCrowd);
+  crowd.hitPlayer = shotHit;
+  crowd.pickUp = pickUp;
   // Surface objects ignore the file y: ground under (x, z), plus the def's
-  // offsets, plus half the radius for logics 2, 4, 7, 8 (4.3).
+  // offsets, plus half the radius for logics 2, 4, 7, 8 (4.3). Every one
+  // with a def is a slot; the crowd draws it at the nearest wrap copy.
+  const wrecks = new Map();
   for (const spot of spots) {
     const template = templates.get(spot.model);
     if (!template) continue;
@@ -1265,20 +1735,19 @@ async function placeObjects(entry, content, gen) {
     const obj = placeModel(template, spot.x + ox, groundAt(spot.x, spot.z) + oy + lift, spot.z + oz, spot);
     if (isActor(spot)) {
       crowd.parent.add(obj);
-      crowd.add(obj, spot, template.radius);
+      crowd.add(obj, spot, template.radius, template.vertices, await wreckFor(spot, entry.look, obj.position, wrecks));
       continue;
     }
     obj.userData.prop = true;
     group.add(obj);
   }
+  if (gen !== loadGen) throw new Cancelled();
   // Power-ups float two bounding radii above the ground (4.4).
   for (const pup of pups) {
     const template = templates.get(pup.model);
     if (!template) continue;
     const obj = placeModel(template, pup.x, groundAt(pup.x, pup.z) + 2 * template.radius, pup.z, {});
-    obj.userData.prop = true;
-    group.add(obj);
-    radarPups.push(obj.position);
+    crowd.addPickup(obj, pup.type, template.radius);
   }
   content.add(group);
   return group.children.length + crowd.actors.length;
@@ -1314,6 +1783,7 @@ async function showModel(name, gen) {
 // ---------------------------------------------------------------- modes
 
 function setSpace(space, portal = null) {
+  if (ship.space === "tunnel" && space === "surface") briefSun = null;
   ship.space = space;
   ship.portal = portal;
   const inTunnel = space === "tunnel";
@@ -1325,11 +1795,15 @@ function setSpace(space, portal = null) {
     surface.add(caveMeshes.group);
   }
   if (caveMeshes?.group) caveMeshes.group.visible = inCave;
-  if (skyMesh) skyMesh.visible = !inCave;
+  if (skyMesh) {
+    skyMesh.visible = !inCave;
+    skyMesh.material.depthWrite = false;
+    skyMesh.material.colorWrite = true;
+  }
   if (stars) stars.visible = flying && !inCave;
   shade.uWindow.value = inCave ? CAVE_WINDOW : SURFACE_WINDOW;
   if (inCave) setLighting(level.caveLight, level.caveAmbient);
-  else if (level) setLighting(level.sun, level.ambient);
+  else if (level) setLighting(briefSun || level.sun, level.ambient);
   const look = inTunnel ? portal.look : level?.look;
   // The screen is cleared to the fog color (palette[fogIndex]).
   scene.background = look ? lookUniforms(look).fogColor.clone() : BACKDROP.clone();
@@ -1380,7 +1854,9 @@ function levelMusic() {
   return level?.music ? objectUrl(level.music, "audio/x-mod") : null;
 }
 
-function startFly() {
+// intro: set up the flight but leave the controls, HUD and mouse for
+// beginFlight once the level's start screens are done.
+function startFly({ intro = false } = {}) {
   if (modeEl.value !== "map" || !level) return;
   flying = true;
   paused = false;
@@ -1392,6 +1868,11 @@ function startFly() {
   ship.pos.set(start.x, groundAt(start.x, start.z) + SPAWN_LIFT, start.z);
   ship.q.setFromEuler(new THREE.Euler(start.pitch, start.yaw, start.roll, "YXZ"));
   ship.rates.set(0, 0, 0);
+  ship.jolt.set(0, 0, 0);
+  ship.grace = 0;
+  ship.flash = 0;
+  resetArsenal();
+  mouseFire = false;
   ship.axes = { pitch: 0, yaw: 0, roll: 0 };
   ship.stick.set(0, 0);
   ship.throttle = THROTTLE_START;
@@ -1406,10 +1887,22 @@ function startFly() {
   // Every sortie starts with everyone back at their posts.
   crowd?.resetAll();
   for (const portal of portals) portal.crowd.resetAll();
+  wakeMusic();
+  wakeSfx();
+  playMusic(levelMusic());
+  if (intro) {
+    hudEl.hidden = true;
+    crosshairEl.hidden = true;
+    return;
+  }
+  beginFlight();
+}
+
+function beginFlight() {
+  cut = null;
   hudEl.hidden = false;
   crosshairEl.hidden = false;
-  wakeMusic();
-  playMusic(levelMusic());
+  clock.getDelta();
   lockPointer();
 }
 
@@ -1424,7 +1917,10 @@ function lockPointer() {
 
 renderer.domElement.addEventListener("click", () => {
   if (!flying) return;
+  // [I] A click or tap also cuts the fly-in short (and takes the mouse).
+  if (cut?.skip && !menu?.active) cut.skip();
   wakeMusic();
+  wakeSfx();
   playMusic(levelMusic());
   if (document.pointerLockElement !== renderer.domElement) lockPointer();
 });
@@ -1449,11 +1945,301 @@ const tmpEuler = new THREE.Euler(0, 0, 0, "YXZ");
 const tmpQ = new THREE.Quaternion();
 const tmpV = new THREE.Vector3();
 
-function scrape(now) {
-  if (now - ship.lastScrape < 0.4) return;
-  ship.lastScrape = now;
-  scrapeSound.currentTime = 0;
-  scrapeSound.play().catch(() => {});
+// Damage (FUN_000131d0): an eighth-second flash (0x2000), a random exp1-5.wav
+// at the ship, 1 s of grace from ground and shot damage, and a jolt. Shields
+// aren't modeled, so the amount is ignored.
+const GRACE = GAME_SECOND;
+const FLASH = GAME_SECOND / 8;
+// The jolt adds (2r - 0x8000) << 13 / frame time to each turn rate, and the
+// rates halve every frame (FUN_00011cc0): the ship turns r/8 - 0x1000 units
+// that frame, half that the next, and so on, (2r - 0x8000) / 4 in all, up to
+// 45 degrees per axis. [I] The halving is per frame; taken at ORIGINAL_FPS.
+const JOLT_FPS = 20;
+const EXPLOSIONS = ["exp1.wav", "exp2.wav", "exp3.wav", "exp4.wav", "exp5.wav"];
+function damage() {
+  ship.flash = FLASH;
+  ship.flashColor = 0;
+  playSfx(EXPLOSIONS[Math.floor(Math.random() * EXPLOSIONS.length)], 0, 0);
+  ship.grace = GRACE;
+  const kick = () => (((Math.floor(Math.random() * 0x8000) * 2 - 0x8000) / 4) / 0x10000) * Math.PI * 2;
+  ship.jolt.x += kick();
+  ship.jolt.y += kick();
+  ship.jolt.z += kick();
+}
+
+// FUN_00012740: ground.wav on the surface and in the cave, scrape.wav on a
+// tunnel wall or obstacle; channel 3, centred (FUN_00029730).
+function groundSound() {
+  playSfx(ship.space === "tunnel" ? "scrape.wav" : "ground.wav", 3, 0);
+}
+
+// Cave rock and the cave ceiling always hurt (FUN_00012740).
+function hit() {
+  groundSound();
+  damage();
+}
+
+// Touching the ground only hurts, and only sounds, outside the grace.
+function scrape() {
+  if (ship.grace <= 0) hit();
+}
+
+// An enemy shot within 1/16 tile (FUN_000133b0): ignored during the grace.
+function shotHit() {
+  if (ship.grace > 0 || !flying || cut) return false;
+  damage();
+  return true;
+}
+
+// ---------------------------------------------------------------- guns
+
+// The weapons by number (FUN_0001b6d0). Tables from GAME.EXE: rate 0x67a20
+// (shots per game second), speed 0x67934 (tiles per game second added to
+// the ship's), damage 0x6797c, model 0x678ec (SHOT_MODELS[weapon]), HUD
+// name 0x67a7c. Each fire plays the sound at the ship on channel 1.
+const WEAPONS = {
+  1: { name: "PAC", rate: 6, speed: 2, damage: 0x1000, sound: "laser2.wav", fire: noseGuns }, // Plasma
+  2: { name: "ION", rate: 6, speed: 1.5, damage: 0x2000, sound: "laser3.wav", fire: fanGun }, // Antimatter
+  3: { name: "RTL", rate: 6, speed: 4, damage: 0x1000, sound: "laser4.wav", fire: wingGuns }, // Laser Beam
+  0x12: { name: "MAM", rate: 2, damage: 0x4000, fire: missile }, // Missile
+  0x13: { name: "SAD", rate: 2, damage: 0x8000, guided: true, fire: missile }, // Guided Missile
+  0x14: { name: "SWT", rate: 2, damage: 0x10000, guided: true, fire: missile }, // Super Missile
+  0x15: { name: "DAM", rate: 6, fire: smartBomb }, // Smart Bomb
+};
+// FUN_0001bab0: keys 1-3 pick weapons 1-3 and 4-7 pick 0x12-0x15, if they have ammo.
+const WEAPON_KEYS = { 1: 1, 2: 2, 3: 3, 4: 0x12, 5: 0x13, 6: 0x14, 7: 0x15 };
+// [port] There are no pickups yet, so every flight starts with one pickup of
+// each (FUN_0003fe70): Plasma and Laser Beam unlimited, Antimatter 100,
+// Missiles 40, Guided and Super Missiles 20, one Smart Bomb. -1 is
+// unlimited. The original starts with Plasma alone (FUN_000401a0).
+const START_AMMO = { 1: -1, 2: 100, 3: -1, 0x12: 40, 0x13: 20, 0x14: 20, 0x15: 1 };
+// The ship's matrix columns are 16.16 units, a sixteenth of a tile long.
+const AXIS = 1 / 16;
+// FUN_0001b050: Antimatter cycles [pitch, yaw] offsets (tables 0x67b14, 0x67b00):
+// up, left, straight, right, down, 0x800 (11.25 degrees) apart.
+const FAN = [[-0x800, 0], [0, -0x800], [0, 0], [0, 0x800], [0x800, 0]];
+let mouseFire = false;
+
+function resetArsenal() {
+  ship.weapon = 1;
+  ship.ammo = { ...START_AMMO };
+  ship.mode = Object.fromEntries(Object.keys(START_AMMO).map((w) => [w, 1])); // a7a14: 1, 2 or 4 bolts
+  ship.fireClock = 1;
+  ship.gunSide = 0;
+  ship.missileSide = 0;
+  ship.fanStep = 0;
+}
+
+function pickWeapon(key) {
+  const weapon = WEAPON_KEYS[key];
+  if (weapon && ship.ammo[weapon]) ship.weapon = weapon;
+}
+
+// [port] + and - step Plasma or Laser Beam through modes 1, 2 and 4, as
+// repeated pickups do (FUN_0003fdd0), without the ammo that comes with them.
+const MODE_WEAPONS = new Set([1, 3]);
+function stepMode(key) {
+  const up = key === "+" || key === "=";
+  if (!up && key !== "-" && key !== "_") return;
+  if (!MODE_WEAPONS.has(ship.weapon)) return;
+  const mode = ship.mode[ship.weapon];
+  ship.mode[ship.weapon] = up ? Math.min(4, mode * 2) : Math.max(1, mode / 2);
+  notify(`${WEAPONS[ship.weapon].name} x${ship.mode[ship.weapon]}`);
+}
+
+// FUN_0003fe70: what a power-up gives, by .pup type, with its message
+// (FUN_0002cbe0, one game second) and power-1.wav. False leaves it lying
+// there. [port] Shields, invisibility, invincibility and afterburner fuel
+// aren't modelled: those only show their message.
+const PICKUPS = [
+  { name: "R.T.L. (3)", give: () => morePower(3) },
+  { name: "P.A.C. (1)", give: () => morePower(1) },
+  { name: "I.O.N. (2)", give: () => (ship.ammo[2] += 100) },
+  { name: "M.A.M. (4)", give: () => (ship.ammo[0x12] += 40) },
+  { name: "S.A.D. (5)", give: () => (ship.ammo[0x13] += 20) },
+  { name: "S.W.T. (6)", give: () => (ship.ammo[0x14] += 20) },
+  { name: "Shield Restore" },
+  { name: "Invisibility!" },
+  { name: "Invincibility!" },
+  { name: "D.A.M. (7)", give: () => (ship.ammo[0x15] ? false : (ship.ammo[0x15] = 1)) },
+  { name: "Afterburner!" },
+  { name: "Power Core!" },
+];
+function pickUp(type) {
+  const pickup = PICKUPS[type];
+  if (!pickup || pickup.give?.() === false) return false;
+  notify(pickup.name);
+  playSfx("power-1.wav", 3, 0);
+  return true;
+}
+
+// FUN_0003fdd0: the first Plasma or Laser Beam is unlimited in mode 1;
+// each one after that doubles the mode (up to 4) and adds 100 rounds.
+function morePower(weapon) {
+  if (!ship.ammo[weapon]) {
+    ship.mode[weapon] = 1;
+    ship.ammo[weapon] = -1;
+    return;
+  }
+  ship.mode[weapon] = Math.min(4, ship.mode[weapon] * 2);
+  ship.ammo[weapon] += 100;
+}
+
+// A message on the status line for one game second (FUN_0002cbe0).
+function notify(text) {
+  ship.notice = text;
+  ship.noticeTime = GAME_SECOND;
+}
+
+// FUN_00012740: inside a slot's box the ship wears it down and takes a hit
+// (0x1000) outside the grace; then the power-ups it touches (FUN_00040040).
+function stepContact(dt) {
+  const room = ship.space === "tunnel" ? ship.portal?.crowd : crowd;
+  if (!room) return;
+  if (room.ram(ship.pos, dt / GAME_SECOND) && ship.grace <= 0) damage();
+  room.collect(ship.pos);
+}
+
+// FUN_0001bab0: Space or the first mouse button. While fire is up the clock
+// sits at one shot, so a press fires on its first frame; held, it fires at
+// most once a frame. Holding the afterburner swaps the gun out for weapon
+// 0x16, so it cannot fire then.
+function stepGuns(dt) {
+  if (!(keys.has(" ") || mouseFire) || keys.has("shift")) {
+    ship.fireClock = 1;
+    return;
+  }
+  ship.fireClock += (dt / GAME_SECOND) * WEAPONS[ship.weapon].rate;
+  if (ship.fireClock <= 1) return;
+  ship.fireClock -= 1;
+  shoot(dt);
+}
+
+// FUN_0001b6d0: an empty weapon falls back to Plasma. Each shot uses one
+// round; when the last goes, a doubled weapon (mode 2 or 4) drops to
+// mode 1 with unlimited rounds, anything else switches to Plasma.
+function shoot(dt) {
+  const target = ship.space === "tunnel" ? ship.portal?.crowd : crowd;
+  if (!target) return;
+  const used = ship.weapon;
+  if (!ship.ammo[used]) ship.weapon = 1;
+  const gun = WEAPONS[ship.weapon];
+  gun.fire(target, gun, dt);
+  if (gun.sound) playSfx(gun.sound, 1, 0);
+  if (ship.ammo[used] > 0 && --ship.ammo[used] === 0) {
+    if (ship.mode[used] >= 2) {
+      ship.mode[used] = 1;
+      ship.ammo[used] = -1;
+    } else {
+      ship.weapon = 1;
+    }
+  }
+}
+
+function shipAxes() {
+  return {
+    f: new THREE.Vector3(0, 0, 1).applyQuaternion(ship.q),
+    u: new THREE.Vector3(0, 1, 0).applyQuaternion(ship.q),
+    r: new THREE.Vector3(1, 0, 0).applyQuaternion(ship.q),
+  };
+}
+
+// Tiles per game second: the ship's speed plus the weapon's.
+const shotSpeed = (gun) => ship.speed * GAME_SECOND + gun.speed;
+
+// Bolts from `base` along the nose, with the ship's orientation. Mode 1
+// alternates half an axis right and left, the right first (DAT_00067af8,
+// shared by both patterns); mode 2 fires both; mode 4 the four corners
+// half an axis out.
+function bolts(target, gun, base, axes, speed) {
+  const at = (side, lift) => base.clone().addScaledVector(axes.r, (side * AXIS) / 2).addScaledVector(axes.u, (lift * AXIS) / 2);
+  const mode = ship.mode[ship.weapon];
+  let spots;
+  if (mode === 1) {
+    ship.gunSide = 1 - ship.gunSide;
+    spots = [at(ship.gunSide ? 1 : -1, 0)];
+  } else if (mode === 2) {
+    spots = [at(1, 0), at(-1, 0)];
+  } else {
+    spots = [at(1, 1), at(-1, 1), at(-1, -1), at(1, -1)];
+  }
+  for (const pos of spots) {
+    target.fire({ pos, dir: axes.f.clone(), q: ship.q.clone(), type: ship.weapon, speed, damage: gun.damage });
+  }
+}
+
+// FUN_0001ac30 (Plasma): half an axis ahead and, except in mode 4, a
+// quarter below (1/32 and 1/64 tile). Every shot starts a frame of travel
+// back, as the shot update runs right after it.
+function noseGuns(target, gun, dt) {
+  const axes = shipAxes();
+  const speed = shotSpeed(gun);
+  const base = ship.pos.clone().addScaledVector(axes.f, AXIS / 2 - speed * (dt / GAME_SECOND));
+  if (ship.mode[ship.weapon] !== 4) base.addScaledVector(axes.u, -AXIS / 4);
+  bolts(target, gun, base, axes, speed);
+}
+
+// FUN_0001a870 (Laser Beam): the same without the drop.
+function wingGuns(target, gun, dt) {
+  const axes = shipAxes();
+  const speed = shotSpeed(gun);
+  bolts(target, gun, ship.pos.clone().addScaledVector(axes.f, AXIS / 2 - speed * (dt / GAME_SECOND)), axes, speed);
+}
+
+// FUN_0001b050 (Antimatter): mode-many shots, each turned by the next FAN
+// offset, from half an axis ahead and half below. Its sideways term
+// multiplies by the raw -1/0/1 of table 0x67b28 and comes out as nothing.
+function fanGun(target, gun, dt) {
+  const axes = shipAxes();
+  const speed = shotSpeed(gun);
+  const { x: pitch, y: yaw, z: roll } = tmpEuler.setFromQuaternion(ship.q, "YXZ");
+  const turn = (units) => (units / 65536) * Math.PI * 2;
+  for (let i = 0; i < ship.mode[ship.weapon]; i++) {
+    const [dp, dy] = FAN[ship.fanStep];
+    ship.fanStep = (ship.fanStep + 1) % FAN.length;
+    const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(pitch + turn(dp), yaw + turn(dy), roll, "YXZ"));
+    const pos = ship.pos.clone()
+      .addScaledVector(axes.f, AXIS / 2 - speed * (dt / GAME_SECOND))
+      .addScaledVector(axes.u, -AXIS / 2);
+    target.fire({ pos, dir: new THREE.Vector3(0, 0, 1).applyQuaternion(q), q, type: ship.weapon, speed, damage: gun.damage });
+  }
+}
+
+// FUN_0001b490: alternately a whole axis right and left (the right first,
+// DAT_00067b40), one below and half ahead, starting a frame of 2 tiles/s
+// back, with the ship's angles and speed.
+function missile(target, gun, dt) {
+  const axes = shipAxes();
+  ship.missileSide = 1 - ship.missileSide;
+  const pos = ship.pos.clone()
+    .addScaledVector(axes.f, AXIS / 2 - 2 * (dt / GAME_SECOND))
+    .addScaledVector(axes.r, ship.missileSide ? AXIS : -AXIS)
+    .addScaledVector(axes.u, -AXIS);
+  const { x: pitch, y: yaw, z: roll } = tmpEuler.setFromQuaternion(ship.q, "YXZ");
+  target.launch({ pos, pitch, yaw, roll, speed: ship.speed * GAME_SECOND, damage: gun.damage, guided: !!gun.guided });
+}
+
+// FUN_0001b600: hits everything awake, flashes the view in entry 2 of the
+// flash table (palette 31) for an eighth of a second (FUN_0002edf0) and
+// fills the shields, which this port doesn't model.
+function smartBomb(target) {
+  target.bomb();
+  ship.flash = FLASH;
+  ship.flashColor = 2;
+}
+
+function stepTimers(dt) {
+  ship.grace = Math.max(0, ship.grace - dt);
+  ship.flash = Math.max(0, ship.flash - dt);
+  ship.noticeTime = Math.max(0, ship.noticeTime - dt);
+}
+
+function stepJolt(dt) {
+  if (ship.jolt.lengthSq() < 1e-10) return ship.jolt.set(0, 0, 0);
+  tmpV.copy(ship.jolt).multiplyScalar(1 - 0.5 ** (dt * JOLT_FPS));
+  ship.jolt.sub(tmpV);
+  const angle = tmpV.length();
+  ship.q.multiply(tmpQ.setFromAxisAngle(tmpV.divideScalar(angle), angle)).normalize();
 }
 
 // Flight (2.3): rate control in the body frame. Up arrow pushes the stick
@@ -1478,9 +2264,11 @@ function stepFlight(dt, now) {
   tmpV.copy(ship.rates).multiplyScalar(dt);
   const angle = tmpV.length();
   if (angle > 0) ship.q.multiply(tmpQ.setFromAxisAngle(tmpV.divideScalar(angle), angle)).normalize();
+  stepJolt(dt);
 
   ship.throttle = THREE.MathUtils.clamp(ship.throttle + axis("a", "z") * THROTTLE_RATE * dt, THROTTLE_MIN, THROTTLE_MAX);
   const burner = keys.has("shift");
+  stepBurnerSound(burner, dt);
   ship.speed = approach(ship.speed, (burner ? AFTERBURNER : ship.throttle) / GAME_SECOND, dt);
   const forward = tmpV.set(0, 0, 1).applyQuaternion(ship.q);
   const before = ship.pos.clone();
@@ -1490,7 +2278,7 @@ function stepFlight(dt, now) {
   ship.pos.x = wrapMap(ship.pos.x);
   ship.pos.z = wrapMap(ship.pos.z);
   if (ship.space === "cave") return stepCave(before);
-  stepSurface(now);
+  stepSurface();
 }
 
 function setPitch(pitch) {
@@ -1499,7 +2287,7 @@ function setPitch(pitch) {
   ship.q.setFromEuler(tmpEuler);
 }
 
-function stepSurface(now) {
+function stepSurface() {
   if (tryEnterTunnel()) return;
   const floor = groundAt(ship.pos.x, ship.pos.z) + CLEARANCE;
   if (ship.pos.y < floor) {
@@ -1508,13 +2296,14 @@ function stepSurface(now) {
     tmpEuler.setFromQuaternion(ship.q, "YXZ");
     const pitch = tmpEuler.x;
     setPitch(pitch > 0 ? -pitch : Math.max(pitch * 2, -BOUNCE_LIMIT));
-    scrape(now);
+    scrape();
   }
   if (ship.pos.y > CEILING) ship.pos.y = CEILING;
 }
 
-// Cave mode (5): floor below, mirrored ceiling above, and solid 255 rock that
-// turns the ship around.
+// Cave mode (5, FUN_00012740): floor below, mirrored ceiling above, and solid
+// 255 rock that turns the ship around. Rock and ceiling always hit; the floor
+// bounces as on the surface.
 function stepCave(before) {
   const ground = groundAt(ship.pos.x, ship.pos.z);
   const floor = ground + CLEARANCE;
@@ -1524,9 +2313,20 @@ function stepCave(before) {
     tmpEuler.setFromQuaternion(ship.q, "YXZ");
     tmpEuler.y += Math.PI;
     ship.q.setFromEuler(tmpEuler);
+    hit();
     return;
   }
-  ship.pos.y = THREE.MathUtils.clamp(ship.pos.y, floor, roof);
+  tmpEuler.setFromQuaternion(ship.q, "YXZ");
+  const pitch = tmpEuler.x;
+  if (ship.pos.y < floor) {
+    ship.pos.y = floor;
+    setPitch(pitch > 0 ? -pitch : Math.max(pitch * 2, -BOUNCE_LIMIT));
+    scrape();
+  } else if (ship.pos.y > roof) {
+    ship.pos.y = roof;
+    setPitch(pitch < 0 ? -pitch : Math.min(pitch * 2, BOUNCE_LIMIT));
+    hit();
+  }
 }
 
 // Entry (6.3): within 1/16 tile of the mouth plane, inside 0.707 of the
@@ -1582,13 +2382,16 @@ function stepTunnel(now) {
     if (!cave) ship.pos.y = Math.max(ship.pos.y, groundAt(ship.pos.x, ship.pos.z) + CLEARANCE);
     return;
   }
-  containInTube(portal, ship.pos, now);
-  collideObstacle(portal, ship.pos, now);
+  // FUN_00038f90: any push by a wall or an obstacle scrapes (scrape.wav) and
+  // hurts, outside the grace.
+  const walled = containInTube(portal, ship.pos, now);
+  if (collideObstacle(portal, ship.pos, now) || walled) scrape();
   surface.visible = ship.pos.z > portal.length - TUBE_STUB;
 }
 
 // Where the ship is in surface coordinates, for the HUD and the draw window.
 function surfacePosition(out) {
+  if (cut) return out.copy(cut.pos);
   if (ship.space !== "tunnel") return out.copy(ship.pos);
   const portal = ship.portal;
   return out.copy(ship.pos).sub(portal.end).applyQuaternion(portal.exit.q).add(portal.exit.pos);
@@ -1597,9 +2400,44 @@ function surfacePosition(out) {
 // The camera sits exactly at the ship (3.4). Mirroring z flips the sign of
 // the yaw and pitch parts of the rotation.
 function syncCamera() {
-  camera.position.set(ship.pos.x, ship.pos.y, -ship.pos.z);
-  camera.quaternion.set(-ship.q.x, -ship.q.y, ship.q.z, ship.q.w);
+  gameView(camera, cut?.pos || ship.pos, viewQ());
   if (stars) stars.position.copy(camera.position);
+}
+
+function gameView(cam, pos, q) {
+  cam.position.set(pos.x, pos.y, -pos.z);
+  cam.quaternion.set(-q.x, -q.y, q.z, q.w);
+}
+
+// The eye's turn: the ship's, or the scripted camera's.
+function viewQ() {
+  return cut?.q || ship.q;
+}
+
+// FUN_00018a90: within 1/8 tile of the deck the game only clears the screen;
+// above it, it draws the deck from above under a flat ceiling (FUN_00018610).
+// The terrain (and the objects drawn with it) is only drawn while the camera
+// is below the deck, so the plateaus at height 255, which sit exactly at the
+// deck, can't be seen from above: the deck hides them. Above the deck the sky
+// plane writes depth, so only objects above it show (FUN_00018ce0).
+const SKY_BAND = 1 / 8;
+function updateSky() {
+  if (!skyMesh || !level || !flying || ship.space !== "surface") return;
+  const look = lookUniforms(level.look);
+  const above = surfaceCam.y - TOP;
+  const overDeck = above >= 0;
+  for (const mesh of terrainMeshes) mesh.visible = !overDeck;
+  skyMesh.visible = overDeck || above < -SKY_BAND;
+  skyMesh.material.depthWrite = overDeck;
+  skyMesh.material.colorWrite = above < -SKY_BAND || above > SKY_BAND;
+  scene.background.copy(above > SKY_BAND ? look.ceilingColor : look.fogColor);
+  const horizon = skyMesh.children[0];
+  horizon.visible = above > SKY_BAND;
+  if (horizon.visible) {
+    tmpEuler.setFromQuaternion(viewQ(), "YXZ");
+    horizon.position.set(surfaceCam.x, TOP, surfaceCam.z);
+    horizon.rotation.set(0, tmpEuler.y, 0);
+  }
 }
 
 const surfaceCam = new THREE.Vector3();
@@ -1638,7 +2476,9 @@ function stepCrowds(dt) {
 
 function syncCrowds() {
   const tile = shade.uCamTile.value;
-  const view = { flying, reach: shade.uWindow.value, camTile: [tile.x, tile.y] };
+  // Billboards face the camera, which is the ship (game pitch and yaw).
+  const { x: pitch, y: yaw } = tmpEuler.setFromQuaternion(viewQ(), "YXZ");
+  const view = { flying, reach: shade.uWindow.value, camTile: [tile.x, tile.y], facing: { pitch, yaw } };
   crowd?.sync(flying ? surfaceCam : null, view);
   if (ship.space === "tunnel") ship.portal.crowd.sync(null, view);
 }
@@ -1646,9 +2486,25 @@ function syncCrowds() {
 // ---------------------------------------------------------------- input
 
 window.addEventListener("keydown", (event) => {
+  if (menu?.active) {
+    if (event.key !== "F5" && event.key !== "F12") event.preventDefault();
+    if (!event.repeat || event.key.length === 1 || event.key.startsWith("Arrow")) menu.key(event);
+    return;
+  }
   const key = event.key.toLowerCase();
+  if (cut?.skip) {
+    if (key === "escape" || key === " " || key === "f1") {
+      event.preventDefault();
+      cut.skip();
+    }
+    return;
+  }
   keys.add(key);
-  if (key === "escape") stopFly();
+  if (key === "escape") {
+    if (gameMode && flying) askReturn();
+    else stopFly();
+    return;
+  }
   if (!flying) return;
   if (key.startsWith("arrow") || key === " ") event.preventDefault();
   if (key === "p" && !event.repeat) {
@@ -1656,11 +2512,27 @@ window.addEventListener("keydown", (event) => {
     setStatus(paused ? "paused · P to fly" : flightStatus());
   }
   if (key === "m" && !event.repeat) setStatus(toggleMusic() ? "music on" : "music off");
+  if (!event.repeat) pickWeapon(key);
+  stepMode(event.key);
 });
 window.addEventListener("keyup", (event) => keys.delete(event.key.toLowerCase()));
-window.addEventListener("blur", () => keys.clear());
+window.addEventListener("blur", () => {
+  keys.clear();
+  mouseFire = false;
+});
+// The first mouse button fires, once the view has the mouse.
+window.addEventListener("mousedown", (event) => {
+  if (event.button === 0 && flying && document.pointerLockElement === renderer.domElement) mouseFire = true;
+});
+window.addEventListener("mouseup", (event) => {
+  if (event.button === 0) mouseFire = false;
+});
+// Esc while the mouse is held is eaten by the browser to release it, so in
+// game mode losing the mouse in flight asks the same question.
 document.addEventListener("pointerlockchange", () => {
-  if (!document.pointerLockElement && flying) stopFly();
+  if (document.pointerLockElement || !flying) return;
+  if (!gameMode) stopFly();
+  else if (!menu?.active && !paused) askReturn();
 });
 // Mouse as a self-centering stick, FPS style: mouse up is nose up.
 window.addEventListener("mousemove", (event) => {
@@ -1674,7 +2546,8 @@ function flightStatus() {
   const burner = keys.has("shift");
   const tiles = (burner ? AFTERBURNER : ship.speed * GAME_SECOND).toFixed(2);
   const where = ship.space === "tunnel" ? "tunnel · " : ship.space === "cave" ? "cave · " : "";
-  return `${where}${tiles} tiles/s · arrows/mouse steer · Q/E roll · A/Z throttle · Shift burner · M music · P pause`;
+  if (ship.noticeTime > 0) return `${where}${ship.notice}`;
+  return `${where}${tiles} tiles/s · arrows/mouse steer · Q/E roll · A/Z throttle · Space/click fire · 1-7 weapon · +/- gun power · Shift burner · M music · P pause`;
 }
 
 // ---------------------------------------------------------------- HUD
@@ -1686,16 +2559,18 @@ function resetNav() {
   navCursor = found >= 0 ? found : (nav.length > 1 ? 1 : -1);
 }
 
+// The status bar shows the nav point's type, not its description (FUN_0002fcb0).
+const NAV_CODES = ["TGT", "TUN", "CHK", "DUN", "XIT", "BOS", "STR"];
 function navName(point) {
   if (!point) return "---";
-  if (point.type === 1 || point.type === 4) return "TUN";
-  if (point.type === 3) return "DUN";
-  return point.label || "TGT";
+  return NAV_CODES[point.type] ?? "TGT";
 }
 
 function updateHud() {
   const { x, z } = surfacePosition(surfaceCam);
-  const sect = `${Math.floor(wrapMap(x))},${Math.floor(wrapMap(z))}`;
+  // "%3d,%3d"; inside a tunnel the original prints "??,??".
+  const pad = (v) => String(Math.floor(wrapMap(v))).padStart(3);
+  const sect = ship.space === "tunnel" ? "??,??" : `${pad(x)},${pad(z)}`;
   const nav = level?.nav || [];
   let target = nav[navCursor];
   if (!target || ship.space === "tunnel") {
@@ -1704,7 +2579,12 @@ function updateHud() {
   }
   // One tile is 16 of the units the original distance counter shows.
   const dist = () => Math.hypot(wrapDelta(x, target.x), wrapDelta(z, target.z)) * 16;
-  if (dist() < 32 && navCursor + 1 < nav.length) target = nav[++navCursor];
+  if (dist() < 32 && navCursor + 1 < nav.length) {
+    target = nav[++navCursor];
+    // FUN_0003f230: reaching the boss point sounds warning.wav (channel 3) as
+    // "Mission Goal Ahead!" comes up.
+    if (target.type === 5) playSfx("warning.wav", 3, 0);
+  }
   paintHud(sect, String(Math.round(dist())), navName(target), target);
 }
 
@@ -1762,10 +2642,17 @@ const HUD_FONT = {
 
 function paintHud(sect, dist, nav, target) {
   hudCtx.clearRect(0, 0, 320, 64);
-  hudInk(sect, 40, 5);
-  hudInk(dist, 40, 17);
-  hudInk(nav, 40, 27);
-  if (paused) hudInk("PAUSE", 134, 5);
+  countHudTicks();
+  paintCrosshair();
+  // FUN_0002fc40: each value is centred in its slot (x, y, slot width).
+  hudSlot(sect, 41, 5, 51);
+  hudSlot(dist, 41, 16, 30);
+  hudSlot(nav, 41, 27, 23);
+  // The weapon and its ammo, "inf" when unlimited.
+  const ammo = ship.ammo[ship.weapon];
+  hudSlot(paused ? "PAUSE" : WEAPONS[ship.weapon].name, 137, 5, 32);
+  hudSlot(ammo === -1 || ammo === undefined ? "inf" : String(ammo), 115, 16, 32);
+  paintThrottle();
   if (!navtar) return;
   const size = 36;
   hudCtx.save();
@@ -1775,6 +2662,42 @@ function paintHud(sect, dist, nav, target) {
   hudCtx.drawImage(navtar, -size / 2, -size / 2, size, size);
   hudCtx.restore();
   paintRadar();
+}
+
+// FUN_0002fcb0: the throttle gauge, rows 12-14 from x 175. Its fill is
+// (throttle - 0x4000) / 0xc000, 73 px at full; the afterburner does not
+// show. The colour runs from palette 0x68 to 0x68 + 23 * fill (the top row
+// to 0x68 + 17.25 * fill).
+function paintThrottle() {
+  if (!radarInk) return;
+  const t = Math.round(ship.throttle * 0x10000);
+  const fill = Math.min(0xffff, Math.max(0, Math.trunc(((t - 0x4000) * 0x4000) / 0xc000) * 4));
+  const length = Math.floor((fill * 0x49) / 0x10000);
+  for (let row = 0; row < 3; row++) {
+    const end = row === 0 ? Math.floor((fill * 0x45) / 4) : fill * 0x17;
+    gaugeRow(175, 12 + row, length, 0x680000, 0x680000 + end);
+  }
+}
+
+// FUN_0002f870: one row of a gauge, palette index stepping from c0 to c1
+// (16.16) in pairs of pixels; the rounding alternates with the row parity,
+// which dithers the ramp.
+function gaugeRow(x, y, length, c0, c1) {
+  if (!length) return;
+  const step = Math.trunc((c1 - c0) / length);
+  const odd = y & 1;
+  for (let i = 0, c = c0; i < length; i += 2) {
+    const a = c;
+    const b = c + step;
+    c = b + step;
+    gaugePixel(x + i, y, (a + (odd ? 0 : 0x8000)) >> 16);
+    gaugePixel(x + i + 1, y, (b + (odd ? 0x8000 : 0)) >> 16);
+  }
+}
+
+function gaugePixel(x, y, index) {
+  hudCtx.fillStyle = `rgb(${radarInk[index * 3]},${radarInk[index * 3 + 1]},${radarInk[index * 3 + 2]})`;
+  hudCtx.fillRect(x, y, 1, 1);
 }
 
 // ---------------------------------------------------------------- radar
@@ -1789,7 +2712,8 @@ const RADAR_ORANGE = new Set([2, 4, 7, 8, 16, 0x26, 0x27]);
 const RADAR_HIDDEN = new Set([0x12, 0x21]);
 
 function paintRadar() {
-  if (!radarFace || !radarInk) return;
+  // The original draws no blips inside tunnels (DAT_00064d48 == 1).
+  if (!radarFace || !radarInk || ship.space === "tunnel") return;
   const room = ship.space === "tunnel" ? ship.portal?.crowd : crowd;
   tmpEuler.setFromQuaternion(ship.q, "YXZ");
   const sin = Math.sin(tmpEuler.y);
@@ -1811,14 +2735,50 @@ function paintRadar() {
     plot(a.pos, RADAR_ORANGE.has(a.def.logic) ? 0x94 : 0x3f);
   }
   // Power-ups pulse through palette 0x61-0x7e, one step per original frame.
-  const now = performance.now();
-  for (; radarClock + 50 <= now; radarClock += 50) {
+  for (let i = 0; i < hudTicks; i++) {
     radarPulse += radarPulseStep;
     if (radarPulse > 0x7f) [radarPulse, radarPulseStep] = [0x7e, -1];
     if (radarPulse < 0x60) [radarPulse, radarPulseStep] = [0x61, 1];
   }
+  for (const p of room?.pickups || []) {
+    if (!p.taken) plot(p.pos, radarPulse);
+  }
+}
+
+// Original frames (20 per second) since the last HUD paint, for the pulses.
+let hudTicks = 0;
+function countHudTicks() {
+  const now = performance.now();
   if (now - radarClock > 1000) radarClock = now;
-  if (ship.space !== "tunnel") for (const pos of radarPups) plot(pos, radarPulse);
+  hudTicks = 0;
+  for (; radarClock + 50 <= now; radarClock += 50) hudTicks += 1;
+}
+
+// The sight, as it shows in the game (taken from a screen grab). Its colour
+// walks palette 0x20-0x3f and back, one step per frame, like the mouse sight
+// FUN_0002ab80 draws.
+const SIGHT = [
+  "    ####    ",
+  "    ####    ",
+  "#### ## ####",
+  "############",
+  "#### ## ####",
+  "    ####    ",
+  "    ####    ",
+];
+function paintCrosshair() {
+  if (!radarInk) return;
+  for (let i = 0; i < hudTicks; i++) {
+    crosshairShade += crosshairStep;
+    if (crosshairShade > 0x3f) [crosshairShade, crosshairStep] = [0x3f, -1];
+    if (crosshairShade < 0x20) [crosshairShade, crosshairStep] = [0x20, 1];
+  }
+  const at = crosshairShade * 3;
+  crosshairCtx.clearRect(0, 0, 12, 7);
+  crosshairCtx.fillStyle = `rgb(${radarInk[at]},${radarInk[at + 1]},${radarInk[at + 2]})`;
+  SIGHT.forEach((row, y) => {
+    for (let x = 0; x < row.length; x++) if (row[x] === "#") crosshairCtx.fillRect(x, y, 1, 1);
+  });
 }
 
 // FUN_00029da0: a plus when the thing is above us, a dash when below,
@@ -1844,7 +2804,34 @@ function blip(x, y, below, color) {
   if (!below) ink(x, y + 2, 0);
 }
 
+function hudSlot(text, x, y, width) {
+  hudInk(text, x + Math.trunc((width - hudWidth(text)) / 2), y);
+}
+
+// FUN_00014a30: each glyph advances its width plus one.
+function hudWidth(text) {
+  let width = 0;
+  for (const ch of String(text)) {
+    const code = ch.charCodeAt(0);
+    if (hudGlyphs) width += code >= 32 && code < 128 ? hudGlyphs[code].glyphWidth + 1 : 0;
+    else width += 6;
+  }
+  return width;
+}
+
 function hudInk(text, x, y) {
+  if (hudGlyphs) {
+    let cursor = x;
+    for (const ch of String(text)) {
+      const code = ch.charCodeAt(0);
+      if (code < 32 || code >= 128) continue;
+      const glyph = hudGlyphs[code];
+      hudCtx.drawImage(glyph, cursor, y);
+      cursor += glyph.glyphWidth + 1;
+    }
+    return;
+  }
+  // Fallback when GAME.EXE was not given: a plain 5x7 font.
   let cursor = x;
   hudCtx.fillStyle = "#3cff45";
   for (const ch of String(text).toUpperCase()) {
@@ -1879,6 +2866,12 @@ function usable(candidate) {
 
 async function storePods(files) {
   const pods = [];
+  const exe = files.find((file) => /^game\.exe$/i.test(file.name));
+  if (exe) await saveFile(EXE_KEY, exe);
+  // The mission lists live loose in the game folder (src/menu.js).
+  for (const file of files) {
+    if (VOX_FILES.includes(file.name.toLowerCase())) await saveFile(file.name, file);
+  }
   for (const file of files) {
     if (!/\.pod$/i.test(file.name)) continue;
     const head = new Uint8Array(await file.slice(0, 84).arrayBuffer());
@@ -1901,6 +2894,10 @@ async function fetchPods(folder) {
     const response = await fetch(`${folder}${name}`);
     if (!response.ok) throw new Error(`${folder}${name} ${response.status}`);
     files.push(new File([await response.blob()], name));
+  }
+  for (const name of VOX_FILES) {
+    const response = await fetch(`${folder}${name.toUpperCase()}`).catch(() => null);
+    if (response?.ok) files.push(new File([await response.blob()], name));
   }
   return storePods(files);
 }
@@ -1934,6 +2931,42 @@ forgetBtn.addEventListener("click", async () => {
   location.reload();
 });
 
+// The status-bar font is only in GAME.EXE. It is optional at setup; with
+// ?pods=<folder>/ it is fetched from the same folder.
+async function loadHudFont(vga) {
+  let blob = await loadFile(EXE_KEY).catch(() => null);
+  if (!blob && params.get("pods")) {
+    const response = await fetch(`${params.get("pods")}GAME.EXE`).catch(() => null);
+    if (response?.ok) {
+      blob = await response.blob();
+      await saveFile(EXE_KEY, blob);
+    }
+  }
+  const font = blob ? readHudFont(new Uint8Array(await blob.arrayBuffer())) : null;
+  smallFont = font;
+  if (!font) return null;
+  const glyphs = [];
+  for (let code = 0; code < 128; code++) {
+    const width = font[code * 64];
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, width);
+    canvas.height = 8;
+    if (width) {
+      const ctx = canvas.getContext("2d");
+      const image = ctx.createImageData(width, 8);
+      for (let i = 0; i < width * 8; i++) {
+        const v = font[code * 64 + 1 + i];
+        if (!v) continue;
+        const index = 0x20 + v;
+        image.data.set([vga[index * 3], vga[index * 3 + 1], vga[index * 3 + 2], 255], i * 4);
+      }
+      ctx.putImageData(image, 0, 0);
+    }
+    glyphs.push(Object.assign(canvas, { glyphWidth: width }));
+  }
+  return glyphs;
+}
+
 // The status bar and nav marker, drawn from the game's own art (VGA palette).
 // The compass interior is palette 0; it gets an opaque dark face so the ship
 // icon sits on a solid dial. The marker's flat backing plate is transparent.
@@ -1941,6 +2974,7 @@ const NAVTAR_FIELD = new Set([0, 8, 9, 10, 12]);
 async function loadHud() {
   const vga = await readPalette(archive, "vga");
   radarInk = vga;
+  hudGlyphs = await loadHudFont(vga);
   const paint = (bytes, width, height, transparent) => {
     const canvas = document.createElement("canvas");
     canvas.width = width;
@@ -1976,8 +3010,6 @@ async function loadHud() {
     marker.ctx.putImageData(marker.image, 0, 0);
     navtar = marker.canvas;
   }
-  const scrape = objectUrl("sound/ground.wav", "audio/wav");
-  if (scrape) scrapeSound = new Audio(scrape);
 }
 
 // ---------------------------------------------------------------- main
@@ -2020,34 +3052,490 @@ async function loadSelection() {
   }
 }
 
+// The flash recolors the 3D view only; the HUD is drawn after it (FUN_0002cdd0).
+const flashBackground = new THREE.Color();
+const backgroundRgb = { r: 0, g: 0, b: 0 };
+function renderFrame() {
+  const flash = flying && ship.flash > 0 && level;
+  shade.uFlash.value = flash ? 1 : 0;
+  if (!flash) {
+    renderer.render(scene, camera);
+    return;
+  }
+  const look = ship.space === "tunnel" && ship.portal ? ship.portal.look : level.look;
+  const color = lookUniforms(look).flashColors[ship.flashColor];
+  shade.uFlashColor.value.copy(color);
+  const background = scene.background;
+  background.getRGB(backgroundRgb, THREE.SRGBColorSpace);
+  const len = Math.min(255, Math.floor(255 * Math.hypot(backgroundRgb.r, backgroundRgb.g, backgroundRgb.b)));
+  const tint = (c) => (Math.floor((Math.round(c * 255) * len) / 4096) * 8) / 255;
+  scene.background = flashBackground.setRGB(tint(color.x), tint(color.y), tint(color.z), THREE.SRGBColorSpace);
+  renderer.render(scene, camera);
+  scene.background = background;
+}
+
 let elapsed = 0;
 function frame() {
   const dt = Math.min(clock.getDelta(), 0.1);
+  if (menu?.active) {
+    menuFrame(dt);
+    requestAnimationFrame(frame);
+    return;
+  }
   if (flying) {
-    if (!paused) {
+    if (cut) stepCut(dt);
+    else if (!paused) {
       elapsed += dt;
+      stepTimers(dt);
       stepFlight(dt, elapsed);
+      stepContact(dt);
+      stepGuns(dt);
       stepCrowds(dt);
+      if (ship.space === "tunnel" && ship.portal) electricSound(ship.portal, elapsed - dt, elapsed);
       setStatus(flightStatus());
     }
     syncCamera();
-    updateHud();
+    if (!cut) updateHud();
   } else {
     controls.update();
   }
+  // [I] Pausing cuts the burner loop too; the original's pause is not traced.
+  if (!flying || paused || cut) cutBurnerSound();
+  if (!(flying && paused)) updateAnimations(dt);
   updateSpinners(elapsed);
   if (ship.space === "tunnel" && ship.portal) updateObstacles(ship.portal, elapsed);
   updateWindow();
+  updateSky();
   syncCrowds();
   world.updateMatrixWorld(true);
   shade.uGameFrame.value.copy(surface.matrixWorld).invert();
-  renderer.render(scene, camera);
+  renderFrame();
   requestAnimationFrame(frame);
+}
+
+// ---------------------------------------------------------------- game mode
+
+// The front end owns the screen: the flight is frozen underneath. The Esc
+// question is drawn over the frozen view; every other screen is opaque,
+// with 3D showing through the window of the name, briefing and report
+// screens.
+function menuFrame(dt) {
+  cutBurnerSound();
+  menu.tick(dt);
+  if (!menu.active) return;
+  if (menu.inked) {
+    renderFrame();
+    return;
+  }
+  renderer.setClearColor(0x000000, 1);
+  renderer.setScissorTest(false);
+  renderer.clear();
+  const view = win.view;
+  if (!win.rect || !view) return;
+  if (view.kind === "report") renderReport(dt, view);
+  else renderWindowModel(dt, view);
+}
+
+// The front end's 3D window, (0x50,0x16)-(0xef,99). FUN_00014910 projects
+// a window with half its height rounded down to even, less one (37), and
+// 4/3 of that across; the zoom (0x64cd0) divides depth, so 0x8000 shows
+// things twice as big.
+function windowProjection(cam, rect, zoom) {
+  const half = ((rect.h / 2) & ~1) - 1;
+  cam.fov = THREE.MathUtils.radToDeg(2 * Math.atan((rect.h / 2 / half) * zoom));
+  cam.aspect = (rect.w / rect.h) * 0.75;
+  cam.updateProjectionMatrix();
+}
+
+function renderInWindow(sceneToDraw, cam, rect) {
+  const sx = FRAME_W / 320;
+  const sy = FRAME_H / 200;
+  renderer.setViewport(rect.x * sx, (200 - rect.y - rect.h) * sy, rect.w * sx, rect.h * sy);
+  renderer.setScissor(rect.x * sx, (200 - rect.y - rect.h) * sy, rect.w * sx, rect.h * sy);
+  renderer.setScissorTest(true);
+  renderer.render(sceneToDraw, cam);
+  renderer.setScissorTest(false);
+  renderer.setViewport(0, 0, FRAME_W, FRAME_H);
+}
+
+// A model in the window, over the star field (FUN_00018420).
+//   ship (FUN_0004b5e0): ship.bin at the origin, pitched 0x1000, turning
+//     1/8 of a circle per game second; the eye 1.5 radii back, zoom 0x8000.
+//   brief (FUN_0004aef0): the briefing model at rest, textured with the
+//     file's second name; the eye one radius out, circling it 1/16 turn per
+//     game second and looking in; light (0, -0xb4fd, 0xb4fd); zoom 1.
+// The radius is the model's corner radius from its origin (FUN_000405b0).
+const win = { rect: null, view: null, scene: new THREE.Scene(), camera: new THREE.PerspectiveCamera(), models: new Map(), shipYaw: 0, stars: null, starPalette: null };
+win.scene.add(new THREE.Group());
+win.scene.children[0].scale.z = -1;
+
+function windowView(rect, view) {
+  win.rect = rect;
+  win.view = view;
+  if (!view) return;
+  if (view.kind === "ship") win.shipYaw = 0;
+  if (view.kind !== "report") windowModel(view);
+}
+
+function windowModel(view) {
+  let model = view.kind === "ship" ? "ship" : view.model.replace(/\.bin$/, "");
+  if (model === "aliensh") model = "aliensh1"; // swapped by FUN_0004aef0
+  const texture = view.kind === "brief" && view.texture !== "null.raw" ? `art/${view.texture}` : null;
+  const key = `${view.kind}|${model}|${texture}|${view.kind === "brief" ? level?.name : ""}`;
+  if (!win.models.has(key)) {
+    win.models.set(key, (async () => {
+      let look = level?.look;
+      if (view.kind === "ship") {
+        if (!modelLook) modelLook = { palette: null, fog: null, light: null, fogIndex: 0 };
+        if (!modelLook.palette) modelLook.palette = await readPalette(archive, "vga");
+        look = modelLook;
+      }
+      const template = await loadModel(model, look, texture);
+      if (!template) return null;
+      const object = template.object.clone(true);
+      return { object, radius: cornerRadius(object), palette: look.palette };
+    })().catch((err) => {
+      console.warn("window model:", err);
+      return null;
+    }));
+  }
+  win.models.get(key).then((built) => {
+    if (win.view !== view || !built) return;
+    const group = win.scene.children[0];
+    for (const child of [...group.children]) if (child !== win.stars) group.remove(child);
+    group.add(built.object);
+    view.built = built;
+  });
+}
+
+function cornerRadius(object) {
+  const box = new THREE.Box3().setFromObject(object);
+  return Math.hypot(...["x", "y", "z"].map((k) => Math.max(Math.abs(box.min[k]), Math.abs(box.max[k]))));
+}
+
+// FUN_00017b40: 2000 stars, x and z within ±64 units, y 0..128 for the
+// first 1001 and below for the rest, each palette 0..31 (rand() >> 10).
+function windowStars(palette) {
+  if (!win.stars) {
+    let seed = 1;
+    const rand = () => ((seed = (seed * 1103515245 + 12345) >>> 0) >>> 16) & 0x7fff;
+    const pos = [];
+    win.starIndex = [];
+    for (let i = 0; i < 2000; i++) {
+      const x = rand() * 256 - 0x400000;
+      const y = (rand() << 8) * (i > 1000 ? -1 : 1);
+      const z = rand() * 256 - 0x400000;
+      pos.push(x / 0x400000, y / 0x400000, z / 0x400000);
+      win.starIndex.push(rand() >> 10);
+    }
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+    geometry.setAttribute("color", new THREE.Float32BufferAttribute(new Float32Array(pos.length), 3));
+    win.stars = new THREE.Points(geometry, new THREE.PointsMaterial({
+      size: FRAME_H / 200, sizeAttenuation: false, vertexColors: true, depthTest: false, depthWrite: false, fog: false,
+    }));
+    win.stars.renderOrder = -1;
+    win.stars.frustumCulled = false;
+  }
+  if (win.starPalette !== palette) {
+    win.starPalette = palette;
+    const colors = win.stars.geometry.getAttribute("color");
+    win.starIndex.forEach((index, i) => {
+      colors.setXYZ(i, palette[index * 3] / 255, palette[index * 3 + 1] / 255, palette[index * 3 + 2] / 255);
+    });
+    colors.needsUpdate = true;
+    win.stars.material.color.set(0xffffff);
+  }
+  return win.stars;
+}
+
+const winEye = new THREE.Vector3();
+const winQ = new THREE.Quaternion();
+const winEuler = new THREE.Euler(0, 0, 0, "YXZ");
+function renderWindowModel(dt, view) {
+  const built = view.built;
+  if (!built) return;
+  const { object, radius } = built;
+  const group = win.scene.children[0];
+  const stars = windowStars(built.palette);
+  if (stars.parent !== group) group.add(stars);
+  let sun;
+  let ambient;
+  if (view.kind === "ship") {
+    win.shipYaw += (dt / GAME_SECOND) * (TAU / 8);
+    object.position.set(0, 0, 0);
+    object.rotation.set(TAU / 16, win.shipYaw, 0, "YXZ");
+    winEye.set(0, 0, -1.5 * radius);
+    winQ.identity();
+    windowProjection(win.camera, win.rect, 0.5);
+    // [I] The light is the one GAME.EXE last set; before any level it is
+    // not traced, so the model viewer's is used.
+    sun = [-30000, -46333, 30000];
+    ambient = 26000;
+  } else {
+    const a = view.angle * TAU;
+    object.position.set(0, 0, 0);
+    object.rotation.set(0, 0, 0);
+    winEye.set(Math.cos(a) * radius, 0, Math.sin(a) * radius);
+    winQ.setFromEuler(winEuler.set(0, TAU * 0.75 - a, 0));
+    windowProjection(win.camera, win.rect, 1);
+    sun = BRIEF_SUN;
+    ambient = level?.ambient;
+  }
+  // The stars turn with the eye but never come nearer (no translation).
+  stars.position.copy(winEye);
+  stars.scale.setScalar(radius * 8);
+  win.camera.near = radius / 50;
+  win.camera.far = radius * 40;
+  win.camera.updateProjectionMatrix();
+  gameView(win.camera, winEye, winQ);
+  const fly = shade.uFly.value;
+  const oldSun = shade.uSun.value.clone();
+  const oldAmbient = shade.uAmbient.value;
+  shade.uFly.value = 0;
+  setLighting(sun, ambient);
+  renderInWindow(win.scene, win.camera, win.rect);
+  shade.uFly.value = fly;
+  shade.uSun.value.copy(oldSun);
+  shade.uAmbient.value = oldAmbient;
+}
+
+const BRIEF_SUN = [0, -0xb4fd, 0xb4fd];
+
+// FUN_00049cb0: the level in the window, the eye circling the target at
+// twice its def radius (+0x98), a quarter turn per game second, one radius
+// above the ground or the target, whichever is higher, looking down at it;
+// zoom 0x8000. The level runs meanwhile (DAT_00064d40 set).
+function renderReport(dt, view) {
+  const target = view.target;
+  if (target.radius === undefined) {
+    target.radius = null;
+    loadModel(target.model, level.look).then((t) => {
+      target.radius = t ? cornerRadius(t.object) : 0.5;
+    });
+  }
+  if (!target.radius) return;
+  const r = target.radius;
+  const a = view.angle * TAU;
+  const floor = groundAt(target.x, target.z);
+  if (!cut) cut = { pos: new THREE.Vector3(), q: new THREE.Quaternion() };
+  const x = target.x + Math.cos(a) * 2 * r;
+  const z = target.z + Math.sin(a) * 2 * r;
+  const y = Math.max(groundAt(x, z), floor) + r;
+  cut.pos.set(x, y, z);
+  cut.q.setFromEuler(winEuler.set(Math.atan2(y - floor, 2 * r), TAU * 0.75 - a, 0));
+  elapsed += dt;
+  stepCrowds(dt);
+  updateAnimations(dt);
+  updateSpinners(elapsed);
+  updateWindow();
+  updateSky();
+  syncCamera();
+  syncCrowds();
+  world.updateMatrixWorld(true);
+  shade.uGameFrame.value.copy(surface.matrixWorld).invert();
+  const { fov, aspect } = camera;
+  windowProjection(camera, win.rect, 0.5);
+  renderInWindow(scene, camera, win.rect);
+  camera.fov = fov;
+  camera.aspect = aspect;
+  camera.updateProjectionMatrix();
+}
+
+// FUN_0004a690: before the flight, the eye starts straight above the
+// spawn, half the deck height over the ground, looking straight down
+// (pitch 0x3fff), and turns a quarter circle per game second while it
+// sinks a tile per game second, until it is within 1/16 tile of the ship.
+// The level runs meanwhile. Esc, Space or F1 cut it short.
+function flyIn() {
+  return new Promise((resolve) => {
+    const pos = new THREE.Vector3(ship.pos.x, groundAt(ship.pos.x, ship.pos.z) + TOP / 2, ship.pos.z);
+    let yaw = 0;
+    cut = {
+      pos, q: new THREE.Quaternion(),
+      step(g) {
+        yaw += g / 4;
+        pos.y -= g;
+        if (pos.y < ship.pos.y + 1 / 16) return this.skip();
+        this.q.setFromEuler(winEuler.set((0x3fff / 0x10000) * TAU, yaw * TAU, 0));
+      },
+      skip() {
+        cut = null;
+        resolve();
+      },
+    };
+    cut.step(0);
+  });
+}
+
+function stepCut(dt) {
+  elapsed += dt;
+  cut.step?.(dt / GAME_SECOND);
+  if (cut) stepCrowds(dt);
+}
+
+function askReturn() {
+  keys.clear();
+  mouseFire = false;
+  cutBurnerSound();
+  menu.askReturn((yes) => {
+    if (!yes) {
+      lockPointer();
+      return;
+    }
+    hudEl.hidden = true;
+    crosshairEl.hidden = true;
+    setStatus("");
+  });
+  if (document.pointerLockElement) document.exitPointerLock();
+}
+
+// Play Game → New Game: load the mission's first level, run its start
+// (FUN_0002cdd0) and fly it.
+async function startGame({ level: name, difficulty: chosen, callsign = "Ice Man", intro = true }) {
+  difficulty = chosen;
+  gameStarted = false;
+  stopMusic();
+  menu.loading();
+  const gen = ++loadGen;
+  stopFly();
+  cut = null;
+  briefSun = null;
+  try {
+    await showMap(name, gen);
+  } catch (err) {
+    if (gen !== loadGen || err instanceof Cancelled) return;
+    console.error(err);
+    setError(String(err.message || err));
+    menu.backToLoop(1, 0);
+    return;
+  }
+  if (gen !== loadGen) return;
+  gameStarted = true;
+  // The level's music starts with the level (FUN_00033070).
+  startFly({ intro });
+  if (intro) {
+    await levelIntro(callsign);
+    if (gen !== loadGen) return;
+  }
+  menu.hide();
+  beginFlight();
+}
+
+// FUN_0002cdd0, when the level's briefing file differs from the last
+// level's: the story .mic (Cinemas), the briefing and tactical report
+// (Level Briefings), the .tvi cinemas; then, every time, the fly-in
+// (Cinemas, surface levels).
+// [I] The .tvi videos are not played: they are not in the PODs.
+let lastBriefing = null;
+async function levelIntro(callsign) {
+  const fresh = level.briefing !== lastBriefing;
+  lastBriefing = level.briefing;
+  menu.useLevelPalette(level.look.palette);
+  const text = async (name) => (name && name !== "null" && archive.has(`data/${name}`) ? archive.text(`data/${name}`) : null);
+  if (fresh && settings.cinemas) {
+    const story = await text(level.stories?.[3]);
+    if (story) await new Promise((done) => menu.story(story, done));
+  }
+  if (fresh && settings.briefings && level.briefing !== "null.txt") {
+    const brief = await text(level.briefing);
+    if (brief) {
+      const key = await new Promise((done) => menu.briefing({ text: brief, callsign }, done));
+      briefSun = BRIEF_SUN;
+      setLighting(briefSun, level.ambient);
+      // [I] The original polls held keys, so Esc held from the briefing
+      // also ends the report; here Esc there skips it outright.
+      if (key !== "Escape") {
+        for (const target of level.briefTargets || []) {
+          const how = await new Promise((done) => menu.report(target, done));
+          if (how === "abort") break;
+        }
+      }
+      cut = null;
+    }
+  }
+  menu.hide();
+  if (settings.cinemas && !level.isTunnel) {
+    hudEl.hidden = true;
+    crosshairEl.hidden = true;
+    await flyIn();
+  }
+}
+
+// Play Game → Resume Game: back into the flight left with Esc (0x2ed30).
+function resumeGame() {
+  hudEl.hidden = false;
+  crosshairEl.hidden = false;
+  paused = false;
+  clock.getDelta();
+  wakeMusic();
+  wakeSfx();
+  playMusic(levelMusic());
+  setStatus(flightStatus());
+  lockPointer();
+}
+
+async function loadVox() {
+  const vox = {};
+  for (const name of VOX_FILES) {
+    let blob = await loadFile(name).catch(() => null);
+    if (!blob && params.get("pods")) {
+      const response = await fetch(`${params.get("pods")}${name.toUpperCase()}`).catch(() => null);
+      if (response?.ok) {
+        blob = await response.blob();
+        await saveFile(name, blob);
+      }
+    }
+    if (blob) vox[name] = await blob.text();
+  }
+  return vox;
+}
+
+async function startMenu() {
+  document.body.classList.add("game");
+  const vga = await readPalette(archive, "vga");
+  const mix = archive.has("fog/vga.mix") ? await archive.bytes("fog/vga.mix") : null;
+  menu = new Menu({
+    archive, canvas: menuEl, palette: vga, mix, smallFont, vox: await loadVox(), settings,
+    hooks: {
+      musicUrl: (path) => objectUrl(path, "audio/x-mod"),
+      playMusic: (url) => playMusic(url),
+      stopMusic,
+      sound: (name) => playSfx(name, 3, 0),
+      wake: () => {
+        wakeMusic();
+        wakeSfx();
+      },
+      startGame,
+      resumeGame,
+      canResume: () => gameStarted && flying,
+      windowView,
+      settingsChanged: (next) => {
+        Object.assign(settings, next);
+        try {
+          localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+        } catch {}
+        applySettings();
+      },
+      quit: () => {
+        stopFly();
+        gameStarted = false;
+        setStatus("");
+      },
+    },
+  });
+  await menu.load();
+  setStatus("");
+  // ?play=<level>: straight into the flight, menus skipped (debugging).
+  const play = params.get("play");
+  // &intro=1 runs the level's start (story, briefing, fly-in) as New Game does.
+  if (play) return startGame({ level: play, difficulty, intro: params.has("intro") });
+  menu.start(params.get("menu") || "title");
 }
 
 // ?debug exposes the flight state for poking at from the console.
 if (params.has("debug")) {
-  window.tv = { ship, keys, portals: () => portals, setSpace, startFly, groundAt, THREE, archive: () => archive, crowd: () => crowd };
+  window.tv = { ship, keys, portals: () => portals, setSpace, startFly, groundAt, THREE, archive: () => archive, crowd: () => crowd, menu: () => menu };
 }
 
 modeEl.addEventListener("change", () => {
@@ -2066,9 +3554,15 @@ try {
   forgetBtn.hidden = false;
   levelList = await readLevels(archive);
   await loadHud();
-  if (params.get("mode") === "model") modeEl.value = "model";
-  fillPicker();
-  await loadSelection();
+  applySettings();
+  if (gameMode) {
+    fillPicker();
+    await startMenu();
+  } else {
+    if (params.get("mode") === "model") modeEl.value = "model";
+    fillPicker();
+    await loadSelection();
+  }
 } catch (err) {
   console.error(err);
   setError(`${err.message || err}. Serve the repo root over http (python3 -m http.server) and open index.html.`);

@@ -56,6 +56,7 @@ export function parseBin(data, name = "") {
 
   let off = 20 + count * 12;
   let texture = null;
+  let animation = null;
   let spriteUVs = null;
   let ramp = null;
   let vertexColors = null;
@@ -74,22 +75,26 @@ export function parseBin(data, name = "") {
     }
     if (block === 0x0d) {
       texture = cstr(data.subarray(off + 4, off + 20)).toLowerCase() || null;
+      animation = null;
       off += 20;
       if (texture) textures.add(texture);
       continue;
     }
     if (block === 0x1d) {
-      // Animated texture: count frames of (texture, sound). The first frame is used.
-      const frames = u32(off + 4);
+      // Animated texture: count frames of (texture, sound), each shown for
+      // `delay` game seconds (16.16), cycling (FUN_00016d50).
+      const count = u32(off + 4);
+      const delay = u32(off + 12) || 0x10000;
       off += 24;
-      let first = null;
-      for (let i = 0; i < frames; i++, off += 32) {
+      const frames = [];
+      for (let i = 0; i < count; i++, off += 32) {
         const frame = cstr(data.subarray(off, off + 16)).toLowerCase();
-        if (frame && !first) first = frame;
+        if (frame) frames.push(frame);
       }
-      if (first) {
-        texture = first;
-        textures.add(first);
+      if (frames.length) {
+        texture = frames[0];
+        for (const frame of frames) textures.add(frame);
+        animation = frames.length > 1 ? { frames, delay } : null;
       }
       continue;
     }
@@ -130,6 +135,7 @@ export function parseBin(data, name = "") {
         corners,
         flat,
         texture: flat ? null : texture,
+        animation: flat ? null : animation,
         alpha: ALPHA_FACES.has(block),
         lit: !UNLIT_FACES.has(block),
         color: color || [0, 0],
@@ -189,7 +195,9 @@ export function parseBin(data, name = "") {
 // "flat", or "inherit" (a textured face with no texture block before it: the
 // game draws it with whatever texture the caller set, as the tunnel obstacle
 // models do). Positions are file units / scale; the caller applies 1/16.
-// Per vertex: position, uv, normal (the stored face plane), ramp (lo, hi), lit.
+// Per vertex: position, uv, normal (the stored face plane), ramp (lo, hi), lit,
+// and source (the model vertex index, for morphing between keyframes).
+// Animated-texture groups carry { frames, delay }.
 export function binGroups(model) {
   const groups = new Map();
   const verts = model.vertices.map(([x, y, z]) => [x / model.scale, y / model.scale, z / model.scale]);
@@ -200,10 +208,14 @@ export function binGroups(model) {
       continue;
     }
     const inherit = !face.texture && !face.flat;
-    const key = face.texture ? `${face.texture}|${face.alpha ? 1 : 0}` : inherit ? "inherit" : "flat";
+    const texture = face.animation ? face.animation.frames.join(",") : face.texture;
+    const key = texture ? `${texture}|${face.alpha ? 1 : 0}` : inherit ? "inherit" : "flat";
     let g = groups.get(key);
     if (!g) {
-      g = { texture: face.texture, alpha: face.alpha, inherit, position: [], uv: [], normal: [], ramp: [], lit: [] };
+      g = {
+        texture: face.texture, animation: face.animation, alpha: face.alpha, inherit,
+        position: [], uv: [], normal: [], ramp: [], lit: [], source: [],
+      };
       groups.set(key, g);
     }
     const c = face.corners;
@@ -216,6 +228,7 @@ export function binGroups(model) {
         const ramp = inherit ? COLOR_RAMPS[0] : face.color;
         g.ramp.push(ramp[0], ramp[1]);
         g.lit.push(face.lit ? 1 : 0);
+        g.source.push(corner.vi);
       }
     }
   }

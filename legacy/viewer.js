@@ -14,7 +14,6 @@ const pickEl = document.getElementById("pick");
 const reliefEl = document.getElementById("relief");
 const heightLabel = document.getElementById("heightLabel");
 const flyBtn = document.getElementById("fly");
-const statusEl = document.getElementById("status");
 const errorEl = document.getElementById("error");
 const hudEl = document.getElementById("hud");
 const hudText = document.getElementById("hudText");
@@ -110,7 +109,7 @@ window.addEventListener("resize", resize);
 resize();
 
 function setStatus(text) {
-  statusEl.textContent = text;
+  console.log(text);
 }
 function setError(text) {
   errorEl.textContent = text || "";
@@ -1346,8 +1345,6 @@ function fly(dt) {
       const ground = sampleHeight(camera.position.x, camera.position.z) + FLY_CLEARANCE;
       if (camera.position.y < ground) camera.position.y = ground;
     }
-    const label = tunnelFlight ? "tunnel · fly the shaft · the other mouth lets you out" : flightStatus();
-    if (statusEl.textContent !== label) setStatus(label);
   }
   updateHud();
 }

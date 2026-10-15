@@ -206,7 +206,6 @@
                 const arrayBuffer = e.target.result;
                 const heightData = new Uint8Array(arrayBuffer);
                 createTerrain(heightData);
-                document.getElementById('status').textContent = 'Terrain loaded!';
             };
             reader.readAsArrayBuffer(file);
         }
