@@ -1,22 +1,35 @@
 #!/usr/bin/env python3
 """Translate unpacked Terminal Velocity assets into PNGs, OBJs, and audio.
 
-The POD archives are unpacked first (see extract.js) into a tree like _orig/.
-This tool reads those files and writes a browsable extracted/ folder.
+The POD archives are unpacked into a tree like _orig/, either by this tool
+(--game points at the install folder) or by legacy/extract.js. This tool reads that
+tree and writes extracted/: the data the game page (index.html at the repo
+root) loads, plus an asset gallery at extracted/index.html.
 
-    python3 tools/tvextract.py
+    python3 tools/tvextract.py --game _oracle
     python3 tools/tvextract.py --root _orig --out extracted
 
 Formats handled
+  *.pod               archive: count, 80-byte label, 40-byte entries (name, size, offset)
   art/*.raw + *.act   8-bit images and 24-bit RGB palettes
   art UI screens      320x200, 256x108, 320x64, 320x25
   models/*.bin        Terminal Reality BIN models (and morph-animation lists)
   data/*.raw + *.clr  256x256 heightmap and texture-index map
   data/*.tex          texture list, index order matches the color map
+  data/*.pup          power-up placements: count, then x,y,z,type
   fog/*.fog *.lte     16-step palette remaps (distance fog and lighting)
+  fog/*.map           RGB555 to palette index lookup (inverse color map)
+  fog/*.mix           256x256 50% blend table for translucent model faces; copied raw
   sound/*.wav         already PCM WAV (11 kHz, 8-bit, mono)
   music/*.mod         6-channel ProTracker modules (signature 6CHN)
   startup/font.*      proportional 23px font
+  startup/tv*.bin     80x25 text-mode exit screens (char, attribute)
+  demo/*.dmo          recorded flights: poses and key presses
+  *.vox (install)     episode and mission order
+
+Palettes: the planet .act files fill 0-239. Index 240-255 is the sky band;
+the engine fills it from the sky palette's 192-207 (sky pixel i uses sky
+color i - 48). Fog fades toward index 255, the horizon color.
 """
 
 from __future__ import annotations
@@ -45,10 +58,29 @@ RAW_SIZES = {
     **UI_SIZES,
 }
 
-FACE_UV = {0x0E, 0x11, 0x18, 0x29, 0x33, 0x34, 0x22}
-FACE_PLAIN = {0x19, 0x05, 0x0F, 0x06}
-# Color 0 is the engine's transparent index on sprites and masked faces.
-ALPHA_FACES = {0x11, 0x0F, 0x33}
+# Face blocks, from the drawer table at 0x67774 in GAME.EXE (docs/original-engine.md 7.4).
+# FACE_UV corners carry their own u,v; FACE_PLAIN corners are bare vertex indices
+# (0x0F takes its UVs from the preceding 0x04 slot list).
+FACE_UV = {0x0E, 0x11, 0x15, 0x18, 0x1E, 0x22}
+FACE_PLAIN = {0x05, 0x06, 0x0F, 0x19}
+# Color 0 is the engine's transparent index on these alpha-tested faces.
+ALPHA_FACES = {0x0F, 0x11}
+# Untextured faces (0x05, 0x19) pick a shade from a color ramp set by block 0x0A:
+# index = lo + light * (hi - lo). A negative 0x0A value is a literal palette index.
+COLOR_RAMPS = (
+    (0, 31), (0, 15), (32, 63), (64, 95), (144, 151), (152, 159), (160, 167), (168, 175),
+    (176, 183), (184, 191), (0, 7), (0, 24), (240, 240), (255, 255), (0, 0), (216, 216),
+)
+# Light level used to bake a ramp into one OBJ color.
+RAMP_LIGHT = 0.7
+
+
+def ramp_color(value: int) -> int:
+    if value < 0:
+        return (-value) & 255
+    lo, hi = COLOR_RAMPS[value % len(COLOR_RAMPS)]
+    return round(lo + RAMP_LIGHT * (hi - lo))
+
 
 LEVEL_FIELDS = (
     "kind",
@@ -89,22 +121,32 @@ def write_png(path: Path, width: int, height: int, rgba: bytes) -> None:
     path.write_bytes(png)
 
 
-def align_sparse_palette(indices: bytes, palette: list[tuple[int, int, int]]) -> bytes:
-    """Sky palettes store their ramp up high (index 192+) while the RAW
-    indexes an even higher band (around 240). Slide the pixels down so the
-    darkest pixel lands on the first real color."""
-    first = next((i for i, (r, g, b) in enumerate(palette) if r or g or b), 0)
-    if first < 128 or not indices:
-        return indices
-    lowest = min(indices)
-    if lowest <= first:
-        return indices
-    shift = lowest - first
-    return bytes(max(0, value - shift) for value in indices)
+SKY_BAND = 240
+SKY_SOURCE = 192
+
+# GAME.EXE keeps the power-up models in a 16-byte-slot table; the .pup type is the slot.
+POWERUP_MODELS = (
+    "powerlas", "powerpla", "powerant", "powermis", "powergmi", "powersup",
+    "powershe", "powervis", "powerinv", "powerfir", "powerzap", "powercan",
+)
+
+# Text-mode attribute colors (CGA/EGA order).
+TEXT_COLORS = (
+    "#000000", "#0000aa", "#00aa00", "#00aaaa", "#aa0000", "#aa00aa", "#aa5500", "#aaaaaa",
+    "#555555", "#5555ff", "#55ff55", "#55ffff", "#ff5555", "#ff55ff", "#ffff55", "#ffffff",
+)
+
+Palette = list[tuple[int, int, int]]
+
+
+def compose_palette(main: Palette, sky: Palette | None) -> Palette:
+    """Planet colors below the sky band, the sky ramp in it."""
+    if not sky or not any(any(c) for c in sky[SKY_SOURCE : SKY_SOURCE + 256 - SKY_BAND]):
+        return list(main)
+    return list(main[:SKY_BAND]) + [sky[i - SKY_BAND + SKY_SOURCE] for i in range(SKY_BAND, 256)]
 
 
 def index_image(indices: bytes, palette: list[tuple[int, int, int]], alpha0: bool) -> bytes:
-    indices = align_sparse_palette(indices, palette)
     out = bytearray(len(indices) * 4)
     for i, idx in enumerate(indices):
         r, g, b = palette[idx]
@@ -183,6 +225,23 @@ def sanitize(name: str) -> str:
     return stem or "unnamed"
 
 
+TILE = 1048576.0
+TURN = math.tau / 65536.0
+
+
+def wrap_tile(value: float) -> float:
+    """World units to tiles, wrapped onto the 256-tile map."""
+    return round((value / TILE) % 256.0, 4)
+
+
+def game_angles(pitch: int, roll: int, yaw: int) -> dict:
+    """Angles in radians, in the game's own left-handed convention:
+    yaw 0 faces +Z and positive yaw turns toward +X (clockwise from above),
+    positive pitch is nose down, positive roll lifts the right wing.
+    The viewer converts to three.js in one place; nothing is negated here."""
+    return {"pitch": round(pitch * TURN, 5), "roll": round(roll * TURN, 5), "yaw": round(yaw * TURN, 5)}
+
+
 def parse_levels(root: Path) -> list[dict]:
     levels = []
     for path in sorted((root / "levels").glob("*.lvl")):
@@ -194,24 +253,31 @@ def parse_levels(root: Path) -> list[dict]:
             info[key] = value
         info["kind"] = lines[0]
         info["is_tunnel"] = lines[0] == "1" or lines[2].lower().endswith(".tnl")
-        # After the light table: sun vector, sun scalar, sky-drift vector, drift scalar.
-        # Components are 16.16 fixed point (65536 = 1). The third component is vertical.
-        if len(lines) > 20 and lines[20].lstrip("-").isdigit():
-            info["sky_scroll"] = lines[19]
-            info["sky_speed"] = lines[20]
+        # After the 17 file names (FUN_00032d20 in GAME.EXE): sun vector and ambient
+        # (models and tunnel mouths), cave-mode light vector and ambient, then the
+        # fog color's palette index. Vectors are 16.16. There is no sky drift.
+        def ints(text: str) -> list[int] | None:
+            try:
+                return [int(part) for part in text.split(",")]
+            except ValueError:
+                return None
+        extra = [ints(line) for line in lines[17:22]]
+        if len(extra) == 5 and all(extra):
+            info["sun"] = extra[0][:3]
+            info["ambient"] = extra[1][0]
+            info["cave_light"] = extra[2][:3]
+            info["cave_ambient"] = extra[3][0]
+            info["fog_index"] = extra[4][0] & 255
         levels.append(info)
     return levels
 
 
 def parse_nav_start(path: Path) -> dict | None:
-    """First waypoint of a .nav is the player spawn.
+    """Player spawn (FUN_0003eac0): the first .nav record when it is type 6.
 
-    After the point count: type, x,y,z, description, pitch,roll,yaw.
-    One tile is 2^20. x and z wrap onto the 256 map. y is stored in the
-    same pre-relief units as object altitudes (game Y / (tile/2)).
-    Angles are 2^16 per turn, clockwise. File yaw 0 faces increasing Z.
-    The camera is stored a half-turn on from that, because rotation 0
-    looks down decreasing Z.
+    x and z come from the file. The file y is ignored: the game spawns half a
+    tile above the ground at (x, z), so the viewer computes y. Angles are used
+    as stored. Without a type-6 record the game spawns at (0, 0) facing yaw 0.
     """
     if not path.exists() or path.suffix.lower() != ".nav":
         return None
@@ -220,35 +286,25 @@ def parse_nav_start(path: Path) -> dict | None:
     if len(lines) < 5:
         return None
     try:
+        kind = int(lines[1])
         pos = [int(part) for part in lines[2].split(",")[:3]]
         ori = [int(part) for part in lines[4].split(",")[:3]]
     except ValueError:
         return None
-    if len(pos) < 3 or len(ori) < 3:
-        return None
-    tile = 1048576.0
-    turn = math.tau / 65536.0
-
-    def wrap(value: float) -> float:
-        wrapped = (value / tile) % 256.0
-        return wrapped + 256.0 if wrapped < 0 else wrapped
-
-    return {
-        "x": round(wrap(pos[0]), 4),
-        "y": round(pos[1] / (tile / 2.0), 4),
-        "z": round(wrap(pos[2]), 4),
-        "pitch": round(ori[0] * turn, 5),
-        "roll": round(ori[1] * turn, 5),
-        "yaw": round((ori[2] * turn + math.pi + math.pi) % math.tau - math.pi, 5),
-    }
+    if kind != 6 or len(pos) < 3 or len(ori) < 3:
+        return {"x": 0.0, "z": 0.0, "pitch": 0.0, "roll": 0.0, "yaw": 0.0}
+    return {"x": wrap_tile(pos[0]), "z": wrap_tile(pos[2]), **game_angles(*ori)}
 
 
 def parse_tdf(path: Path) -> list[dict]:
-    """Where a tunnel meets the heightmap.
+    """Tunnel portals (FUN_00039d50).
 
-    Each record is the tunnel level, the entrance and exit coordinates,
-    and the ground texture painted on those tiles (the hole in the ice,
-    canyon, and so on). Coordinates match object placements.
+    Record: tunnel .lvl, entrance x,y,z, exit x,y,z, entrance mode, two
+    textures (the second is the mouth tile), exit mode, two exit textures,
+    cave flag. A mouth is drawn only when its mode is not 0. The game
+    recomputes the exit y from the ground. The cave flag switches the
+    renderer to cave mode (floor and mirrored ceiling) after the tunnel.
+    Coordinates are tiles.
     """
     if not path.exists():
         return []
@@ -262,102 +318,90 @@ def parse_tdf(path: Path) -> list[dict]:
         return []
     count = int(lines[0])
     index = 1
-    tile = 1048576.0
     tunnels = []
-
-    def wrap(value: float) -> float:
-        wrapped = (value / tile) % 256.0
-        return wrapped + 256.0 if wrapped < 0 else wrapped
 
     def spot(text: str) -> dict | None:
         try:
             x, y, z = [int(part) for part in text.split(",")[:3]]
         except ValueError:
             return None
-        return {
-            "x": round(wrap(x), 4),
-            "y": round(y / (tile / 2.0), 4),
-            "z": round(wrap(z), 4),
-        }
+        return {"x": wrap_tile(x), "y": round(y / TILE, 4), "z": wrap_tile(z)}
+
+    def number(text: str) -> int:
+        return int(text) if text.lstrip("-").isdigit() else 0
 
     for _ in range(count):
         if index + 9 >= len(lines):
             break
-        level = Path(lines[index]).stem.lower()
-        entrance = spot(lines[index + 1])
-        exit_ = spot(lines[index + 2])
-        mouth = Path(lines[index + 5]).stem.lower()
-        exit_mouth = Path(lines[index + 8]).stem.lower()
+        rec = lines[index : index + 10]
         index += 10
+        entrance = spot(rec[1])
+        exit_ = spot(rec[2])
         if not entrance or not exit_:
             continue
         tunnels.append({
-            "level": level,
+            "level": Path(rec[0]).stem.lower(),
             "entrance": entrance,
             "exit": exit_,
-            "mouth": f"textures/{mouth}.png",
-            "exitMouth": f"textures/{exit_mouth}.png",
+            "entranceMode": number(rec[3]),
+            "mouth": f"textures/{Path(rec[5]).stem.lower()}.png",
+            "exitMode": number(rec[6]),
+            "exitMouth": f"textures/{Path(rec[8]).stem.lower()}.png",
+            "cave": number(rec[9]) == 1,
         })
     return tunnels
 
 
-def parse_tnl(path: Path) -> dict:
-    """Tunnel centerline, wall faces, and per-segment object slots.
+def parse_tnl(path: Path) -> list[dict]:
+    """Tunnel segments (FUN_00034770). Segment k runs from z = k to k + 1 tiles.
 
-    Each segment is one tile long: x0,y0,x1,y1,w0,h0,w1,h1. The centerline
-    uses 4096 file units per terrain tile. The cross-section numbers are the
-    radius in those same units. After the sizes, a segment lists an object
-    slot (an index into the surface level's models, or 0) and one texture
-    index per wall. Those indices point at the tunnel level's own texture list.
+    Per segment: x0,y0,x1,y1,N / a0,a1,rot / rx0,ry0 / b0,b1 / rx1,ry1 / hp /
+    light face / missing / obstacle / obstacle texture / N face textures /
+    light mode, light intensity, ambient. Lengths are 1/4096 tile, angles
+    65536 per turn. Ring vertex i of the start ring sits at angle
+    a0 + i*(a1-a0)/(N-missing), at (x0 + rx0 cos, y0 + ry0 sin). Face
+    textures index the tunnel level's own .tex list.
     """
-    empty = {"segments": [], "faces": [], "fittings": []}
     if not path.exists():
-        return empty
-    lines = []
+        return []
+    toks = []
     for line in path.read_text("latin1", errors="replace").splitlines():
         line = line.strip().strip("\x1a")
-        if not line or line.startswith(";") or line.startswith("!"):
-            continue
-        lines.append(line)
-    if not lines or not lines[0].isdigit():
-        return empty
-    count = int(lines[0])
-    headers = [
-        i for i, line in enumerate(lines)
-        if line.count(",") == 4 and all(part.lstrip("-").isdigit() for part in line.split(","))
-    ]
+        if line and not line.startswith(";"):
+            toks.append(line)
+    if not toks or not toks[0].isdigit():
+        return []
+
+    def ints(text: str) -> list[int]:
+        return [int(part) for part in text.split(",")]
+
     segments = []
-    faces = []
-    fittings = []
-    chosen = headers[:count]
-    for nth, index in enumerate(chosen):
-        stop = chosen[nth + 1] if nth + 1 < len(chosen) else len(lines)
-        block = lines[index:stop]
-        try:
-            head = [int(part) for part in block[0].split(",")]
-            start = [int(part) for part in block[2].split(",")]
-            end = [int(part) for part in block[4].split(",")]
-        except (ValueError, IndexError):
-            break
-        if len(head) < 4 or len(start) < 2 or len(end) < 2:
-            break
-        segments.append([
-            head[0], head[1], head[2], head[3],
-            start[0], start[1], end[0], end[1],
-        ])
-        tail = []
-        for line in block[5:]:
-            if line.lstrip("-").isdigit():
-                tail.append(int(line))
-        fitting = tail[3] if len(tail) > 3 and tail[3] > 0 else 0
-        face = []
-        for value in tail[4:]:
-            if value < 0 or value > 64:
-                break
-            face.append(value)
-        fittings.append(fitting)
-        faces.append(face)
-    return {"segments": segments, "faces": faces, "fittings": fittings}
+    i = 1
+    try:
+        for _ in range(int(toks[0])):
+            x0, y0, x1, y1, n = ints(toks[i])
+            a0, a1, rot = ints(toks[i + 1])
+            rx0, ry0 = ints(toks[i + 2])
+            b0, b1 = ints(toks[i + 3])
+            rx1, ry1 = ints(toks[i + 4])
+            hp, light, missing, obstacle, obstacle_tex = (int(t) for t in toks[i + 5 : i + 10])
+            i += 10
+            faces = [int(t) for t in toks[i : i + n]]
+            i += n
+            light_mode, light_level, ambient = (int(t) for t in toks[i : i + 3])
+            i += 3
+            segments.append({
+                "start": [x0, y0], "end": [x1, y1], "sides": n,
+                "a": [a0, a1], "spin": rot, "r0": [rx0, ry0],
+                "b": [b0, b1], "r1": [rx1, ry1],
+                "hp": hp, "lightFace": light, "missing": missing,
+                "obstacle": obstacle, "obstacleTex": obstacle_tex,
+                "faces": faces,
+                "lightMode": light_mode, "lightLevel": light_level, "ambient": ambient,
+            })
+    except (ValueError, IndexError):
+        pass
+    return segments
 
 
 def nav_label(descr: str, kind: int) -> str:
@@ -384,8 +428,8 @@ def parse_nav(path: Path) -> list[dict]:
     destroy, and which ones) plus the next point's type. Those integers are
     not the next waypoint. Tunnel entrances are type 1 and exits are type 4.
     Type 3 is the departure unit, the exit port, labeled DUN.
-    Coordinates are stored like object placements: x/z wrapped onto the 256
-    map, y in pre-relief units.
+    Coordinates are tiles, x/z wrapped onto the 256 map. The game raises a
+    waypoint's y to the ground if the file value is below it.
     """
     if not path.exists() or path.suffix.lower() != ".nav":
         return []
@@ -454,7 +498,7 @@ def parse_nav(path: Path) -> list[dict]:
             continue
         points.append({
             "x": round(wrap(pos[0]), 4),
-            "y": round(pos[1] / (tile / 2.0), 4),
+            "y": round(pos[1] / tile, 4),
             "z": round(wrap(pos[2]), 4),
             "type": kind,
             "label": nav_label(descr, kind),
@@ -480,8 +524,13 @@ def resolve_model(def_path: Path, model: str) -> str:
     return Path(name).stem.lower() or model
 
 
-def read_def(path: Path) -> tuple[list[tuple[str, int]], list[list[int]]]:
-    """Model table and raw placement rows from a level .def."""
+def read_def(path: Path) -> tuple[list[dict], list[list[int]]]:
+    """Def table and raw placement rows from a level .def (FUN_000230a0).
+
+    Def header: logic, ?, radius, dx, dy, dz, "model.bin,second.bin". The
+    radius is replaced in game by the model's bounding radius; dx/dy/dz are
+    world-unit offsets added to the placement.
+    """
     if not path.exists():
         return [], []
     lines = [ln.strip() for ln in path.read_text("latin1", errors="replace").replace("\r\n", "\n").replace("\r", "\n").split("\n")]
@@ -490,22 +539,27 @@ def read_def(path: Path) -> tuple[list[tuple[str, int]], list[list[int]]]:
         return [], []
     count = int(lines[0])
     index = 1
-    models: list[tuple[str, int]] = []
+    models: list[dict] = []
     for _ in range(count):
         if index >= len(lines):
             break
         header = lines[index]
         index += 1
-        logic = 0
         parts = [part.strip() for part in header.split(",")]
-        if parts and parts[0].lstrip("-").isdigit():
-            logic = int(parts[0])
+        nums = []
+        for part in parts[:6]:
+            nums.append(int(part) if part.lstrip("-").isdigit() else 0)
+        nums += [0] * (6 - len(nums))
         model = ""
         for part in parts:
             if part.lower().endswith(".bin"):
                 model = Path(part).stem.lower()
                 break
-        models.append((resolve_model(path, model), logic))
+        models.append({
+            "model": resolve_model(path, model),
+            "logic": nums[0],
+            "offset": [round(v / TILE, 5) for v in nums[3:6]],
+        })
         # thrust, flags, firing vertices
         index += 3
         if index < len(lines) and lines[index].lower().startswith(";newhit"):
@@ -545,75 +599,51 @@ def read_def(path: Path) -> tuple[list[tuple[str, int]], list[list[int]]]:
 
 
 def parse_def_placements(path: Path) -> list[dict]:
-    """Object instances from a level .def.
+    """Object instances on a surface level (FUN_00022f20).
 
-    A placement is def-index, strength, x, y, z, pitch, roll, yaw.
-    World axes match the heightmap: +x is a column, +z is a row.
-    One tile is 2^20 game units. The height byte lines up with object
-    altitudes at byte/32, and the viewer mesh uses byte/16, so altitudes
-    are doubled into viewer units. Strength 0 is an empty slot.
-    Angles are 2^16 per turn, clockwise; yaw is negated for Three.js.
+    Row: def index, strength, x, y, z, pitch, roll, yaw. The game ignores
+    the file y: it seats every object at ground(x, z), adds the def's
+    dx/dy/dz, and for logic 2, 4, 7 and 8 also half the model's bounding
+    radius. The viewer does that sum, so this exports the parts.
+    Strength 0 is an empty slot.
     """
     models, rows = read_def(path)
-    if not rows:
-        return []
-    tile = 1048576.0
-    turn = math.tau / 65536.0
     spots = []
-    for values in rows:
-        def_index, strength, x, y, z, pitch, roll, yaw = values
+    for def_index, strength, x, y, z, pitch, roll, yaw in rows:
         if strength == 0 or not (0 <= def_index < len(models)):
             continue
-        model, logic = models[def_index]
-        if not model:
+        spec = models[def_index]
+        if not spec["model"]:
             continue
-
-        def wrap(value: int) -> float:
-            wrapped = (value / tile) % 256.0
-            return wrapped + 256.0 if wrapped < 0 else wrapped
-
-        # Ground vehicles and buildings sit on the terrain. Aircraft keep
-        # the altitude written in the file.
-        ground = {0, 1, 3, 9, 10, 14, 15, 19, 20, 21, 24, 33, 41}
         spots.append({
-            "model": model,
-            "seat": "ground" if logic in ground else "air",
-            "x": round(wrap(x), 3),
-            "y": round(y / (tile / 2.0), 3),
-            "z": round(wrap(z), 3),
-            "yaw": round(-yaw * turn, 5),
-            "pitch": round(pitch * turn, 5),
-            "roll": round(roll * turn, 5),
+            "model": spec["model"],
+            "logic": spec["logic"],
+            "offset": spec["offset"],
+            "x": wrap_tile(x),
+            "z": wrap_tile(z),
+            **game_angles(pitch, roll, yaw),
         })
     return spots
 
 
 def parse_tunnel_contents(path: Path) -> list[dict]:
-    """Props inside a tunnel. X/Y are the cross-section and Z runs down the shaft.
-
-    Same 2^20 game units as the surface, but these are tunnel-local: one tile
-    along the shaft, not a wrapped map coordinate. The cross-section matches
-    the centerline (game units / 2^20 = file units / 4096).
-    """
+    """Props inside a tunnel, in tunnel space: x/y across the shaft, z down it,
+    in tiles. Tunnel levels use the file x, y, z as stored."""
     models, rows = read_def(path)
-    tile = 1048576.0
-    turn = math.tau / 65536.0
     spots = []
-    for values in rows:
-        def_index, strength, x, y, z, pitch, roll, yaw = values
+    for def_index, strength, x, y, z, pitch, roll, yaw in rows:
         if strength == 0 or not (0 <= def_index < len(models)):
             continue
-        model, _logic = models[def_index]
-        if not model or model == "cube":
+        spec = models[def_index]
+        if not spec["model"] or spec["model"] == "cube":
             continue
         spots.append({
-            "model": model,
-            "x": round(x / tile, 4),
-            "y": round(y / tile, 4),
-            "z": round(z / tile, 4),
-            "yaw": round(-yaw * turn, 5),
-            "pitch": round(pitch * turn, 5),
-            "roll": round(roll * turn, 5),
+            "model": spec["model"],
+            "logic": spec["logic"],
+            "x": round(x / TILE, 4),
+            "y": round(y / TILE, 4),
+            "z": round(z / TILE, 4),
+            **game_angles(pitch, roll, yaw),
         })
     return spots
 
@@ -625,6 +655,164 @@ def parse_tex(path: Path) -> list[str]:
     if lines and lines[0].isdigit():
         lines = lines[1:]
     return [ln for ln in lines if "." in ln]
+
+
+def unpack_pods(game: Path, root: Path) -> list[str]:
+    """Unpack every .pod in the install folder into root.
+
+    Header: uint32 count, 80-byte label. Then count entries of a 32-byte
+    name, uint32 size, uint32 offset. STARTUP.POD goes first; names that
+    appear in more than one archive are identical copies. Loose files the
+    menus use (episode lists, the TRI splash) land in root/loose.
+    """
+    root.mkdir(parents=True, exist_ok=True)
+    base = root.resolve()
+    pods = sorted(game.glob("*.[pP][oO][dD]"), key=lambda p: (p.name.lower() != "startup.pod", p.name.lower()))
+    labels = []
+    for pod in pods:
+        data = pod.read_bytes()
+        count = struct.unpack_from("<I", data, 0)[0]
+        labels.append(f"{pod.name}: {cstr(data[4:84])} ({count} files)")
+        for i in range(count):
+            off = 84 + i * 40
+            name = cstr(data[off : off + 32]).replace("\\", "/").lower()
+            size, pos = struct.unpack_from("<II", data, off + 32)
+            dest = (root / name).resolve()
+            if not name or base not in dest.parents or pos + size > len(data):
+                continue
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            dest.write_bytes(data[pos : pos + size])
+    loose = root / "loose"
+    for path in game.iterdir():
+        if path.is_file() and path.suffix.lower() in {".vox", ".wav", ".gif"}:
+            loose.mkdir(exist_ok=True)
+            shutil.copy2(path, loose / path.name.lower())
+    return labels
+
+
+def parse_pup(path: Path) -> list[dict]:
+    """Power-ups: count, then x,y,z,type rows. The game reads only `count`
+    rows, so the multiplayer levels' six rows behind a count of 0 are not
+    placed; `listed` marks the rows the game uses."""
+    if not path.exists():
+        return []
+    lines = [ln for ln in read_text(path) if ln and not ln.startswith(";")]
+    if not lines or not lines[0].isdigit():
+        return []
+    count = int(lines[0])
+    out = []
+    for line in lines[1:]:
+        parts = line.split(",")
+        if len(parts) != 4:
+            continue
+        try:
+            x, y, z, kind = (int(p) for p in parts)
+        except ValueError:
+            continue
+        out.append({
+            "x": x, "y": y, "z": z, "type": kind,
+            "model": POWERUP_MODELS[kind] if 0 <= kind < len(POWERUP_MODELS) else "",
+            "listed": len(out) < count,
+        })
+    return out
+
+
+def parse_demo(path: Path) -> dict | None:
+    """Recorded flight. Line 1 is the record count, line 2 the level.
+
+    A record is `kind,time` with time in 1/65536 s. Kind 0 is followed by the
+    ship position (x,y,z, same units as .nav) and pitch,roll,yaw (2^16 per turn)
+    plus a 0/1 flag that toggles in short bursts (meaning unconfirmed). Kind 1
+    is a key press; the next line is the scancode (57 = space, fire).
+    """
+    lines = [ln for ln in read_text(path) if ln]
+    if len(lines) < 2 or not lines[0].isdigit():
+        return None
+    count = int(lines[0])
+    level = Path(lines[1]).stem.lower()
+    tile = 1048576.0
+    turn = math.tau / 65536.0
+    poses = []
+    keys = []
+    i = 2
+    while i < len(lines) and len(poses) + len(keys) < count:
+        head = lines[i].split(",")
+        i += 1
+        if len(head) != 2:
+            continue
+        kind, time = int(head[0]), int(head[1])
+        if kind == 1 and i < len(lines):
+            keys.append({"t": round(time / 65536.0, 4), "key": int(lines[i])})
+            i += 1
+            continue
+        if kind != 0 or i + 1 >= len(lines):
+            continue
+        pos = [int(p) for p in lines[i].split(",")[:3]]
+        ori = [int(p) for p in lines[i + 1].split(",")[:4]]
+        i += 2
+        poses.append({
+            "t": round(time / 65536.0, 4),
+            "x": round((pos[0] / tile) % 256.0, 4),
+            "y": round(pos[1] / (tile / 2.0), 4),
+            "z": round((pos[2] / tile) % 256.0, 4),
+            "pitch": round(-ori[0] * turn, 5),
+            "roll": round(ori[1] * turn, 5),
+            "yaw": round((ori[2] * turn + math.pi + math.pi) % math.tau - math.pi, 5),
+            "flag": ori[3] if len(ori) > 3 else 0,
+        })
+    return {
+        "level": level,
+        "seconds": poses[-1]["t"] if poses else 0,
+        "poses": poses,
+        "keys": keys,
+        "note": "x/z wrap onto the 256 map, y is pre-relief like .nav; yaw and pitch are camera-facing like level.start",
+    }
+
+
+def parse_vox(path: Path) -> dict | None:
+    """Episode list: count, title, then planet,mission,level rows."""
+    lines = [ln for ln in read_text(path) if ln]
+    if len(lines) < 2:
+        return None
+    missions = []
+    for line in lines[2:]:
+        parts = [p.strip() for p in line.split(",")]
+        if len(parts) == 3 and parts[0].isdigit() and parts[1].isdigit():
+            missions.append({"planet": int(parts[0]), "mission": int(parts[1]), "level": Path(parts[2]).stem.lower()})
+    return {"file": path.name.lower(), "title": lines[1], "missions": missions}
+
+
+def text_screen_html(data: bytes, title: str) -> str:
+    """80x25 text-mode dump (character, attribute) as colored HTML."""
+    rows = []
+    for y in range(min(25, len(data) // 160)):
+        cells = []
+        for x in range(80):
+            ch, attr = data[(y * 80 + x) * 2], data[(y * 80 + x) * 2 + 1]
+            glyph = bytes([ch]).decode("cp437") if ch >= 32 else " "
+            fg, bg = TEXT_COLORS[attr & 15], TEXT_COLORS[(attr >> 4) & 7]
+            cells.append(f'<span style="color:{fg};background:{bg}">{html.escape(glyph)}</span>')
+        rows.append("".join(cells))
+    body = "\n".join(rows)
+    return (
+        f'<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>{html.escape(title)}</title>'
+        '<style>body{margin:0;background:#000;display:grid;place-items:center;min-height:100vh}'
+        'pre{font:16px/1 "Perfect DOS VGA 437",ui-monospace,monospace;margin:0}</style></head>'
+        f"<body><pre>{body}</pre></body></html>\n"
+    )
+
+
+def colormap_image(table: bytes, palette: Palette) -> tuple[int, int, bytes]:
+    """32 red slices of 32x32 (green down, blue across) for a 15-bit lookup."""
+    width, height = 32 * 32, 32
+    out = bytearray(width * height * 4)
+    for r in range(32):
+        for g in range(32):
+            for b in range(32):
+                cr, cg, cb = palette[table[(r << 10) | (g << 5) | b]]
+                i = (g * width + r * 32 + b) * 4
+                out[i : i + 4] = bytes((cr, cg, cb, 255))
+    return width, height, bytes(out)
 
 
 def parse_bin(data: bytes, name: str) -> dict:
@@ -652,7 +840,9 @@ def parse_bin(data: bytes, name: str) -> dict:
     if ident != 0x14:
         raise ValueError(f"unknown id {ident:#x}")
 
-    scale, _u1, index_bias, nverts = struct.unpack_from("<iiii", data, 4)
+    # Block 0x14 (scale) then block 0x02 (vertex list: first slot, count, xyz...).
+    # Face corners index slots, so the first slot is always subtracted.
+    scale, _vertex_block, index_bias, nverts = struct.unpack_from("<iiii", data, 4)
     if nverts < 0 or 20 + nverts * 12 > len(data):
         raise ValueError(f"bad vertex count {nverts}")
     vertices = [struct.unpack_from("<iii", data, 20 + i * 12) for i in range(nverts)]
@@ -722,15 +912,14 @@ def parse_bin(data: bytes, name: str) -> dict:
                     else:
                         u = v = 0
                         sprite = False
-                if vi < 0 or vi >= nverts:
-                    vi -= index_bias
+                vi -= index_bias
                 corners.append((vi, u, v, sprite))
             color = None
             if block == 0x06 and vertex_colors:
                 used = [vertex_colors[c[0]] for c in corners if 0 <= c[0] < len(vertex_colors)]
                 color = used[0] if used else None
             elif block in (0x19, 0x05) and flat_color is not None:
-                color = flat_color
+                color = ramp_color(flat_color)
             faces.append({
                 "type": block,
                 "normal": (nx, ny, nz),
@@ -742,7 +931,7 @@ def parse_bin(data: bytes, name: str) -> dict:
             })
             continue
         if block == 0x0A:
-            flat_color = struct.unpack_from("<I", data, off)[0]
+            flat_color = struct.unpack_from("<i", data, off)[0]
             off += 4
             continue
         if block == 0x04:
@@ -794,10 +983,10 @@ def parse_bin(data: bytes, name: str) -> dict:
 
 
 def norm_uv(u: int, v: int, sprite: bool = False) -> tuple[float, float]:
-    # 16.16 fixed point in a 0..255 texture space. 0 is the top-left,
-    # 0xFF0000 is the far edge. Faces and billboard sprites use the same scale.
+    # 16.16 fixed point in a 0..256 texel space. 0 is the top-left edge,
+    # 0x1000000 the far edge. Faces and billboard sprites use the same scale.
     del sprite
-    return (u / 65536.0) / 255.0, (v / 65536.0) / 255.0
+    return u / (65536.0 * 256.0), v / (65536.0 * 256.0)
 
 
 def orient(corners, positions, normal):
@@ -873,7 +1062,25 @@ def sheet(frames: list[tuple[int, int, bytes]], columns: int = 8) -> tuple[int, 
     return width, height, bytes(image)
 
 
-def export_obj(model: dict, dest: Path, palette, written_textures: set[str], art: dict[str, Path]) -> dict:
+def write_mtl(path: Path, materials: dict[str, dict], texture_url) -> None:
+    """texture_url(raw name) returns the map path relative to the MTL, or None."""
+    mtl = []
+    for name, spec in materials.items():
+        mtl.append(f"newmtl {name}")
+        kd = spec["kd"]
+        mtl.append(f"Kd {kd[0]:.4f} {kd[1]:.4f} {kd[2]:.4f}")
+        mtl.append("Ka 0 0 0")
+        mtl.append("Ks 0 0 0")
+        if spec["texture"]:
+            url = texture_url(spec["texture"])
+            if url:
+                mtl.append(f"map_Kd {url}")
+        mtl.append("")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("\n".join(mtl))
+
+
+def export_obj(model: dict, dest: Path, palette, texture_url) -> tuple[dict, dict[str, dict]]:
     scale = model["scale"] or 1
     positions = [(x / scale, y / scale, z / scale) for x, y, z in model["vertices"]]
     obj_lines = [
@@ -934,29 +1141,7 @@ def export_obj(model: dict, dest: Path, palette, written_textures: set[str], art
     obj_lines.extend(face_lines)
     dest.mkdir(parents=True, exist_ok=True)
     (dest / f"{model['name']}.obj").write_text("\n".join(obj_lines) + "\n")
-
-    mtl = []
-    tex_dir = dest / "textures"
-    for name, spec in materials.items():
-        mtl.append(f"newmtl {name}")
-        kd = spec["kd"]
-        mtl.append(f"Kd {kd[0]:.4f} {kd[1]:.4f} {kd[2]:.4f}")
-        mtl.append("Ka 0 0 0")
-        mtl.append("Ks 0 0 0")
-        if spec["texture"]:
-            png = sanitize(spec["texture"]) + ".png"
-            mtl.append(f"map_Kd textures/{png}")
-            if png not in written_textures:
-                raw = art.get(spec["texture"].lower())
-                if raw and palette is not None:
-                    size = image_size(raw.stat().st_size)
-                    if size:
-                        w, h = size
-                        rgba = index_image(raw.read_bytes()[: w * h], palette, alpha0=True)
-                        write_png(tex_dir / png, w, h, rgba)
-                        written_textures.add(png)
-        mtl.append("")
-    (dest / f"{model['name']}.mtl").write_text("\n".join(mtl))
+    write_mtl(dest / f"{model['name']}.mtl", materials, texture_url)
     return {
         "file": f"models/{model['name']}.obj",
         "vertices": len(positions),
@@ -964,7 +1149,7 @@ def export_obj(model: dict, dest: Path, palette, written_textures: set[str], art
         "dropped": bad,
         "textures": model["textures"],
         "anims": model["anims"],
-    }
+    }, materials
 
 
 def remap_image(table: bytes, palette, rows: int = 16) -> bytes:
@@ -983,10 +1168,13 @@ def build_gallery(out: Path, catalog: dict) -> None:
     def img(src: str, alt: str, cls: str = "") -> str:
         return f'<img loading="lazy" class="{cls}" src="{html.escape(src)}" alt="{html.escape(alt)}">'
 
-    screens = "\n".join(
-        f'<figure>{img(s["file"], s["name"])}<figcaption>{html.escape(s["name"])} {s["width"]}×{s["height"]}</figcaption></figure>'
-        for s in catalog["screens"]
-    )
+    def screen(s: dict) -> str:
+        if s["palette"] == "text":
+            return f'<figure><a href="{html.escape(s["file"])}">{html.escape(s["name"])} (80×25 text screen)</a></figure>'
+        size = f' {s["width"]}×{s["height"]}' if s["width"] else ""
+        return f'<figure>{img(s["file"], s["name"])}<figcaption>{html.escape(s["name"])}{size}</figcaption></figure>'
+
+    screens = "\n".join(screen(s) for s in catalog["screens"])
     sheets = "\n".join(
         f'<figure>{img(s["file"], s["name"], "sheet")}<figcaption>{html.escape(s["name"])} · {s["frames"]} frames</figcaption></figure>'
         for s in catalog["sheets"]
@@ -1013,6 +1201,21 @@ def build_gallery(out: Path, catalog: dict) -> None:
         f'<figure>{img(e["file"], e["name"], "remap")}<figcaption>{html.escape(e["name"])}</figcaption></figure>'
         for e in catalog["effects"]
     )
+
+    colormaps = "\n".join(
+        f'<figure>{img(c["file"], c["name"], "sheet")}<figcaption>{html.escape(c["name"])} · {html.escape(c["palette"])}</figcaption></figure>'
+        for c in catalog["colormaps"]
+        if c.get("file")
+    )
+    episodes = "\n".join(
+        f'<p><strong>{html.escape(e["title"])}</strong><br>'
+        + " · ".join(f'{m["planet"]}.{m["mission"]} {html.escape(m["level"])}' for m in e["missions"])
+        + "</p>"
+        for e in catalog["episodes"]
+    )
+    demos = ", ".join(f'<code>{html.escape(d["file"])}</code> ({html.escape(d["level"])}, {d["seconds"]:.0f}s)' for d in catalog["demos"])
+    if demos:
+        episodes += f"<p>Demo flights: {demos}</p>"
 
     def sound_block(items):
         blocks = []
@@ -1073,7 +1276,7 @@ def build_gallery(out: Path, catalog: dict) -> None:
 <body>
 <header>
   <h1>Terminal Velocity assets</h1>
-  <p><a href="viewer.html">Open the 3D viewer</a> for models and a textured flyover of each map.</p>
+  <p><a href="../index.html">Open the game page</a> for models and a flyable version of each map.</p>
   <p>{catalog["counts"]["screens"]} screens, {catalog["counts"]["textures"]} textures,
   {catalog["counts"]["sprites"]} sprites, {catalog["counts"]["sheets"]} effect sheets,
   {catalog["counts"]["models"]} models, {catalog["counts"]["sounds"]} sounds,
@@ -1088,12 +1291,14 @@ def build_gallery(out: Path, catalog: dict) -> None:
 <section><h2>Sprites and object textures</h2>
 <p>Sprites load as they scroll into view. The checkerboard is the transparent colour (palette index 0).</p>
 <div class="grid" id="sprites">{sprites}</div></section>
+<section><h2>Color lookups</h2><p>RGB555 to palette index tables (<code>fog/*.map</code>), drawn as 32 red slices.</p><div class="grid">{colormaps}</div></section>
+<section><h2>Episodes</h2>{episodes}</section>
 <section><h2>Font</h2><div class="grid"><figure>{img("font/font.png", "font", "sheet")}<figcaption>ASCII 32–126, 23px, widths in font/glyphs.json</figcaption></figure></div></section>
 <section><h2>Sound effects</h2><div class="sounds">{sound_block(catalog["sounds"])}</div></section>
 <section><h2>Music</h2><p>6-channel ProTracker modules. Browsers cannot play these directly; open them in OpenMPT, MilkyTracker, or anything else that understands the 6CHN signature.</p><ul>
 {"".join(f"<li><code>{html.escape(m['file'])}</code> · {html.escape(m['title'])} · {m['channels']} ch</li>" for m in catalog["music"])}
 </ul></section>
-<section><h2>Models</h2><p>Inspect these in the <a href="viewer.html">3D viewer</a>.</p><ul>{models}</ul></section>
+<section><h2>Models</h2><p>Inspect these on the <a href="../index.html?mode=model">game page</a>.</p><ul>{models}</ul></section>
 <script>
 const spriteObserver = new IntersectionObserver((entries) => {{
   for (const entry of entries) {{
@@ -1125,11 +1330,22 @@ def write_view_manifest(out: Path, catalog: dict) -> None:
             "index": entry["index"],
             "textures": entry.get("textureFiles") or [],
             "sky": entry.get("sky"),
-            "skyScroll": entry.get("skyScroll"),
             "start": entry.get("start"),
             "nav": entry.get("nav") or [],
             "objects": entry.get("objects") or [],
             "tunnels": entry.get("tunnels") or [],
+            "powerups": entry.get("powerups") or [],
+            "modelMtl": entry.get("modelMtl") or {},
+            "fog": entry.get("fog"),
+            "horizon": entry.get("horizon"),
+            "sun": entry.get("sun"),
+            "ambient": entry.get("ambient"),
+            "caveLight": entry.get("caveLight"),
+            "caveAmbient": entry.get("caveAmbient"),
+            "music": entry.get("music"),
+            "palette": entry.get("palette"),
+            "mission": entry.get("mission"),
+            "demos": entry.get("demos") or [],
         })
     models = []
     for entry in catalog["models"]:
@@ -1142,13 +1358,10 @@ def write_view_manifest(out: Path, catalog: dict) -> None:
             "mtl": str(Path(obj).with_suffix(".mtl")),
             "textures": entry.get("textures") or [],
         })
-    (out / "view.json").write_text(json.dumps({"levels": levels, "models": models}))
-
-
-def install_viewer(out: Path) -> None:
-    src = Path(__file__).resolve().parent / "viewer"
-    for name in ("viewer.html", "viewer.js"):
-        shutil.copy(src / name, out / name)
+    episodes = [{"title": e["title"], "levels": [m["level"] for m in e["missions"]]} for e in catalog["episodes"]]
+    # Units for the viewer: positions in tiles (2^20 game units), angles in
+    # radians in the game's left-handed convention (see game_angles).
+    (out / "view.json").write_text(json.dumps({"version": 2, "levels": levels, "models": models, "episodes": episodes}))
 
 
 def extract(root: Path, out: Path) -> dict:
@@ -1174,21 +1387,55 @@ def extract(root: Path, out: Path) -> dict:
         tex_path = root / "data" / lv["textures"]
         tex_lists[lv["name"]] = parse_tex(tex_path)
 
+    # Most .act files are byte-identical copies. Name each distinct palette
+    # once (vga wins its group) so votes and variant folders line up.
+    canon: dict[str, str] = {}
+    groups: dict[bytes, list[str]] = defaultdict(list)
+    for name, pal in palettes.items():
+        groups[bytes(c for rgb in pal for c in rgb)].append(name)
+    for names in groups.values():
+        lead = "vga" if "vga" in names else min(names)
+        for name in names:
+            canon[name] = lead
+
+    # Tunnels have no sky of their own; they keep the surface level's band.
+    tunnel_parent: dict[str, str] = {}
+    for lv in levels:
+        if lv["is_tunnel"] or not lv.get("tdf", "").lower().endswith(".tdf"):
+            continue
+        for portal in parse_tdf(root / "data" / lv["tdf"].lower()):
+            tunnel_parent.setdefault(portal["level"], lv["name"])
+
+    world: dict[str, tuple[str, Palette]] = {}
+    keyed: dict[str, Palette] = {"vga": palettes["vga"]}
+
+    def palette_for(lv: dict) -> tuple[str, Palette]:
+        if lv["name"] in world:
+            return world[lv["name"]]
+        main_name = canon.get(Path(lv["palette"].lower()).stem, "vga")
+        source = level_by_name.get(tunnel_parent.get(lv["name"], ""), lv)
+        sky_name = canon.get(Path(source["sky_palette"].lower()).stem, "")
+        sky = palettes.get(sky_name) if sky_name not in ("", "null") else None
+        pal = compose_palette(palettes[main_name], sky)
+        key = main_name if pal == palettes[main_name] else f"{main_name}_{sky_name}"
+        keyed[key] = pal
+        world[lv["name"]] = (key, pal)
+        return key, pal
+
+    for lv in levels:
+        palette_for(lv)
+
     votes: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
     terrain_names: set[str] = set()
     for lv in levels:
-        pal = lv["palette"].lower()
-        if not pal.endswith(".act"):
-            continue
-        pal_name = Path(pal).stem.lower()
+        key, _pal = palette_for(lv)
         weight = 2 if lv["is_tunnel"] else 5
         for tex in tex_lists[lv["name"]]:
-            votes[tex.lower()][pal_name] += weight
+            votes[tex.lower()][key] += weight
             terrain_names.add(tex.lower())
         sky = lv["sky"].lower()
-        sky_pal = Path(lv["sky_palette"].lower()).stem
-        if sky.endswith(".raw") and sky_pal in palettes:
-            votes[sky][sky_pal] += 10
+        if sky.endswith(".raw"):
+            votes[sky][key] += 10
 
     models = []
     model_errors = []
@@ -1199,30 +1446,99 @@ def extract(root: Path, out: Path) -> dict:
             model_errors.append(f"{path.name}: {exc}")
     model_by_name = {m["name"]: m for m in models}
 
-    for lv in levels:
-        def_path = root / "data" / lv["objects"]
-        if not def_path.exists():
-            continue
-        text = def_path.read_text("latin1", errors="replace").lower()
-        pal_name = Path(lv["palette"].lower()).stem
-        if pal_name not in palettes:
-            continue
-        weight = 2 if lv["is_tunnel"] else 4
-        for match in re.findall(r"[\w.-]+\.bin", text):
-            model = model_by_name.get(Path(match).stem)
-            if not model:
-                continue
-            for tex in model.get("textures") or []:
-                votes[tex.lower()][pal_name] += weight
+    def model_textures(name: str, seen: set[str] | None = None) -> list[str]:
+        """Texture names of a model, following morph lists to their frames."""
+        seen = seen if seen is not None else set()
+        model = model_by_name.get(name)
+        if not model or name in seen:
+            return []
+        seen.add(name)
+        if model["kind"] == "anim":
+            out = []
+            for frame in model["frames"]:
+                out += model_textures(Path(frame).stem.lower(), seen)
+            return out
+        return [t.lower() for t in model["textures"]]
 
-    def choose_palette(raw_name: str):
+    def level_models(lv: dict) -> set[str]:
+        def_path = root / "data" / lv["objects"].lower()
+        found = set()
+        if def_path.exists():
+            text = def_path.read_text("latin1", errors="replace").lower()
+            found = {Path(m).stem for m in re.findall(r"[\w.-]+\.bin", text)}
+        for pup in parse_pup(root / "data" / lv["pup"].lower()):
+            if pup["model"]:
+                found.add(pup["model"])
+        return {m for m in found if m in model_by_name}
+
+    models_of = {lv["name"]: level_models(lv) for lv in levels}
+    for lv in levels:
+        key, _pal = palette_for(lv)
+        weight = 2 if lv["is_tunnel"] else 4
+        for name in models_of[lv["name"]]:
+            for tex in model_textures(name):
+                votes[tex][key] += weight
+
+    def choose_palette(raw_name: str) -> tuple[Palette, str]:
         tally = votes.get(raw_name.lower())
         if not tally:
             return palettes["vga"], "vga"
-        best = max(tally, key=lambda k: (tally[k], k in palettes))
-        if best not in palettes:
-            return palettes["vga"], "vga"
-        return palettes[best], best
+        best = max(sorted(tally), key=lambda k: tally[k])
+        return keyed[best], best
+
+    # A texture is drawn once with its most-voted palette. A level whose
+    # palette disagrees on any index the texture uses gets its own copy in
+    # textures/<palette>/ (and models/textures/<palette>/ for model skins).
+    pixel_sets: dict[str, frozenset[int]] = {}
+
+    def used_indices(raw_name: str) -> frozenset[int]:
+        if raw_name not in pixel_sets:
+            path = raw_files.get(raw_name)
+            pixel_sets[raw_name] = frozenset(path.read_bytes()) if path else frozenset()
+        return pixel_sets[raw_name]
+
+    def needs_variant(raw_name: str, key: str) -> bool:
+        _pal, default = choose_palette(raw_name)
+        if key == default:
+            return False
+        a, b = keyed[key], keyed[default]
+        return any(a[i] != b[i] for i in used_indices(raw_name))
+
+    variants_written: set[str] = set()
+
+    def write_variant(raw_name: str, key: str, rel: str, alpha0: bool) -> None:
+        if rel in variants_written:
+            return
+        path = raw_files.get(raw_name)
+        size = image_size(path.stat().st_size) if path else None
+        if not size:
+            return
+        w, h = size
+        write_png(out / rel, w, h, index_image(path.read_bytes()[: w * h], keyed[key], alpha0))
+        variants_written.add(rel)
+
+    def texture_url(raw_name: str, key: str) -> str:
+        raw_name = raw_name.lower()
+        stem = Path(raw_name).stem
+        if not needs_variant(raw_name, key):
+            return f"textures/{stem}.png"
+        rel = f"textures/{key}/{stem}.png"
+        write_variant(raw_name, key, rel, alpha0=False)
+        return rel
+
+    def skin_url(raw_name: str, key: str | None) -> str | None:
+        """Model texture path relative to models/, written on first use."""
+        raw_name = raw_name.lower()
+        if raw_name not in raw_files:
+            return None
+        png = sanitize(raw_name) + ".png"
+        if key is None or not needs_variant(raw_name, key):
+            _pal, key = choose_palette(raw_name)
+            rel = f"textures/{png}"
+        else:
+            rel = f"textures/{key}/{png}"
+        write_variant(raw_name, key, f"models/{rel}", alpha0=True)
+        return rel
 
     catalog = {
         "screens": [],
@@ -1234,6 +1550,10 @@ def extract(root: Path, out: Path) -> dict:
         "sounds": [],
         "music": [],
         "models": [],
+        "colormaps": [],
+        "demos": [],
+        "episodes": [],
+        "undecoded": [],
         "errors": model_errors,
     }
 
@@ -1326,34 +1646,112 @@ def extract(root: Path, out: Path) -> dict:
             write_png(out / rel, width, height, rgba)
             catalog["sheets"].append({"name": label, "file": rel, "frames": len(frames), "source": model["name"]})
 
+    # Models. The default MTL uses each skin's most-voted palette; levels that
+    # disagree get models/<palette>/<name>.mtl through model_mtl().
+    model_dir = out / "models"
+    model_materials: dict[str, dict[str, dict]] = {}
+    for model in models:
+        if model["kind"] == "anim":
+            catalog["models"].append({
+                "file": f"models/{model['name']}.json",
+                "vertices": 0,
+                "faces": 0,
+                "dropped": 0,
+                "textures": [],
+                "kind": "anim",
+                "frames": model["frames"],
+                "delay": model["delay"],
+            })
+            (model_dir / f"{model['name']}.json").parent.mkdir(parents=True, exist_ok=True)
+            (model_dir / f"{model['name']}.json").write_text(json.dumps({
+                "type": "morph",
+                "frames": model["frames"],
+                "delay": model["delay"],
+                "note": "delay is 65536/frames_per_second; each frame is a sibling BIN",
+            }, indent=2))
+            continue
+        pal = palettes["vga"]
+        for tex in model["textures"]:
+            pal, _key = choose_palette(tex)
+            break
+        try:
+            info, materials = export_obj(model, model_dir, pal, lambda tex: skin_url(tex, None))
+            model_materials[model["name"]] = materials
+            catalog["models"].append(info)
+        except Exception as exc:
+            catalog["errors"].append(f"obj {model['name']}: {exc}")
+
+    def model_mtl(name: str, key: str) -> str | None:
+        """Path of a palette-specific MTL for this model, or None if the default fits."""
+        materials = model_materials.get(name)
+        if not materials:
+            return None
+        skins = {spec["texture"].lower() for spec in materials.values() if spec["texture"]}
+        if not any(raw in raw_files and needs_variant(raw, key) for raw in skins):
+            return None
+        rel = f"models/{key}/{name}.mtl"
+        if rel not in variants_written:
+            write_mtl(out / rel, materials, lambda tex: (lambda url: f"../{url}" if url else None)(skin_url(tex, key)))
+            variants_written.add(rel)
+        return rel
+
+    def mtl_overrides(names, key: str) -> dict[str, str]:
+        found = {}
+        for name in sorted(names):
+            rel = model_mtl(name, key)
+            if rel:
+                found[name] = rel
+        return found
+
     # Terrain
+    fog_index: dict[str, int] = {}
     for lv in levels:
-        if lv["is_tunnel"]:
-            atlas_only = True
-        else:
-            atlas_only = False
+        table = root / "fog" / lv.get("fog", "").lower()
+        if table.exists() and table.stat().st_size >= 4096:
+            last = table.read_bytes()[15 * 256 : 16 * 256]
+            fog_index[lv["name"]] = max(set(last), key=last.count)
+
+    def hex_color(rgb) -> str:
+        return "#{:02x}{:02x}{:02x}".format(*rgb)
+
+    tile = 1048576.0
+    for lv in levels:
+        atlas_only = lv["is_tunnel"]
         names = tex_lists[lv["name"]]
-        pal_name = Path(lv["palette"].lower()).stem
-        palette = palettes.get(pal_name, palettes["vga"])
+        key, palette = palette_for(lv)
         entry = {
             "name": lv["name"],
             "textures": len(names),
-            "palette": pal_name,
-            "textureFiles": [f"textures/{Path(tex).stem.lower()}.png" for tex in names],
+            "palette": key,
+            "textureFiles": [texture_url(tex, key) for tex in names],
         }
+        # The .lvl names the fog color's palette index; the .fog table's last
+        # row is the fallback when the line is missing.
+        fog_at = lv.get("fog_index", fog_index.get(lv["name"]))
+        if fog_at is not None:
+            entry["fog"] = hex_color(palette[fog_at])
+            entry["horizon"] = hex_color(palette[255])
+        for field, key_name in (("sun", "sun"), ("ambient", "ambient"), ("cave_light", "caveLight"), ("cave_ambient", "caveAmbient")):
+            if field in lv:
+                entry[key_name] = lv[field]
+        music = lv.get("music", "").lower()
+        if music.endswith(".mod"):
+            entry["music"] = f"audio/music/{music}"
         def_path = root / "data" / lv.get("objects", "").lower()
         if def_path.suffix == ".def" and def_path.exists():
             entry["objects"] = parse_def_placements(def_path)
+        pups = parse_pup(root / "data" / lv.get("pup", "").lower())
+        if pups and not atlas_only:
+            # Surface power-ups float at ground + 2 x bounding radius; the viewer seats them.
+            entry["powerups"] = [{
+                "model": p["model"],
+                "type": p["type"],
+                "x": wrap_tile(p["x"]),
+                "z": wrap_tile(p["z"]),
+            } for p in pups if p["model"] and p["listed"]]
         sky = lv.get("sky", "").lower()
-        if sky.endswith(".raw"):
-            entry["sky"] = f"textures/{Path(sky).stem.lower()}.png"
-        scroll = lv.get("sky_scroll")
-        speed = lv.get("sky_speed")
-        if scroll and speed:
-            parts = [int(p) for p in scroll.split(",")[:3]]
-            while len(parts) < 3:
-                parts.append(0)
-            entry["skyScroll"] = [parts[0], parts[1], parts[2], int(speed)]
+        if sky.endswith(".raw") and sky in raw_files:
+            entry["sky"] = texture_url(sky, key)
         nav_name = lv.get("nav", "").lower()
         start = parse_nav_start(root / "data" / nav_name)
         if start:
@@ -1361,45 +1759,45 @@ def extract(root: Path, out: Path) -> dict:
         nav_points = parse_nav(root / "data" / nav_name)
         if nav_points:
             entry["nav"] = nav_points
+        if not atlas_only:
+            overrides = mtl_overrides(models_of[lv["name"]], key)
+            if overrides:
+                entry["modelMtl"] = overrides
         tdf_name = lv.get("tdf", "").lower()
         portals = parse_tdf(root / "data" / tdf_name) if tdf_name.endswith(".tdf") else []
         if portals:
-            by_name = {item["name"]: item for item in levels}
             for portal in portals:
-                tunnel_level = by_name.get(portal["level"])
-                tex_name = ""
+                tunnel_level = level_by_name.get(portal["level"])
+                tunnel_key = palette_for(tunnel_level)[0] if tunnel_level else key
+                listed = tex_lists.get(portal["level"]) or []
+                if tunnel_level and not listed:
+                    listed = parse_tex(root / "data" / tunnel_level.get("textures", "").lower())
+                # The mouth tiles are painted on the surface, so they use its palette.
+                portal["mouth"] = texture_url(Path(portal["mouth"]).stem + ".raw", key)
+                portal["exitMouth"] = texture_url(Path(portal["exitMouth"]).stem + ".raw", key)
+                portal["walls"] = [texture_url(tex, tunnel_key) for tex in listed]
+                portal["segments"] = parse_tnl(root / "data" / f"{portal['level']}.tnl")
+                contents = parse_tunnel_contents(root / "data" / f"{portal['level']}.def")
                 if tunnel_level:
-                    listed = tex_lists.get(portal["level"]) or []
-                    if listed:
-                        tex_name = Path(listed[0]).stem.lower()
-                    else:
-                        tunnel_tex = root / "data" / tunnel_level.get("textures", "").lower()
-                        names_tnl = parse_tex(tunnel_tex)
-                        if names_tnl:
-                            tex_name = Path(names_tnl[0]).stem.lower()
-                tnl_path = root / "data" / f"{portal['level']}.tnl"
-                parsed = parse_tnl(tnl_path)
-                wall_names = []
+                    for p in parse_pup(root / "data" / tunnel_level.get("pup", "").lower()):
+                        if p["model"] and p["listed"]:
+                            contents.append({
+                                "model": p["model"],
+                                "powerup": p["type"],
+                                "x": round(p["x"] / tile, 4),
+                                "y": round(p["y"] / tile, 4),
+                                "z": round(p["z"] / tile, 4),
+                                "yaw": 0.0, "pitch": 0.0, "roll": 0.0,
+                            })
+                portal["contents"] = contents
                 if tunnel_level:
-                    listed = tex_lists.get(portal["level"]) or []
-                    if not listed:
-                        tunnel_tex = root / "data" / tunnel_level.get("textures", "").lower()
-                        listed = parse_tex(tunnel_tex)
-                    wall_names = [Path(tex).stem.lower() for tex in listed]
-                surface_models = [name for name, _logic in read_def(def_path)[0]] if def_path.suffix == ".def" and def_path.exists() else []
-                fittings = []
-                for slot in parsed["fittings"]:
-                    if slot <= 0 or slot >= len(surface_models):
-                        fittings.append("")
-                        continue
-                    model = surface_models[slot]
-                    fittings.append("" if model in ("", "cube") else model)
-                portal["wall"] = f"textures/{tex_name}.png" if tex_name else ""
-                portal["walls"] = [f"textures/{name}.png" for name in wall_names]
-                portal["segments"] = parsed["segments"]
-                portal["faces"] = parsed["faces"]
-                portal["fittings"] = fittings
-                portal["contents"] = parse_tunnel_contents(root / "data" / f"{portal['level']}.def")
+                    tunnel_models = {spot["model"] for spot in contents}
+                    overrides = mtl_overrides(tunnel_models & set(model_materials), tunnel_key)
+                    if overrides:
+                        portal["modelMtl"] = overrides
+                    if tunnel_level["name"] in fog_index:
+                        tpal = palette_for(tunnel_level)[1]
+                        portal["fog"] = hex_color(tpal[fog_index[tunnel_level["name"]]])
             entry["tunnels"] = portals
         if names:
             frames = []
@@ -1464,58 +1862,52 @@ def extract(root: Path, out: Path) -> dict:
                 if averages:
                     write_png(out / crel, 256, 256, bytes(color))
                     entry["color"] = crel
-        if len(entry) > 3:
-            catalog["terrain"].append(entry)
+        catalog["terrain"].append(entry)
 
-    # Fog and lighting remaps
+    # Fog and lighting remaps, drawn with the palette of a level that uses them.
+    table_owner: dict[str, dict] = {}
+    for lv in levels:
+        for field in ("fog", "light"):
+            table_owner.setdefault(lv.get(field, "").lower(), lv)
     for kind, folder in (("fog", "effects/fog"), ("lte", "effects/light")):
-        src = root / "fog"
-        for path in sorted(src.glob(f"*.{kind}")):
+        for path in sorted((root / "fog").glob(f"*.{kind}")):
             table = path.read_bytes()
-            lv = level_by_name.get(path.stem.lower())
-            pal_name = "vga"
-            if lv:
-                pal_name = Path(lv["palette"].lower()).stem
-            palette = palettes.get(pal_name, palettes["vga"])
+            lv = table_owner.get(path.name.lower()) or level_by_name.get(path.stem.lower())
+            key, palette = palette_for(lv) if lv else ("vga", palettes["vga"])
             rows = max(1, len(table) // 256)
             rel = f"{folder}/{path.stem}.png"
             write_png(out / rel, 256, rows, remap_image(table, palette, rows))
-            catalog["effects"].append({"name": f"{path.stem} {kind}", "file": rel, "palette": pal_name})
+            catalog["effects"].append({"name": f"{path.stem} {kind}", "file": rel, "palette": key})
 
-    # Models
-    written = set()
-    model_dir = out / "models"
-    for model in models:
-        if model["kind"] == "anim":
-            catalog["models"].append({
-                "file": f"models/{model['name']}.json",
-                "vertices": 0,
-                "faces": 0,
-                "dropped": 0,
-                "textures": [],
-                "kind": "anim",
-                "frames": model["frames"],
-                "delay": model["delay"],
-            })
-            (model_dir / f"{model['name']}.json").parent.mkdir(parents=True, exist_ok=True)
-            (model_dir / f"{model['name']}.json").write_text(json.dumps({
-                "type": "morph",
-                "frames": model["frames"],
-                "delay": model["delay"],
-                "note": "delay is 65536/frames_per_second; each frame is a sibling BIN",
-            }, indent=2))
+    # 15-bit color lookups. Only a couple are distinct; draw each one once.
+    seen_maps: dict[bytes, str] = {}
+    for path in sorted((root / "fog").glob("*.map")):
+        table = path.read_bytes()
+        if len(table) != 32768:
             continue
-        # Prefer a planet palette that actually voted for this model's textures.
-        pal = palettes["vga"]
-        for tex in model["textures"]:
-            chosen, _name = choose_palette(tex)
-            pal = chosen
-            break
-        try:
-            info = export_obj(model, model_dir, pal, written, raw_files)
-            catalog["models"].append(info)
-        except Exception as exc:
-            catalog["errors"].append(f"obj {model['name']}: {exc}")
+        lv = level_by_name.get(path.stem.lower())
+        key, palette = palette_for(lv) if lv else ("vga", palettes["vga"])
+        digest = table[:]
+        if digest in seen_maps:
+            catalog["colormaps"].append({"name": path.stem, "same_as": seen_maps[digest]})
+            continue
+        seen_maps[digest] = path.stem
+        w, h, rgba = colormap_image(table, palette)
+        rel = f"effects/colormap/{path.stem}.png"
+        write_png(out / rel, w, h, rgba)
+        catalog["colormaps"].append({
+            "name": path.stem,
+            "file": rel,
+            "palette": key,
+            "note": "index = r5<<10 | g5<<5 | b5; drawn as 32 red slices, green down, blue across",
+        })
+    for path in sorted((root / "fog").glob("*.mix")):
+        if path.stat().st_size == 0:
+            continue
+        dest = out / "effects" / "mix" / path.name.lower()
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(path, dest)
+        catalog["undecoded"].append({"file": f"effects/mix/{dest.name}", "bytes": path.stat().st_size, "note": "31x256 sky blend table"})
 
     # Font
     ndx = root / "startup" / "font.ndx"
@@ -1549,17 +1941,19 @@ def extract(root: Path, out: Path) -> dict:
         (out / "font" / "glyphs.json").write_text(json.dumps({"height": height, "first": 32, "glyphs": meta}, indent=2))
 
     # Audio
-    sfx_dir = out / "audio" / "sfx"
-    sfx_dir.mkdir(parents=True, exist_ok=True)
-    for path in sorted((root / "sound").glob("*.wav")):
-        dest = sfx_dir / path.name.lower()
+    # The TRI*.WAV clips sit loose in the install folder next to TRI.GIF.
+    sound_sources = [("audio/sfx", p) for p in sorted((root / "sound").glob("*.wav"))]
+    sound_sources += [("audio/extra", p) for p in sorted((root / "loose").glob("*.wav"))]
+    for folder, path in sound_sources:
+        dest = out / folder / path.name.lower()
+        dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(path, dest)
         with wave.open(str(path)) as wav:
             rate = wav.getframerate()
             frames = wav.getnframes()
             catalog["sounds"].append({
                 "name": path.stem.lower(),
-                "file": f"audio/sfx/{dest.name}",
+                "file": f"{folder}/{dest.name}",
                 "rate": rate,
                 "channels": wav.getnchannels(),
                 "bits": wav.getsampwidth() * 8,
@@ -1582,12 +1976,57 @@ def extract(root: Path, out: Path) -> dict:
     # Readable mission text
     text_dir = out / "text"
     text_dir.mkdir(parents=True, exist_ok=True)
-    for folder, pattern in (("data", "*.txt"), ("data", "*.mic"), ("data", "*.def"), ("data", "*.nav")):
+    sources = [("data", f"*.{ext}") for ext in ("txt", "mic", "def", "nav", "tdf", "tnl", "tex", "pup")]
+    sources += [("levels", "*.lvl"), ("loose", "*.vox")]
+    for folder, pattern in sources:
         for path in sorted((root / folder).glob(pattern)):
             if path.stat().st_size == 0:
                 continue
             body = path.read_bytes().replace(b"\x1a", b"").decode("latin1").replace("\r\n", "\n")
             (text_dir / path.name.lower()).write_text(body)
+    # The .ani and .qke tables are a bare 0 in every level; nothing to export.
+
+    # Text-mode screens shown on exit (shareware and registered).
+    for path in sorted((root / "startup").glob("tv*.bin")):
+        data = path.read_bytes()
+        if len(data) != 4000:
+            continue
+        rel = f"screens/{path.stem.lower()}.html"
+        (out / rel).write_text(text_screen_html(data, path.stem.lower()))
+        catalog["screens"].append({"name": path.stem.lower(), "file": rel, "width": 80, "height": 25, "palette": "text"})
+    for path in sorted((root / "loose").glob("*.gif")):
+        rel = f"screens/{path.name.lower()}"
+        shutil.copy2(path, out / rel)
+        catalog["screens"].append({"name": path.stem.lower(), "file": rel, "width": 0, "height": 0, "palette": "gif"})
+
+    # Recorded demo flights.
+    for path in sorted((root / "demo").glob("*.dmo")):
+        demo = parse_demo(path)
+        if not demo:
+            catalog["errors"].append(f"demo {path.name}: unreadable")
+            continue
+        rel = f"demo/{path.stem.lower()}.json"
+        (out / "demo").mkdir(exist_ok=True)
+        (out / rel).write_text(json.dumps(demo))
+        catalog["demos"].append({"file": rel, "level": demo["level"], "seconds": demo["seconds"], "poses": len(demo["poses"]), "keys": len(demo["keys"])})
+    for terrain in catalog["terrain"]:
+        runs = [{"file": d["file"], "seconds": d["seconds"]} for d in catalog["demos"] if d["level"] == terrain["name"]]
+        if runs:
+            terrain["demos"] = runs
+
+    # Episodes, in menu order.
+    order = {"share.vox": 0, "retail1.vox": 1, "retail2.vox": 2}
+    for path in sorted((root / "loose").glob("*.vox"), key=lambda p: (order.get(p.name.lower(), 9), p.name.lower())):
+        episode = parse_vox(path)
+        if episode and episode["missions"]:
+            catalog["episodes"].append(episode)
+    mission_of = {}
+    for episode in catalog["episodes"]:
+        for m in episode["missions"]:
+            mission_of[m["level"]] = f'{episode["title"]} · planet {m["planet"]} mission {m["mission"]}'
+    for terrain in catalog["terrain"]:
+        if terrain["name"] in mission_of:
+            terrain["mission"] = mission_of[terrain["name"]]
 
     catalog["counts"] = {
         "screens": len(catalog["screens"]),
@@ -1599,11 +2038,14 @@ def extract(root: Path, out: Path) -> dict:
         "models": len(catalog["models"]),
         "sounds": len(catalog["sounds"]),
         "music": len(catalog["music"]),
+        "colormaps": len(catalog["colormaps"]),
+        "demos": len(catalog["demos"]),
+        "episodes": len(catalog["episodes"]),
+        "undecoded": len(catalog["undecoded"]),
         "errors": len(catalog["errors"]),
     }
     (out / "catalog.json").write_text(json.dumps(catalog, indent=2))
     write_view_manifest(out, catalog)
-    install_viewer(out)
     build_gallery(out, catalog)
     return catalog
 
@@ -1611,9 +2053,13 @@ def extract(root: Path, out: Path) -> dict:
 def main() -> None:
     here = Path(__file__).resolve().parents[1]
     parser = argparse.ArgumentParser(description="Translate unpacked Terminal Velocity assets")
+    parser.add_argument("--game", type=Path, help="install folder with the .pod files; unpacked into --root first")
     parser.add_argument("--root", type=Path, default=here / "_orig", help="unpacked game tree")
     parser.add_argument("--out", type=Path, default=here / "extracted", help="output directory")
     args = parser.parse_args()
+    if args.game:
+        for label in unpack_pods(args.game, args.root):
+            print("unpacked", label)
     catalog = extract(args.root, args.out)
     counts = catalog["counts"]
     print(

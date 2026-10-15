@@ -1,5 +1,0 @@
-newmtl exp2_alpha
-Kd 1.0000 1.0000 1.0000
-Ka 0 0 0
-Ks 0 0 0
-map_Kd textures/exp2.png

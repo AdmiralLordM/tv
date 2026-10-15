@@ -1,9 +1,0 @@
-{
-  "type": "morph",
-  "frames": [
-    "bradmis1.bin",
-    "bradmis2.bin"
-  ],
-  "delay": 3276,
-  "note": "delay is 65536/frames_per_second; each frame is a sibling BIN"
-}

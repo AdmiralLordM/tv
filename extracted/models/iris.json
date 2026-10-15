@@ -1,9 +1,0 @@
-{
-  "type": "morph",
-  "frames": [
-    "iris1.bin",
-    "iris4.bin"
-  ],
-  "delay": 131072,
-  "note": "delay is 65536/frames_per_second; each frame is a sibling BIN"
-}
